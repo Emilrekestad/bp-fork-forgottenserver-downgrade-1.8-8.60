@@ -1,0 +1,11 @@
+Original ladder chain (32323,32211,7 climbing up):
+  (32323,32211,7): ground=ladder(433)
+    item: ladder (433)
+  (32323,32211,6): no tile
+  (32323,32211,5): no tile
+  (32323,32211,4): no tile
+
+Reported trapdoor position (32321,32211,6):
+  (32321,32211,6): ground=trapdoor(432)
+    item: trapdoor (432)
+  (32321,32211,5): no tile

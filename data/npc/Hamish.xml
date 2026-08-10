@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Hamish" script="Hamish.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="133" head="19" body="95" legs="87" feet="128" addons="1" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="blank,2260,10;arrow, 3447,65;bolt, 3446,15;bow, 3350,38;crossbow, 3349,28;health,7618,45;icicle rune, 3158,45;Heavy,2311,45;rune,2265,95;drill bolt, 16142,50;earth arrow, 774,1000;energy bomb rune, 3149,5000;poison, 25740,21;fireball rune, 3189,20;flaming arrow, 763,500;flaming arrow, 763,5000;flaming arrow, 763,1000;flaming arrow, 763,500" />
+		
+		<parameter key="shop_sellable" value="&#xA;&#x9;&#x9;&#xA;&#x9;&#x9;    flaskpequeno,7636,5" />
+		<parameter key="message_farewell" value="May enlightenment be your path, |PLAYERNAME|." />
+		<parameter key="message_walkaway" value="May enlightenment be your path, |PLAYERNAME|." />
+		<parameter key="message_sendtrade" value="Of course, just browse through my offers." />
+		<parameter key="message_greet" value="Be mourned pilgrim in flesh. I'm selling general goods." />
+	</parameters>
+</npc>

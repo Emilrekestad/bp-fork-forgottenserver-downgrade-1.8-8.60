@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Edmund" script="Edmund.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="472" head="116" body="114" legs="95" feet="78" addons="0" />
+	
+	<voices>
+<voice text="Shop Jewels, come to trade with me." interval2="90" margin="1" yell="no" />
+</voices>
+	<parameters>
+	<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="Black Pearl, 3027,560;Bronze Goblet,5807,2000;Golden Amulet, 3013,6600;Golden Goblet,5805,5000;Ruby Necklace, 3016,3560;Silver Goblet,5806,3000;Small Amethyst, 3033,400;Small Emerald, 3032,500;Small Ruby, 3030,500;Small Sapphire, 3029,500;Wedding Ring, 3004,990;White Pearl, 3026,320;Small Diamond, 3028,600" />
+
+		<parameter key="shop_sellable" value="Black Pearl, 3027,280;Blue Crystal Shard, 16119,1500;Blue Crystal Splinter, 16124,400;Brown Crystal Splinter, 16123,400;Cyan Crystal Fragment, 16125,800;Giant Shimmering Pearl, 281,3000;Gold Ingot, 9058,5000;Green Crystal Fragment, 16127,800;Green Crystal Shard, 16121,1500;Green Crystal Splinter, 16122,400;Red Crystal Fragment, 16126,800;Small Amethyst, 3033,200;Small Diamond, 3028,300;Small Emerald, 3032,250;Small Topaz, 9057,200;Violet Crystal Shard, 16120,1500;Wedding Ring, 3004,100;White Pearl, 3026,160;Small Ruby, 3030,250;Small Sapphire, 3029,250" />
+	</parameters>
+</npc>

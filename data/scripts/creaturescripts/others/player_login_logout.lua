@@ -23,14 +23,16 @@ function loginMessage.onLogin(player)
     player:sendTextMessage(MESSAGE_STATUS_DEFAULT, loginStr)
 
     local vocation = player:getVocation()
-    local promotion = vocation:getPromotion()
-    if player:isPremium() then
-        local value = player:getStorageValue(PlayerStorageKeys.promotion)
-        if value and value == 1 then
-            player:setVocation(promotion)
+    if vocation:getId() ~= 0 then
+        local promotion = vocation:getPromotion()
+        if player:isPremium() then
+            local value = player:getStorageValue(PlayerStorageKeys.promotion)
+            if value and value == 1 then
+                player:setVocation(promotion)
+            end
+        elseif not promotion then
+            player:setVocation(vocation:getDemotion())
         end
-    elseif not promotion then
-        player:setVocation(vocation:getDemotion())
     end
 
     -- Update Experience Rate Stamina

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Rowenna" script="Rowenna.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="139" head="115" body="38" legs="76" feet="38" addons="0" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="axe, 3274,20;battle axe, 3266,235;battle hammer, 3305,350;bone sword, 3338,75;carlin sword, 3283,473;club, 3270,5;crowbar, 3304,260;dagger, 3267,5;hand axe, 3268,8;longsword, 3285,160;mace, 3286,90;morning star, 3282,430;rapier, 3272,15;sabre, 3273,35;short sword, 3294,26;sickle, 3293,7;spike sword, 3271,8000;sword, 3264,85;throwing knife, 3298,25;two handed sword, 3265,950;war hammer, 3279,10000" />
+		<parameter key="shop_sellable" value="axe, 3274,7;battle axe, 3266,80;battle hammer, 3305,120;bone club, 3337,5;bone sword, 3338,20;carlin sword, 3283,118;club, 3270,1;crowbar, 3304,50;dagger, 3267,2;double axe, 3275,260;fire sword, 3280,1000;halberd, 3269,400;hand axe, 3268,4;hatchet, 3276,25;katana, 3300,35;longsword, 3285,51;mace, 3286,30;morning star, 3282,100;orcish axe, 3316,350;rapier, 3272,5;sabre, 3273,12;short sword, 3294,10;sickle, 3293,3;small axe, 3462,5;spike sword, 3271,240;studded club, 3336,10;swampling club, 17824,40;sword, 3264,25;throwing knife, 3298,2;two handed sword, 3265,450;war hammer, 3279,470" />
+	</parameters>
+</npc>

@@ -8070,7 +8070,7 @@ void Player::handleAccountManager(const std::string& text, std::ostringstream& m
 				managerTalkState[i] = false;
 			}
 
-			if (IOLoginData::createPlayer(managerData.accountId, managerData.string1, 1, managerData.sex)) {
+			if (IOLoginData::createPlayer(managerData.accountId, managerData.string1, 0, managerData.sex)) {
 				msg << "Your character has been created.";
 			} else {
 				msg << "Your character couldn't be created, please try again.";

@@ -1,0 +1,6 @@
+433	ladder	type=0	group=1	clientId=433	useable=false	ground=true
+1948	ladder	type=0	group=0	clientId=1948	useable=false	ground=false
+20474	ladder rung	type=0	group=0	clientId=20474	useable=false	ground=false
+435	sewer grate	type=0	group=0	clientId=435	useable=false	ground=false
+437	stairs	type=0	group=1	clientId=437	useable=false	ground=true
+20475	ladder rung	type=0	group=0	clientId=20475	useable=false	ground=false

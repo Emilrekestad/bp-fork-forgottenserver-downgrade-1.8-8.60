@@ -4164,19 +4164,27 @@
 	<item id="2431" name="drawers">
 		<attribute key="containersize" value="10" />
 		<attribute key="rotateto" value="2434" />
+		<attribute key="blocking" value="1" />
+		<attribute key="moveable" value="0" />
 	</item>
 	<item id="2432" name="drawers">
 		<attribute key="containersize" value="10" />
 		<attribute key="rotateto" value="2431" />
+		<attribute key="blocking" value="1" />
+		<attribute key="moveable" value="0" />
 	</item>
 	<item id="2433" name="drawers">
 		<attribute key="wrapableto" value="2789" />
 		<attribute key="containersize" value="10" />
 		<attribute key="rotateto" value="2432" />
+		<attribute key="blocking" value="1" />
+		<attribute key="moveable" value="0" />
 	</item>
 	<item id="2434" name="drawers">
 		<attribute key="containersize" value="10" />
 		<attribute key="rotateto" value="2433" />
+		<attribute key="blocking" value="1" />
+		<attribute key="moveable" value="0" />
 	</item>
 	<item fromid="2435" toid="2440" article="a" name="bookcase">
 		<attribute key="containersize" value="6" />
@@ -4272,6 +4280,8 @@
 		<attribute key="containersize" value="15" />
 		<attribute key="rotateto" value="2481" />
 		<attribute key="weight" value="12000" />
+		<attribute key="blocking" value="1" />
+		<attribute key="moveable" value="0" />
 	</item>
 	<item id="2473" article="a" name="box">
 		<attribute key="containersize" value="10" />
@@ -4296,16 +4306,22 @@
 		<attribute key="containersize" value="15" />
 		<attribute key="rotateto" value="2482" />
 		<attribute key="weight" value="12000" />
+		<attribute key="blocking" value="1" />
+		<attribute key="moveable" value="0" />
 	</item>
 	<item id="2481" article="a" name="chest">
 		<attribute key="containersize" value="15" />
 		<attribute key="rotateto" value="2480" />
 		<attribute key="weight" value="12000" />
+		<attribute key="blocking" value="1" />
+		<attribute key="moveable" value="0" />
 	</item>
 	<item id="2482" article="a" name="chest">
 		<attribute key="containersize" value="15" />
 		<attribute key="rotateto" value="2472" />
 		<attribute key="weight" value="12000" />
+		<attribute key="blocking" value="1" />
+		<attribute key="moveable" value="0" />
 	</item>
 	<item id="2483" article="a" name="large trunk">
 		<attribute key="wrapableto" value="2794" />

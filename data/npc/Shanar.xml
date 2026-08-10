@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Shanar" script="Shanar.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="159" head="0" body="94" legs="105" feet="76" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="axe, 3274,20;battle axe, 3266,235;battle hammer, 3305,350;bone sword, 3338,75;brass armor, 3359,450;brass helmet, 3354,120;brass legs, 3372,195;brass shield, 3411,65;carlin sword, 3283,473;chain armor, 3358,200;chain helmet, 3352,52;chain legs, 3558,80;club, 3270,5;leather helmet, 3355,12;leather armor, 3361,35;steel shield, 3409,240;wooden shield, 3412,15;dagger, 3267,5;rapier, 3272,15;sabre, 3273,35;longsword, 3285,160;machete, 3308,35;staff, 3289,40;spear, 3277,10;throwing knife, 3298,25" />
+		<parameter key="shop_sellable" value="axe, 3274,7;battle axe, 3266,80;battle hammer, 3305,120;steel helmet, 3351,190;chain helmet, 3352,17;iron helmet, 3353,145;brass helmet, 3354,30;leather helmet, 3355,4;devil helmet, 3356,450;viking helmet, 3367,66;warrior helmet, 3369,696;knight legs, 3371,375;brass legs, 3372,49;chain legs, 3558,20;leather legs, 3559,1;plate legs, 3557,115;plate armor, 3357,400;chain armor, 3358,70;brass armor, 3359,150;leather armor, 3361,12;knight armor, 3370,875;steel shield, 3409,80;plate shield, 3410,31;brass shield, 3411,16;wooden shield, 3412,5;battle shield, 3413,95;guardian shield, 3415,180;dragon shield, 3416,360;two handed sword, 3265,450;dagger, 3267,2;spike sword, 3271,225;rapier, 3272,5;sabre, 3273,12;fire sword, 3280,1000;longsword, 3285,51;short sword, 3294,10;mace, 3286,23;spear, 3277,3" />
+	</parameters>
+</npc>

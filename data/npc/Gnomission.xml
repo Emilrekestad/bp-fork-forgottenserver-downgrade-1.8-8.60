@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Gnomission" script="Gnomission.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="493" head="41" body="115" legs="100" feet="95" addons="0" />
+	<parameters>
+		<parameter key="message_greet" value="Hello |PLAYERNAME|. You are probably eager to enter the warzones." />
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="mushroom pie, 16103,150" />
+		<parameter key="shop_sellable" value="stuffed dragon,5791,6000;frozen starlight, 3249,20000;ceremonial ankh,6561,20000;arcane staff, 3341,42000;the avenger,6528,42000;arbalest,5803,42000;golden sickle, 3306,1000;golden amulet, 3013,2000;star amulet, 3014,500;modified crossbow, 8021,10000;dwarven axe, 3323,1500;sea serpent trophy, 9613,10000;souleater trophy, 11679,7500;marlin trophy, 902,5000;red tome, 2852,2000;purple tome, 2848,2000;runed sword,7417,45000;unholy book,6103,30000;crystal wand, 3068,10000;panda teddy,5080,30000;baby seal doll,7183,20000;bejeweled ship's telescope, 9616,20000;the ironworker,8853,50000;executioner,7453,55000;egg of the many, 9606,15000;claw of 'the noxious spawn', 9392,15000;blade of corruption, 11693,60000;bloody edge,7416,30000;demon helmet, 3387,40000;dwarven legs, 3398,40000;silkweaver bow, 8029,12000;ornamented shield, 3424,1500;blue legs, 645,15000" />
+		<parameter key="message_farewell" value="Good bye!" />
+	</parameters>
+</npc>

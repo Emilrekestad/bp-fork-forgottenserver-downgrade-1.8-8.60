@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Azil" script="Azil.lua" walkinterval="0" floorchange="0">
+	<health now="100" max="100" />
+	<look type="146" head="95" body="9" legs="12" feet="123" addons="0" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="brass armor, 3359,450;brass helmet, 3354,120;brass legs, 3372,195;brass shield, 3411,65;chain armor, 3358,200;chain helmet, 3352,52;chain legs, 3558,80;coat, 3562,8;doublet, 3379,16;dwarven shield, 3425,500;iron helmet, 3353,390;jacket, 3561,12;leather armor, 3361,35;leather boots, 3552,10;leather helmet, 3355,12;leather legs, 3559,10;viking helmet, 3367,265;wooden shield, 3412,15" />
+		<parameter key="shop_sellable" value="steel helmet, 3351,300;chain helmet, 3352,12;brass helmet, 3354,30;leather helmet, 3355,3;viking helmet, 3367,70;brass legs, 3372,49;chain legs, 3558,20;plate armor, 3357,240;chain armor, 3358,40;brass armor, 3359,112;leather armor, 3361,5;plate shield, 3410,45;brass shield, 3411,16;wooden shield, 3412,3;battle shield, 3413,60" />
+	</parameters>
+</npc>

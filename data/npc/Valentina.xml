@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Valentina" script="Valentina.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="157" head="116" body="116" legs="98" feet="45" addons="1" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="Crimson Rose, 21954,15;Flower Bouquet, 649,20;Heart Backpack, 10202,500;Present, 906,10;Sweetheart Ring, 21955,500;Truelove Teddy, 21953,1000;Valentines Cake,6393,30;Valentines Card,6538,5" />
+	</parameters>
+</npc>

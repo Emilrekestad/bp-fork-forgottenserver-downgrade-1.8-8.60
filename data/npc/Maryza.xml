@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Maryza" script="Maryza.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="160" head="41" body="51" legs="70" feet="95" />
+<voices>
+<voice text="Sit down, have a drink and enjoy the day!" interval2="100" margin="1" yell="no" />
+</voices>
+	<parameters>
+		<parameter key="message_greet" value="Welcome to the Jolly Axeman, |PLAYERNAME|. Have a good time and eat some {food}!" />
+		<parameter key="message_farewell" value="Yeah, bye." />
+		<parameter key="message_walkaway" value="Yeah, bye." />
+		<parameter key="message_sendtrade" value="Sure, have a look at my food. Remember, touching means buying it." />
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="meat, 3577,5;ham, 3582,8;cookie, 3598,2;bread, 3600,4;roll, 3601,2;brown bread, 3602,3;cheese, 3607,6" />
+	</parameters>
+</npc>

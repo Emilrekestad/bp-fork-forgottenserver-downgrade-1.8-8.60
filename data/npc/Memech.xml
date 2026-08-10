@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Memech" script="Memech.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="131" head="21" body="21" legs="21" feet="116" addons="0" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="chain helmet, 3352,52;leather helmet, 3355,12;chain legs, 3558,80;chain armor, 3358,200;brass armor, 3359,450;leather armor, 3361,35;steel shield, 3409,240;wooden shield, 3412,15;dagger, 3267,5;rapier, 3272,15;sabre, 3273,35;mace, 3286,90;battle hammer, 3305,350" />
+		<parameter key="shop_sellable" value="steel helmet, 3351,190;chain helmet, 3352,17;leather helmet, 3355,4;chain legs, 3558,25;plate armor, 3357,400;chain armor, 3358,70;brass armor, 3359,150;leather armor, 3361,12;steel shield, 3409,80;wooden shield, 3412,5;battle shield, 3413,95;two handed sword, 3265,450;dagger, 3267,2;rapier, 3272,5;sabre, 3273,12;short sword, 3294,10;morning star, 3282,90;mace, 3286,30;battle hammer, 3305,120;battle axe, 3266,80;hand axe, 3268,4;halberd, 3269,400;spear, 3277,3" />
+	</parameters>
+</npc>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Janz" script="Janz.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="143" head="58" body="119" legs="118" feet="120" addons="1" />
+<voices>
+<voice text="Moved into a new house? I got the perfect furniture for you." interval2="100" margin="1" yell="no" />
+</voices>
+<parameters>
+<parameter key="module_keywords" value="1" />
+		<parameter key="keywords" value="furniture;" />
+	<parameter key="keyword_reply1" value="I have {beds}, {chairs}, {containers}, {decoration}, {flowers}, {instruments}, {pillows}, {pottery}, {statues}, {tapestries} and {tables}. Which of those would you like to see?" />
+		<parameter key="message_greet" value="HAIL to the Warlord of the arena! |PLAYERNAME|, Hero of Svargrond!" />
+		<parameter key="message_farewell" value="Farewell, Warlord of the arena, |PLAYERNAME|, Hero of Svargrond!" />
+		<parameter key="message_walkaway" value="Farewell, Warlord of the arena, |PLAYERNAME|, Hero of Svargrond!" />
+		<parameter key="message_sendtrade" value="Have a look. Most furniture comes in handy kits. Just use them in your house to assemble the furniture. Do you want to see only a certain {type} of furniture?" />
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="amphora, 2893,4,0;armor rack kit,6114,90;barrel kit, 2793,12;big table kit, 2785,30;birdcage kit, 2796,50;blue bed kit, 834,80;blue pillow, 2394,25;blue tapestry, 2657,25;bookcase kit, 6372,70;box, 119,10;chest, 2472,10;chimney kit, 7864,200;coal basin kit, 2806,25;crate, 116,10;cuckoo clock, 2660,40;drawer kit, 2789,18;dresser kit, 2790,25;flower bowl, 2983,6;globe kit, 2797,50;goblin statue kit, 2804,50;god flowers, 2981,5;goldfish bowl,5928,50;green bed kit, 831,80;green cushioned chair kit, 2776,40;green pillow, 2396,25;green tapestry, 2645,25;harp kit, 2808,50;heart pillow, 2393,30;honey flower, 2984,5;indoor plant kit, 2811,8;knight statue kit, 2802,50;large amphora kit, 2805,50;locker kit, 2791,30;minotaur statue kit, 2803,50;orange tapestry, 2651,25;oven kit, 6371,80;pendulum clock kit, 2801,75;piano kit, 2807,200;picture, 2618,50;picture, 2618,50;picture, 2618,50;potted flower, 2985,5;purple tapestry, 2642,25;red bed kit, 833,80;red cushioned chair kit, 2775,40;red pillow, 2395,25;red tapestry, 2654,25;rocking chair kit, 2778,25;rocking horse kit, 2800,30;round blue pillow, 2398,25;round purple pillow, 2400,25;round red pillow, 2399,25;round table kit, 2783,25;round turquoise pillow, 2401,25;small blue pillow, 2389,20;small green pillow, 2387,20;small orange pillow, 2390,20;small purple pillow, 2386,20;small red pillow, 2388,20;small table kit, 2782,20;small turquoise pillow, 2391,20;small white pillow, 2392,20;sofa chair kit, 2779,55;square table kit, 2784,25;table lamp kit, 2798,35;telescope kit, 2799,70;treasure chest, 2478,1000;trophy stand, 872,50;trough kit, 2792,7;trunk kit, 2794,10;vase, 2876,3,0;venorean cabinet kit, 17974,90;venorean drawer kit, 17977,40;venorean wardrobe kit, 17975,50;wall mirror, 2603,40;wall mirror, 2603,40;wall mirror, 2603,40;water pipe, 2974,40;weapon rack kit,6115,90;white tapestry, 2665,25;wooden chair kit, 2777,15;yellow bed kit, 832,80;yellow pillow, 900,25;yellow tapestry, 2648,25" />
+	</parameters>
+</npc>
+

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Lee'Delle" script="Lee'Delle.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="140" head="78" body="76" legs="72" feet="96" addons="0" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="chain helmet, 3352,49;coat, 3562,7;doublet, 3379,14;jacket, 3561,9;leather armor, 3361,22;leather helmet, 3355,11;leather legs, 3559,9;studded helmet, 3376,58;studded shield, 3426,47;wooden shield, 3412,13;axe, 3274,18;dagger, 3267,4;hand axe, 3268,7;rapier, 3272,13;sabre, 3273,22;scythe, 3453,10;short sword, 3294,26;sickle, 3293,7;spear, 3277,9;rope, 3003,45;worm, 3492,1;fishing rod, 3483,140;football, 2990,111;waterball, 619,200;scroll, 347,5;bag, 235,4;backpack, 2854,9;shovel, 3457,9" />
+		<parameter key="shop_sellable" value="axe, 3274,7;bone club, 3337,5;brass helmet, 3354,22;brass shield, 3411,25;chain armor, 3358,40;chain helmet, 3352,12;copper shield, 3430,50;dagger, 3267,2;doublet, 3379,3;leather armor, 3361,5;leather boots, 3552,2;leather helmet, 3355,3;leather legs, 3559,2;legion helmet, 3374,22;plate shield, 3410,40;studded armor, 3378,10;studded helmet, 3376,20;studded legs, 3362,15;studded shield, 3426,16;viking helmet, 3367,25;hand axe, 3268,4;hatchet, 3276,25;katana, 3300,35;mace, 3286,30;machete, 3308,6;rapier, 3272,5;rope, 3003,8;sword, 3264,25;sabre, 3273,12;short sword, 3294,10;sickle, 3293,2;spear, 3277,3;scythe, 3453,3;sickle, 3293,2;shovel, 3457,2;wooden shield, 3412,3;fishing rod, 3483,30" />
+	</parameters>
+</npc>

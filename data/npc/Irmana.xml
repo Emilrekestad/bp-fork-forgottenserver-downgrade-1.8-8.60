@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Irmana" script="Irmana.lua" walkinterval="2000">
+	<health now="100" max="100" />
+	<look type="140" head="78" body="90" legs="13" feet="14" addons="3" />
+<voices>
+<voice text="Welcome to the house of fashion, Iron Sparrow!" interval2="100" margin="1" yell="no" />
+</voices>
+	<parameters>
+		<parameter key="message_greet" value="Welcome to the house of fashion, |PLAYERNAME|,also {recycle} Red Robe, Mystic Turban or Green Tunics or buy few things ask me for a {trade}!" />
+		<parameter key="message_farewell" value="Good bye, |PLAYERNAME|." />
+		<parameter key="message_walkaway" value="Good bye, |PLAYERNAME|." />
+		<parameter key="message_onsendtrade" value="I'm currently interested in these materials." />
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_sellable" value="Ape Fur,5883,120;Badger Fur, 903,15;Black Wool, 11448,300;Blue Piece of Cloth,5912,200;Brown Piece of Cloth,5913,100;Bunch of Troll Hair, 9689,30;Dirty Turban, 11456,120;Downy Feather, 11684,20;Earflap, 17819,40;Frost Giant Pelt, 9658,160;Geomancer's Robe, 11458,80;Ghostly Tissue, 9690,90;Green Dragon Leather,5877,100;Green Piece of Cloth,5910,200;Jewelled Belt, 11470,180;Lion's Mane, 9691,60;Lizard Leather,5876,150;Minotaur Leather,5878,80;Necromantic Robe, 11475,250;Noble Turban, 11486,430;Piece of Crocodile Leather, 10279,15;Purple Robe, 11473,110;Red Dragon Leather,5948,200;Red Piece of Cloth,5911,300;Rope Belt, 11492,66;Royal Tapestry, 9045,1000;Safety Pin, 11493,120;Shaggy Tail, 10407,25;Silky Fur, 10292,35;Simple Dress, 3568,50;Skunk Tail, 10274,50;Snake Skin, 9694,400;Spool of Yarn,5886,1000;Striped Fur, 10293,50;Tattered Piece of Robe, 9684,120;Thick Fur, 10307,150;Velvet Tapestry, 8921,800;Warwolf Fur, 10318,30;Werewolf Fur, 10317,380;White Piece of Cloth,5909,100;Winter Wolf Fur, 10295,20;Wool, 10319,15;Yellow Piece of Cloth,5914,150" />
+	</parameters>
+</npc>
+

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Turvy" script="Turvy.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="139" head="78" body="52" legs="100" feet="115" addons="0" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="axe, 3274,20;hand axe, 3268,8;battle hammer, 3305,350;mace, 3286,90;dagger, 3267,5;rapier, 3272,15;sabre, 3273,35;sword, 3264,85;spear, 3277,10;throwing knife, 3298,25;chain helmet, 3352,52;leather helmet, 3355,12;brass armor, 3359,450;chain armor, 3358,200;leather armor, 3361,35;chain legs, 3558,80;steel shield, 3409,240;wooden shield, 3412,15" />
+		<parameter key="shop_sellable" value="axe, 3274,7;battle axe, 3266,80;halberd, 3269,400;axe, 3274,20;hand axe, 3268,4;battle hammer, 3305,120;mace, 3286,30;morning star, 3282,90;dagger, 3267,2;rapier, 3272,5;sabre, 3273,12;short sword, 3294,10;sword, 3264,25;two handed sword, 3265,450;spear, 3277,3;chain helmet, 3352,17;leather helmet, 3355,4;steel helmet, 3351,190;brass armor, 3359,150;chain armor, 3358,70;leather armor, 3361,12;plate armor, 3357,400;chain legs, 3558,25;battle shield, 3413,95;steel shield, 3409,80;wooden shield, 3412,5" />
+	</parameters>
+</npc>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Kroox" script="Kroox.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="160" head="0" body="120" legs="82" feet="95" />
+<voices>
+<voice text="By the sons of fire! Best weapons in town!" interval2="100" margin="1" yell="no" />
+</voices>
+	<parameters>
+		<parameter key="message_greet" value="Welcome to Kroox Quality Armor, |PLAYERNAME|! Wanna take a look, ask me for a {trade}." />
+		<parameter key="message_farewell" value="Good bye. Come back soon." />
+		<parameter key="message_walkaway" value="Good bye. Come back soon." />
+		<parameter key="message_sendtrade" value="You look, you like, you buy!" />
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="steel helmet, 3351,580;chain helmet, 3352,52;iron helmet, 3353,390;brass helmet, 3354,120;brass legs, 3372,195;chain legs, 3558,80;plate armor, 3357,1200;chain armor, 3358,200;brass armor, 3359,450;steel shield, 3409,240;plate shield, 3410,125;dwarven shield, 3425,500" />
+		<parameter key="shop_sellable" value="steel helmet, 3351,300;chain helmet, 3352,12;iron helmet, 3353,140;brass helmet, 3354,30;devil helmet, 3356,450;viking helmet, 3367,70;warrior helmet, 3369,700;knight legs, 3371,380;brass legs, 3372,50;plate legs, 3557,115;chain legs, 3558,20;plate armor, 3357,240;chain armor, 3358,40;brass armor, 3359,110;plate shield, 3410,45;brass shield, 3411,16;wooden shield, 3412,3;battle shield, 3413,60;dwarven shield, 3425,100" />
+	</parameters>
+</npc>
+

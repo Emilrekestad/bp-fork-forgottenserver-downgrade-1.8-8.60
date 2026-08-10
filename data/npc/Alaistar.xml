@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Alaistar" script="Alaistar.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="133" head="19" body="76" legs="60" feet="1" addons="0" />
+<voices>
+<voice text="Potions, runes, wands and rods, all here in the great Malunga's house." interval2="90" margin="1" yell="no" />
+</voices>
+	<parameters>
+		<parameter key="keywords" value="magic;" />
+		<parameter key="keyword_reply1" value="I'm selling spirit, health and mana potions, runes, wands, rods and spellbooks. If you'd like to see my offers, ask me for a {trade}." />
+		<parameter key="message_greet" value="Hi there and welcome to my little {magic} shop." />
+		<parameter key="message_farewell" value="Yeah, bye." />
+		<parameter key="message_walkaway" value="However." />
+		<parameter key="message_sendtrade" value="Of course, just browse through my wares. Or do you want to look only at {potions}, {wands} or {runes}?" />
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="ultimate mp,26029,350;Supreme Health Potion, 23375,500;ultimate spirit potion, 23374,350;great health potion, 239,190;great mana potion, 238,120;great spirit potion, 7642,190;health potion, 266,45;mana potion, 268,50;strong health potion, 236,100;strong mana potion, 237,80;ultimate health potion, 7643,310" />
+
+		<parameter key="shop_sellable" value="Cowbell, 21204,210;empty potion flask, 283,5;empty potion flask, 283,5;empty potion flask, 283,5;Execowtioner Mask, 21201,240;Giant Pacifier, 21199,170;Glob of Glooth, 21182,125;Glooth Injection Tube, 21103,350;Metal Jaw, 21193,260;Metal Toe, 21198,430;Moohtant Horn, 21200,140;Necromantic Rust, 21196,390;Poisoned Fang, 21195,130;Slime Heart, 21194,160;Slimy Leaf Tentacle, 21197,320;vial, 2874,5" />
+	</parameters>
+</npc>

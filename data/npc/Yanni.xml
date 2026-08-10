@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Yanni" script="Yanni.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="131" head="22" body="22" legs="22" feet="57" addons="0" />
+<voices>
+<voice text="Armors, helmets, shields and legs. All sizes!" interval2="100" margin="1" yell="no" />
+</voices>
+	<parameters>
+		<parameter key="message_greet" value="Salutations, |PLAYERNAME|. Welcome to the Ironhouse, {warehouse} of Abran Ironeye." />
+		<parameter key="message_farewell" value="Thanks for doing business with us, traveller |PLAYERNAME|!" />
+		<parameter key="module_keywords" value="1" />
+		<parameter key="keywords" value="warehouse;job;" />
+		<parameter key="keyword_reply1" value="If you'd like to see my offers in armor, ask me for a {trade}." />
+		<parameter key="keyword_reply2" value="I work for Abran Ironeye in the armor department." />
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="Brass Armor, 3359,450;Brass Helmet, 3354,120;Brass Legs, 3372,195;Brass Shield, 3411,65;Chain Armor, 3358,200;Chain Helmet, 3352,52;Chain Legs, 3558,80;Coat, 3562,8;Doublet, 3379,16;Dwarven Shield, 3425,500;Iron Helmet, 3353,390;Jacket, 3561,12;Leather Armor, 3361,35;Leather Boots, 3552,10;Leather Helmet, 3355,12;Leather Legs, 3559,10;Plate Armor, 3357,1200;Plate Shield, 3410,125;Scale Armor, 3377,260;Soldier Helmet, 3375,110;Steel Helmet, 3351,580;Steel Shield, 3409,240;Studded Armor, 3378,90;Studded Helmet, 3376,63;Studded Legs, 3362,50;Studded Shield, 3426,50;Viking Helmet, 3367,265;Viking Shield, 3431,260;Wooden Shield, 3412,15" />
+		<parameter key="shop_sellable" value="Battle Shield, 3413,95;Brass Armor, 3359,150;Brass Helmet, 3354,30;Brass Legs, 3372,49;Brass Shield, 3411,25;Chain Armor, 3358,70;Chain Helmet, 3352,17;Chain Legs, 3558,25;Coat, 3562,1;Copper Shield, 3430,50;Doublet, 3379,3;Dwarven Shield, 3425,100;Iron Helmet, 3353,150;Jacket, 3561,1;Leather Armor, 3361,12;Leather Boots, 3552,2;Leather Helmet, 3355,4;Leather Legs, 3559,9;Legion Helmet, 3374,22;Plate Armor, 3357,400;Plate Legs, 3557,115;Plate Shield, 3410,45;Scale Armor, 3377,75;Small Axe, 3462,5;Soldier Helmet, 3375,16;Steel Helmet, 3351,293;Steel Shield, 3409,80;Studded Armor, 3378,25;Studded Helmet, 3376,20;Studded Legs, 3362,15;Studded Shield, 3426,16;Viking Helmet, 3367,66;Viking Shield, 3431,85;Wooden Shield, 3412,5" />
+	</parameters>
+</npc>

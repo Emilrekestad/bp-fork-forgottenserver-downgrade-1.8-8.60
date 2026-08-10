@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Alesar" script="Alesar.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="80" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="ancient shield, 3432, 5000;dark armor, 3383, 1500;dark helmet, 3384, 1000;ice rapier, 3284, 5000;serpent sword, 3297, 6000" />
+		<parameter key="shop_sellable" value="ancient shield, 3432, 900;dark armor, 3383, 400;dark helmet, 3384, 250;serpent sword, 3297, 900;black shield, 3429, 800;bonebreaker, 7428, 10000;dragon hammer, 3322, 2000;dreaded cleaver, 7419, 15000;earth knight axe, 785, 2000;energy knight axe, 802, 2000;fiery knight axe, 666, 2000;giant sword, 3281, 17000;haunted blade, 7407, 8000;icy knight axe, 685, 2000;knight armor, 3370, 5000;knight axe, 3318, 2000;knight legs, 3371, 5000;mystic turban, 3574, 150;onyx flail, 7421, 22000;ornamented axe, 7411, 20000;poison dagger, 3299, 50;skull staff, 3324, 6000;strange helmet, 3373, 500;titan axe, 7413, 4000;tower shield, 3428, 8000;vampire shield, 3434, 15000;warrior helmet, 3369, 5000" />
+	</parameters>
+</npc>

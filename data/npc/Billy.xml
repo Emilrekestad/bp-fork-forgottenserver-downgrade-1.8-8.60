@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Billy" script="Billy.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="153" head="78" body="63" legs="58" feet="115" addons="1" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="bread, 3600,3;cheese, 3607,5;ham, 3582,8;meat, 3577,5" />
+		<parameter key="shop_sellable" value="bread, 3600,1;cheese, 3607,2;ham, 3582,4;meat, 3577,2;carrot, 3595,1;cherry, 3590,1;egg, 3606,1;salmon, 3579,2;dead rat, 3994,2" />
+	</parameters>
+</npc>

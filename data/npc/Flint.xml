@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Flint" script="Flint.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="134" head="95" body="57" legs="76" feet="39" addons="0" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="&#xA;&#x9;&#x9;&#x9;brown,2789,6" />
+		<parameter key="shop_sellable" value="Alloy Legs, 21168,11000;axe, 3274,7;axe, 3274,10000;Battle Axe, 3266,80;Battle Hammer, 3305,120;battle shield, 3413,95;Bone Sword, 3338,20;Brass Armor, 3359,150;Brass Helmet, 3354,30;Brass Legs, 3372,49;Cowtana, 21177,2500;Dwarven Shield, 3425,100;Execowtioner Axe, 21176,12000;Fire Sword, 3280,1000;Gearwheel Chain, 21170,5000;Glooth Amulet, 21183,2000;Glooth Axe, 21180,1500;Glooth Blade, 21179,1500;Glooth cap,23535,7000;Glooth Club, 21178,1500;Glooth Whip, 21172,2500;Halberd, 3269,400;Heat Core, 21167,10000;Metal Bat, 21171,9000;Metal Spats, 21169,2000;Mino Lance, 21174,7000;Mino Shield, 21175,3000;Moohtah Plate,23537,6000;Moohtant Cudgel, 21173,14000;Plate Armor, 3357,400;Rubber Cap, 21165,11000;War Hammer, 3279,470;Steel Helmet, 3351,293;shovel, 3457,8;watch, 2906,6;wooden hammer, 3459,15" />
+	</parameters>
+</npc>

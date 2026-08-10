@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Aldo" script="Aldo.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="128" head="40" body="37" legs="116" feet="95" addons="0" />
+	<parameters>
+		<parameter key="message_greet" value="Just great, another ... 'customer'. Hello, |PLAYERNAME|. If you want to trade, let's get it over with." />
+		<parameter key="message_farewell" value="That's music in my ears." />
+		<parameter key="message_walkaway" value="Yeah, get lost." />
+		<parameter key="message_onsendtrade" value="Yeah, buy something." />
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="Brass Helmet, 3354,120;Brass Legs, 3372,195;Chain Helmet, 3352,52;Chain Legs, 3558,80;Iron Helmet, 3353,390;Leather Boots, 3552,10;Leather Helmet, 3355,12;Leather Legs, 3559,10;Sandals, 3551,2;Soldier Helmet, 3375,110;Steel Helmet, 3351,580;Studded Helmet, 3376,63;Studded Legs, 3362,50;Viking Helmet, 3367,265" />
+		<parameter key="shop_sellable" value="Brass Helmet, 3354,30;Brass Legs, 3372,49;Chain Helmet, 3352,17;Chain Legs, 3558,25;Iron Helmet, 3353,150;Leather Boots, 3552,2;Leather Helmet, 3355,4;Leather Legs, 3559,9;Legion Helmet, 3374,22;Plate Legs, 3557,115;Small Axe, 3462,5;Soldier Helmet, 3375,16;Steel Helmet, 3351,293;Studded Helmet, 3376,20;Studded Legs, 3362,15;Viking Helmet, 3367,66" />
+	</parameters>
+</npc>

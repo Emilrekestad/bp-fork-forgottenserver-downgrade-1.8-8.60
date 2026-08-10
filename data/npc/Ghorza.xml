@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Ghorza" script="Ghorza.lua" walkinterval="2000" floorchange="0">
+  <health now="100" max="100" />
+  <look type="859" head="0" body="0" legs="0" feet="0" addons="0" />
+  <voices>
+    <voice text="Spirits are restless." interval2="120" margin="1" yell="no" />
+    <voice text="Great Hunger is upset." interval2="0" margin="1" yell="no" />
+    <voice text="All water drying up and Vuzrog does nothing!" interval2="120" margin="1" yell="no" />
+  </voices>
+  
+  <parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="animate dead rune, 3203,375;avalanche rune, 3161,45;blank rune, 3147,10;Chameleon Rune, 3178,210;Convince Creature Rune, 3177,80;Cure Poison Rune, 3153,65;Destroy Field Rune, 3148,15;desintegrate rune,2310,26;energy bomb rune, 3149,162;Energy Field Rune, 3164,38;Energy Wall Rune, 3166,85;Explosion Rune, 3200,31;Fire Bomb Rune, 3192,117;Fire Field Rune, 3188,28;Fire Wall Rune, 3190,61;fireball rune, 3189,30;Great Fireball Rune, 3191,45;Great Health Potion, 239,190;Great Mana Potion, 238,120;Great Spirit Potion, 7642,120;Health Potion, 266,45;Heavy Magic Missile Rune, 3198,12;holy missile rune, 3182,16;icicle rune, 3158,30;Intense Healing Rune, 3152,95;Light Magic Missile Rune, 3174,4;magic wall rune, 3180,116;Mana Potion, 268,50;paralyze rune, 3165,700;poison bomb rune, 3173,85;Poison Field Rune, 3172,21;Poison Wall Rune, 3176,52;soulfire rune, 3195,46;Stalagmite Rune, 3179,12;stone shower rune, 3175,37;Strong Health Potion, 236,100;Strong Mana Potion, 237,80;Sudden Death Rune, 3155,108;thunderstorm rune, 3202,37;Ultimate Healing Rune, 3160,175;Ultimate Health Potion, 7643,310;wild growth rune, 3156,160" />
+		<parameter key="shop_sellable" value="empty potion flask, 283,5;empty potion flask, 283,5;empty potion flask, 283,5;vial, 2874,5" />
+	</parameters>
+</npc>

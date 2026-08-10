@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Mordecai" script="Mordecai.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="130" head="38" body="132" legs="117" feet="3" addons="1" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+        <parameter key="message_greet" value="Hi there |PLAYERNAME|, and welcome to the {magic} store." />
+        <parameter key="message_farewell" value="See you, |PLAYERNAME|." />
+		<parameter key="message_sendtrade" value="Of course, just browse through my wares. Or do you want to look only at {runes} or {wands}?" />
+		<parameter key="message_walkaway" value="See you, |PLAYERNAME|." />
+	 <parameter key="shop_buyable" value="animate dead rune, 3203,375;avalanche rune, 3161,45;chameleon rune, 3178,210;convince creature rune, 3177,80;cure poison rune, 3153,65;destroy field rune, 3148,15;desintegrate rune,2310,26;energy bomb rune, 3149,162;energy field rune, 3164,38;energy wall rune, 3166,85;explosion rune, 3200,31;fire bomb rune, 3192,117;fire field rune, 3188,28;fire wall rune, 3190,61;great fireball rune, 3191,45;Hailstorm Rod, 3067,15000;holy missile rune, 3182,16;icicle rune, 3158,30;magic wall rune, 3180,116;moonlight rod, 3070,1000;necrotic rod, 3069,5000;northwind rod, 8083,7500;paralyze rune, 3165,700;poison field rune, 3172,21;poison wall rune, 3176,52;snakebite rod, 3066,500;soulfire rune, 3195,46;springsprout rod, 8084,18000;Stone Shower Rune, 3175,37;sudden death rune, 3155,108;terra rod, 3065,10000;Thunderstorm Rune, 3202,37;Ultimate Healing Rune, 3160,175;Underworld Rod, 8082,22000;wand of cosmic energy, 3073,10000;wand of decay, 3072,5000;wand of draconia, 8093,7500;wand of dragonbreath, 3075,1000;wand of inferno, 3071,15000;Wand of Starstorm, 8092,18000;Wand of Voodoo, 8094,22000;wand of vortex, 3074,500;Wild Growth Rune, 3156,160" />
+	<parameter key="shop_sellable" value="Spellwand, 651,299" />
+  </parameters>
+</npc>

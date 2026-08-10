@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Gorn" script="Gorn.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="129" head="58" body="68" legs="101" feet="95" addons="0" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="Blessed Wooden Stake ,5942,30000;shovel, 3457,50;fishing rod, 3483,150;rope, 3003,50;machete, 3308,40;orange backpack, 9602,20;orange bag, 9603,5;pick, 3456,50;scythe, 3453,50;torch, 2920,2;bottle, 2875,3,1;book, 401,15;book, 401,15;document, 637,12;book, 401,15;parchment, 173,8;scroll, 347,5;valentines card,6538,30;plate, 2905,6;present box,1990,10;watch, 2906,20;worm, 3492,1;crowbar, 3304,1000" />
+	</parameters>
+</npc>

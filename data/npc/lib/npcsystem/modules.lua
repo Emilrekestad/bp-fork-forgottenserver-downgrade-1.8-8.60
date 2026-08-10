@@ -227,6 +227,34 @@ if Modules == nil then
         return true
     end
 
+    -- Set custom greeting messages (legacy NpcSystem compatibility)
+    function FocusModule:addGreetMessage(message)
+        if not self.greetWords then
+            self.greetWords = {}
+        end
+        if type(message) == 'string' then
+            table.insert(self.greetWords, message)
+        else
+            for i = 1, #message do
+                table.insert(self.greetWords, message[i])
+            end
+        end
+    end
+
+    -- Set custom farewell messages (legacy NpcSystem compatibility)
+    function FocusModule:addFarewellMessage(message)
+        if not self.farewellWords then
+            self.farewellWords = {}
+        end
+        if type(message) == 'string' then
+            table.insert(self.farewellWords, message)
+        else
+            for i = 1, #message do
+                table.insert(self.farewellWords, message[i])
+            end
+        end
+    end
+
     -- Greeting callback function.
     function FocusModule.onGreet(cid, message, keywords, parameters)
         return parameters.module.npcHandler:onGreet(cid)
@@ -294,12 +322,12 @@ if Modules == nil then
                 if reply then
                     self:addKeyword(keywords, reply)
                 else
-                    print("[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                    print("[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                           "Parameter '" .. "keyword_reply" .. n ..
                               "' missing. Skipping...")
                 end
             else
-                print("[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                print("[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                       "No keywords found for keyword set #" .. n ..
                           ". Skipping...")
             end
@@ -388,7 +416,7 @@ if Modules == nil then
                 elseif i == 6 then
                     premium = temp == "true"
                 else
-                    print("[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                    print("[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                           "Unknown parameter found in travel destination parameter.",
                           temp, destination)
                 end
@@ -398,7 +426,7 @@ if Modules == nil then
             if name and x and y and z and cost then
                 self:addDestination(name, {x = x, y = y, z = z}, cost, premium)
             else
-                print("[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                print("[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                       "Parameter(s) missing for travel destination:", name, x,
                       y, z, cost, premium)
             end
@@ -632,7 +660,7 @@ if Modules == nil then
                 elseif i == 5 then
                     realName = temp
                 else
-                    print("[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                    print("[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                           "Unknown parameter found in buyable items parameter.",
                           temp, item)
                 end
@@ -642,13 +670,13 @@ if Modules == nil then
             local it = ItemType(itemid)
             if it:getId() == 0 then
                 -- invalid item
-                print("[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                print("[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                       "Item id missing (or invalid) for parameter item:", item)
             else
                 if alreadyParsedIds[itemid] then
                     if table.contains(alreadyParsedIds[itemid], subType or -1) then
                         print(
-                            "[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                            "[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                             "Found duplicated item:", item)
                     else
                         table.insert(alreadyParsedIds[itemid], subType or -1)
@@ -666,20 +694,20 @@ if Modules == nil then
                 if itemid and cost then
                     if subType == nil and it:isFluidContainer() then
                         print(
-                            "[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                            "[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                             "SubType missing for parameter item:", item)
                     else
                         self:addBuyableItem(nil, itemid, cost, subType, realName)
                     end
                 else
-                    print("[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                    print("[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                           "Parameter(s) missing for item:", itemid, cost)
                 end
             else
                 if name and itemid and cost then
                     if subType == nil and it:isFluidContainer() then
                         print(
-                            "[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                            "[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                             "SubType missing for parameter item:", item)
                     else
                         local names = {}
@@ -688,7 +716,7 @@ if Modules == nil then
                                             realName)
                     end
                 else
-                    print("[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                    print("[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                           "Parameter(s) missing for item:", name, itemid, cost)
                 end
             end
@@ -719,7 +747,7 @@ if Modules == nil then
                 elseif i == 5 then
                     subType = tonumber(temp)
                 else
-                    print("[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                    print("[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                           "Unknown parameter found in sellable items parameter.",
                           temp, item)
                 end
@@ -729,13 +757,13 @@ if Modules == nil then
             local it = ItemType(itemid)
             if it:getId() == 0 then
                 -- invalid item
-                print("[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                print("[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                       "Item id missing (or invalid) for parameter item:", item)
             else
                 if alreadyParsedIds[itemid] then
                     if table.contains(alreadyParsedIds[itemid], subType or -1) then
                         print(
-                            "[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                            "[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                             "Found duplicated item:", item)
                     else
                         table.insert(alreadyParsedIds[itemid], subType or -1)
@@ -749,7 +777,7 @@ if Modules == nil then
                 if itemid and cost then
                     self:addSellableItem(nil, itemid, cost, realName, subType)
                 else
-                    print("[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                    print("[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                           "Parameter(s) missing for item:", itemid, cost)
                 end
             else
@@ -758,7 +786,7 @@ if Modules == nil then
                     names[#names + 1] = name
                     self:addSellableItem(names, itemid, cost, realName, subType)
                 else
-                    print("[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                    print("[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                           "Parameter(s) missing for item:", name, itemid, cost)
                 end
             end
@@ -791,7 +819,7 @@ if Modules == nil then
                 elseif i == 6 then
                     realName = temp
                 else
-                    print("[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                    print("[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                           "Unknown parameter found in buyable items parameter.",
                           temp, item)
                 end
@@ -800,7 +828,7 @@ if Modules == nil then
 
             if name and container and itemid and cost then
                 if subType == nil and ItemType(itemid):isFluidContainer() then
-                    print("[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                    print("[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                           "SubType missing for parameter item:", item)
                 else
                     local names = {}
@@ -809,7 +837,7 @@ if Modules == nil then
                                                  subType, realName)
                 end
             else
-                print("[Warning : " .. Npc():getName() .. "] NpcSystem:",
+                print("[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                       "Parameter(s) missing for item:", name, container, itemid,
                       cost)
             end
@@ -897,7 +925,7 @@ if Modules == nil then
                         }
                 else
                     if cost < shopItem.sell then
-                        print("[Warning : " .. Npc():getName() ..
+                        print("[Warning : " .. tostring(Npc():getName()) ..
                                   "] NpcSystem: Buy price lower than sell price: (" ..
                                   shopItem.name .. ")")
                     end
@@ -1014,7 +1042,7 @@ if Modules == nil then
                         }
                 else
                     if shopItem.buy > -1 and cost > shopItem.buy then
-                        print("[Warning : " .. Npc():getName() ..
+                        print("[Warning : " .. tostring(Npc():getName()) ..
                                   "] NpcSystem: Sell price higher than buy price: (" ..
                                   shopItem.name .. ")")
                     end

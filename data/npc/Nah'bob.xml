@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Nah'Bob" script="Nah'Bob.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="80" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="bonelord shield, 3418, 7000;noble armor, 3380, 8000;obsidian lance, 3313, 3000;spike sword, 3271, 8000;war hammer, 3279, 10000" />
+		<parameter key="shop_sellable" value="angelic axe, 7436, 5000;blue robe, 3567, 10000;bonelord shield, 3418, 1200;boots of haste, 3079, 30000;broadsword, 3301, 500;butcher's axe, 7412, 18000;crown armor, 3381, 12000;crown helmet, 3385, 2500;crown legs, 3382, 12000;crown shield, 3419, 8000;crusader helmet, 3391, 6000;dragon lance, 3302, 9000;dragon shield, 3416, 4000;earth spike sword, 779, 1000;earth war hammer, 793, 1200;energy spike sword, 794, 1000;energy war hammer, 810, 1200;fiery spike sword, 660, 1000;fiery war hammer, 674, 1200;fire axe, 3320, 8000;fire sword, 3280, 4000;glorious axe, 7454, 3000;guardian shield, 3415, 2000;ice rapier, 3284, 1000;icy spike sword, 679, 1000;icy war hammer, 693, 1200;noble armor, 3380, 900;obsidian lance, 3313, 500;phoenix shield, 3439, 16000;queen's sceptre, 7410, 20000;royal helmet, 3392, 30000;shadow sceptre, 7451, 10000;spike sword, 3271, 1000;thaian sword, 7391, 16000;war hammer, 3279, 1200" />
+	</parameters>
+</npc>

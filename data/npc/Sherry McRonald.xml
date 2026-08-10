@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Sherry McRonald" script="Sherry McRonald.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="136" head="78" body="94" legs="19" feet="97" addons="0" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="cheese, 3607,5;cherry, 3590,1;melon, 3593,8;pumpkin, 3594,10" />
+		<parameter key="shop_sellable" value="bread, 3600,2" />
+	</parameters>
+</npc>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Shiantis" script="Shiantis.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="136" head="0" body="36" legs="13" feet="76" addons="0" />
+<parameters>
+		<parameter key="message_greet" value="Welcome |PLAYERNAME|. What is your need today? Ask me for a {trade} to check out my offers." />
+		<parameter key="message_farewell" value="Good bye, |PLAYERNAME|." />
+		<parameter key="module_keywords" value="1" />
+		<parameter key="keywords" value="job;" />
+		<parameter key="keyword_reply1" value="I am selling several kinds of equipment and decoration. What is your need?" />
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="book, 401,15;book, 401,15;book, 401,15;candelabrum, 2911,8;candlestick, 2917,2;document, 637,12;coal basin kit, 2806,25;parchment, 173,8;present, 906,10;red backpack, 2867,20;red bag, 2859,5;scroll, 347,5;torch, 2920,2;watch,6091,20;wall mirror, 2603,40;wall mirror, 2603,40;wall mirror, 2603,40;picture, 2618,50;picture, 2618,50;picture, 2618,50;cuckoo clock, 2660,40;birdcage kit, 2796,50;globe kit, 2797,50;table lamp kit, 2798,35;telescope kit, 2799,70;rocking horse kit, 2800,30;pendulum clock kit, 2801,75;water pipe, 2974,40;goldfish bowl,5928,50;oven kit, 6371,80;chimney kit, 7864,200;vial of oil,2006,20,11" />
+		<parameter key="shop_sellable" value="vial, 2874,5" />
+	</parameters>
+</npc>
+

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Richard" script="Richard.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="472" head="97" body="38" legs="41" feet="0" addons="0" />
+	
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="bp,1988,10;arrow, 3447,4;bolt, 3446,3;bow, 3350,1;crossbow, 3349,5;health,2679,1;rune,2328,1;drill bolt, 16142,150;earth arrow, 774,8;energy bomb rune, 3149,5000;poison, 25740,50;fireball rune, 3189,2;flaming arrow, 763,5;flaming arrow, 763,12;flaming arrow, 763,10;flaming arrow, 763,1;flaming arrow, 763,2" />
+		
+		<parameter key="shop_sellable" value="&#xA;&#x9;&#x9;&#xA;&#x9;&#x9;    flaskpequeno,2696,2;&#xA;&#x9;&#x9;&#x9;&#xA;&#x9;&#x9;&#x9;flaskpequeno,2580,30;&#xA;&#x9;&#x9;&#x9;flaskpequeno,2666,2;&#xA;&#x9;&#x9;&#x9;flaskpequeno,2554,2;&#xA;&#x9;&#x9;&#x9;flaskpequeno,2120,8&#x9;" />
+		<parameter key="message_farewell" value="May enlightenment be your path, |PLAYERNAME|." />
+		<parameter key="message_walkaway" value="May enlightenment be your path, |PLAYERNAME|." />
+		<parameter key="message_sendtrade" value="Of course, just browse through my offers." />
+		<parameter key="message_greet" value="Be mourned pilgrim in flesh. I'm selling general goods." />
+	</parameters>
+</npc>

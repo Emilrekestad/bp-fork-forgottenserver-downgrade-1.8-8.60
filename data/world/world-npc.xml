@@ -1,0 +1,2447 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<npcs>
+  <npc centerx="32658" centery="31916" centerz="0" radius="3">
+    <npc name="UzonE" x="1" y="-3" z="0" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32588" centery="31941" centerz="0" radius="1">
+    <npc name="Gewen" x="0" y="1" z="0" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32995" centery="31470" centerz="1" radius="1">
+    <npc name="Ulala" x="0" y="-1" z="1" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32983" centery="31539" centerz="1" radius="1">
+    <npc name="Melian" x="0" y="0" z="1" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33232" centery="31754" centerz="1" radius="1">
+    <npc name="Chief Grarkharok" x="-1" y="0" z="1" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32535" centery="31772" centerz="1" radius="1">
+    <npc name="Thanita" x="0" y="1" z="1" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32587" centery="31786" centerz="1" radius="1">
+    <npc name="Caramellia" x="-1" y="0" z="1" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33268" centery="31835" centerz="1" radius="2">
+    <npc name="Spectulus" x="0" y="0" z="1" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33213" centery="32454" centerz="1" radius="2">
+    <npc name="Kasmir" x="0" y="-1" z="1" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33102" centery="32520" centerz="1" radius="1">
+    <npc name="Gabel" x="-1" y="0" z="1" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33044" centery="32621" centerz="1" radius="2">
+    <npc name="Malor" x="0" y="1" z="1" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33077" centery="31022" centerz="2" radius="1">
+    <npc name="ChrakNPC" x="1" y="0" z="2" spawntime="1200" direction="2" />
+  </npc>
+  <npc centerx="32795" centery="31557" centerz="2" radius="2">
+    <npc name="An Old Dragonlord" x="1" y="1" z="2" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32700" centery="31720" centerz="2" radius="3">
+    <npc name="Edala" x="-3" y="-2" z="2" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33268" centery="31835" centerz="2" radius="2">
+    <npc name="Sinclair" x="0" y="0" z="2" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32478" centery="31903" centerz="2" radius="3">
+    <npc name="Riddler" x="1" y="-2" z="2" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33104" centery="32520" centerz="2" radius="1">
+    <npc name="Nah'bob" x="-1" y="0" z="2" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33045" centery="32621" centerz="2" radius="1">
+    <npc name="Yaman" x="0" y="-1" z="2" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="31982" centery="32826" centerz="2" radius="3">
+    <npc name="Klaus" x="-1" y="0" z="2" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32391" centery="32828" centerz="2" radius="5">
+    <npc name="Tristan" x="-1" y="1" z="2" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32789" centery="31237" centerz="3" radius="2">
+    <npc name="Vincent" x="1" y="0" z="3" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32993" centery="31471" centerz="3" radius="1">
+    <npc name="Lazaran" x="-1" y="0" z="3" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32700" centery="31671" centerz="3" radius="3">
+    <npc name="A Sweaty Cyclops" x="-1" y="3" z="3" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33190" centery="31783" centerz="3" radius="3">
+    <npc name="Pino" x="3" y="-1" z="3" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33256" centery="31837" centerz="3" radius="2">
+    <npc name="Alexander" x="0" y="2" z="3" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33281" centery="31845" centerz="3" radius="2">
+    <npc name="Arkulius" x="-1" y="0" z="3" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33652" centery="31883" centerz="3" radius="3">
+    <npc name="Sholley" x="0" y="0" z="3" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32588" centery="31923" centerz="3" radius="3">
+    <npc name="Tulf" x="-1" y="3" z="3" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32623" centery="31923" centerz="3" radius="3">
+    <npc name="Emperor Kruzak" x="3" y="1" z="3" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32630" centery="31923" centerz="3" radius="3">
+    <npc name="Humnog, The Guard" x="-3" y="-2" z="3" spawntime="60" direction="2" />
+    <npc name="Hemor, The Guard" x="-3" y="2" z="3" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33100" centery="32522" centerz="3" radius="2">
+    <npc name="Djema" x="-1" y="0" z="3" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32395" centery="32821" centerz="3" radius="2">
+    <npc name="Admiral Wyrmslicer" x="1" y="0" z="3" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="31976" centery="32856" centerz="3" radius="1">
+    <npc name="Vulturenose" x="1" y="0" z="3" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32252" centery="31097" centerz="4" radius="3">
+    <npc name="Iyad" x="-1" y="0" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32535" centery="31836" centerz="4" radius="1">
+    <npc name="Uzon" x="1" y="0" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33256" centery="31837" centerz="4" radius="1">
+    <npc name="Thomas" x="0" y="1" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33283" centery="31845" centerz="4" radius="1">
+    <npc name="Lailene" x="-1" y="0" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33267" centery="31848" centerz="4" radius="2">
+    <npc name="Zoltan" x="-1" y="-1" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32056" centery="31881" centerz="4" radius="3">
+    <npc name="Garamond" x="3" y="1" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32070" centery="31881" centerz="4" radius="3">
+    <npc name="Ser Tybald" x="1" y="1" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33632" centery="31881" centerz="4" radius="1">
+    <npc name="Barnabas Dee" x="0" y="0" z="4" spawntime="1200" direction="2" />
+  </npc>
+  <npc centerx="33618" centery="31884" centerz="4" radius="1">
+    <npc name="Alaistar" x="0" y="0" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33652" centery="31884" centerz="4" radius="3">
+    <npc name="Jondrin" x="0" y="0" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33625" centery="31894" centerz="4" radius="1">
+    <npc name="Edmund" x="0" y="0" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32070" centery="31895" centerz="4" radius="3">
+    <npc name="Mr Morris" x="1" y="2" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33640" centery="31898" centerz="4" radius="1">
+    <npc name="Fayla" x="0" y="0" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32056" centery="31902" centerz="4" radius="3">
+    <npc name="Plunderpurse" x="-1" y="-2" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33609" centery="31973" centerz="4" radius="1">
+    <npc name="Zeronex" x="0" y="0" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32952" centery="32042" centerz="4" radius="3">
+    <npc name="Uncle" x="0" y="-3" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32101" centery="32129" centerz="4" radius="3">
+    <npc name="Blind Orc" x="1" y="0" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32140" centery="32168" centerz="4" radius="3">
+    <npc name="Hyacinth" x="-3" y="3" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33028" centery="32416" centerz="4" radius="1">
+    <npc name="Samir" x="-1" y="1" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33108" centery="32525" centerz="4" radius="1">
+    <npc name="Haroun" x="1" y="0" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32310" centery="32621" centerz="4" radius="2">
+    <npc name="Ocelus" x="1" y="1" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33045" centery="32622" centerz="4" radius="3">
+    <npc name="Baa'leal" x="-1" y="1" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33155" centery="32812" centerz="4" radius="3">
+    <npc name="Dario" x="2" y="-2" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32413" centery="32830" centerz="4" radius="2">
+    <npc name="Isolde" x="-1" y="0" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33150" centery="32842" centerz="4" radius="1">
+    <npc name="Arkhothep" x="-1" y="0" z="4" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32912" centery="31018" centerz="5" radius="2">
+    <npc name="Tamoril" x="0" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32212" centery="31057" centerz="5" radius="2">
+    <npc name="Romir" x="-1" y="1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32120" centery="31093" centerz="5" radius="2">
+    <npc name="A Starving Dog" x="2" y="-2" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33080" centery="31215" centerz="5" radius="1">
+    <npc name="Izsh" x="0" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32789" centery="31236" centerz="5" radius="1">
+    <npc name="Chuckles" x="1" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32817" centery="31279" centerz="5" radius="2">
+    <npc name="Karith" x="1" y="-1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32023" centery="31443" centerz="5" radius="2">
+    <npc name="Freezhild" x="1" y="-1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32714" centery="31601" centerz="5" radius="3">
+    <npc name="Llathriel" x="-3" y="-2" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32316" centery="31752" centerz="5" radius="1">
+    <npc name="Bunny Bonecrusher" x="1" y="-1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33274" centery="31755" centerz="5" radius="3">
+    <npc name="Sister Of Jack" x="3" y="1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32203" centery="31787" centerz="5" radius="1">
+    <npc name="An Apparition" x="-1" y="1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32191" centery="31810" centerz="5" radius="2">
+    <npc name="A Ghostly Woman Ghostland" x="0" y="1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33253" centery="31840" centerz="5" radius="1">
+    <npc name="Luna" x="1" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33268" centery="31848" centerz="5" radius="2">
+    <npc name="Gundralph" x="-1" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33281" centery="31848" centerz="5" radius="2">
+    <npc name="Fiona" x="0" y="-2" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33662" centery="31878" centerz="5" radius="1">
+    <npc name="Marvin" x="0" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32056" centery="31881" centerz="5" radius="3">
+    <npc name="Richard" x="0" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33634" centery="31882" centerz="5" radius="1">
+    <npc name="Silas" x="0" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33674" centery="31883" centerz="5" radius="1">
+    <npc name="Ezebeth" x="0" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33618" centery="31884" centerz="5" radius="1">
+    <npc name="Mordecai" x="0" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33650" centery="31884" centerz="5" radius="1">
+    <npc name="Barazbaz" x="0" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33611" centery="31886" centerz="5" radius="1">
+    <npc name="Emily" x="0" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33626" centery="31894" centerz="5" radius="1">
+    <npc name="Virgil" x="0" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33613" centery="31895" centerz="5" radius="1">
+    <npc name="Christine" x="0" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33640" centery="31897" centerz="5" radius="1">
+    <npc name="Nicholas" x="0" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32056" centery="31902" centerz="5" radius="3">
+    <npc name="Hamish" x="1" y="-2" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32070" centery="31902" centerz="5" radius="3">
+    <npc name="Inigo" x="0" y="-2" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32626" centery="31917" centerz="5" radius="1">
+    <npc name="Etzel" x="0" y="-1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32631" centery="31917" centerz="5" radius="2">
+    <npc name="Sigurd" x="-1" y="2" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32980" centery="32035" centerz="5" radius="3">
+    <npc name="Talesia" x="-1" y="1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33015" centery="32049" centerz="5" radius="3">
+    <npc name="Dagomir" x="3" y="-2" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32924" centery="32070" centerz="5" radius="3">
+    <npc name="Boozer" x="-3" y="-2" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32973" centery="32077" centerz="5" radius="3">
+    <npc name="Vladruc" x="3" y="2" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32882" centery="32084" centerz="5" radius="3">
+    <npc name="Leeland" x="0" y="-2" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32952" centery="32105" centerz="5" radius="3">
+    <npc name="Hugo" x="-2" y="-3" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32945" centery="32112" centerz="5" radius="3">
+    <npc name="Kalvin" x="-2" y="-3" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32952" centery="32112" centerz="5" radius="3">
+    <npc name="Irmana" x="0" y="-3" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32903" centery="32119" centerz="5" radius="3">
+    <npc name="Abran Ironeye" x="2" y="-3" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32430" centery="32172" centerz="5" radius="3">
+    <npc name="Miles, The Guard" x="-1" y="1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32307" centery="32185" centerz="5" radius="1">
+    <npc name="Trimegis" x="0" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32097" centery="32219" centerz="5" radius="3">
+    <npc name="Asralius" x="-1" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33617" centery="32371" centerz="5" radius="3">
+    <npc name="Eruaran" x="1" y="1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33536" centery="32504" centerz="5" radius="3">
+    <npc name="Mortis" x="0" y="-1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33102" centery="32520" centerz="5" radius="2">
+    <npc name="Bo'Ques" x="0" y="1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33103" centery="32539" centerz="5" radius="1">
+    <npc name="Fa'Hradin" x="-1" y="1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33047" centery="32621" centerz="5" radius="1">
+    <npc name="Alesar" x="1" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32635" centery="32739" centerz="5" radius="1">
+    <npc name="Perod" x="-1" y="1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32622" centery="32740" centerz="5" radius="1">
+    <npc name="Tandros" x="-1" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32621" centery="32747" centerz="5" radius="1">
+    <npc name="Zaidal" x="1" y="-1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32332" centery="32764" centerz="5" radius="1">
+    <npc name="Eleonore" x="-1" y="-1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32347" centery="32809" centerz="5" radius="2">
+    <npc name="Malunga" x="-2" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33159" centery="32809" centerz="5" radius="1">
+    <npc name="Ormuhn" x="0" y="1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33130" centery="32811" centerz="5" radius="1">
+    <npc name="Mehkesh" x="0" y="0" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33130" centery="32819" centerz="5" radius="1">
+    <npc name="Fenech" x="1" y="1" z="5" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32361" centery="31029" centerz="6" radius="2">
+    <npc name="Siflind" x="-1" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33193" centery="31044" centerz="6" radius="1">
+    <npc name="Cranky Lizard Crone" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32234" centery="31074" centerz="6" radius="2">
+    <npc name="Robert" x="-1" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32254" centery="31081" centerz="6" radius="2">
+    <npc name="Hawkyr" x="1" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32263" centery="31090" centerz="6" radius="2">
+    <npc name="Thorwulf" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32342" centery="31108" centerz="6" radius="2">
+    <npc name="Captain Breezelda" x="-1" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32354" centery="31125" centerz="6" radius="3">
+    <npc name="Captain Haba" x="-1" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32789" centery="31235" centerz="6" radius="1">
+    <npc name="Gree Dee" x="0" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32822" centery="31252" centerz="6" radius="1">
+    <npc name="Redward" x="1" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32803" centery="31269" centerz="6" radius="2">
+    <npc name="Guide Edna" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32803" centery="31277" centerz="6" radius="2">
+    <npc name="Captain Cookie" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32157" centery="31290" centerz="6" radius="1">
+    <npc name="Messenger of Heaven" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32647" centery="31291" centerz="6" radius="2">
+    <npc name="Maris" x="1" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33458" centery="31302" centerz="6" radius="1">
+    <npc name="Rock In A Hard Place" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32344" centery="31323" centerz="6" radius="2">
+    <npc name="Baltim" x="-1" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32363" centery="31325" centerz="6" radius="2">
+    <npc name="Zora" x="1" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32771" centery="31358" centerz="6" radius="2">
+    <npc name="Mr. West" x="0" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32667" centery="31455" centerz="6" radius="1">
+    <npc name="Rapanaioisleofevil" x="0" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32670" centery="31657" centerz="6" radius="1">
+    <npc name="Shiriel" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32693" centery="31657" centerz="6" radius="3">
+    <npc name="Amarie" x="0" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32651" centery="31664" centerz="6" radius="3">
+    <npc name="Ukea" x="1" y="2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32728" centery="31664" centerz="6" radius="3">
+    <npc name="Guide Thelandil" x="-2" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32735" centery="31671" centerz="6" radius="3">
+    <npc name="Captain Seagull" x="0" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32665" centery="31685" centerz="6" radius="3">
+    <npc name="Eroth" x="-3" y="-3" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32359" centery="31687" centerz="6" radius="5">
+    <npc name="Humphrey" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32672" centery="31699" centerz="6" radius="3">
+    <npc name="Roderick" x="0" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32637" centery="31706" centerz="6" radius="3">
+    <npc name="Elf Guard" x="3" y="3" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33491" centery="31713" centerz="6" radius="3">
+    <npc name="Captain Pelagia" x="0" y="-3" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33274" centery="31755" centerz="6" radius="3">
+    <npc name="Mother Of Jack" x="0" y="3" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32207" centery="31756" centerz="6" radius="3">
+    <npc name="Dalbrect" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33175" centery="31764" centerz="6" radius="3">
+    <npc name="Captain Seahorse" x="0" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33182" centery="31773" centerz="6" radius="3">
+    <npc name="Guide Jonathan" x="-1" y="-2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32383" centery="31781" centerz="6" radius="2">
+    <npc name="Emma" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33680" centery="31790" centerz="6" radius="3">
+    <npc name="Grubokk" x="1" y="3" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33213" centery="31792" centerz="6" radius="2">
+    <npc name="Willard" x="1" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33275" centery="31800" centerz="6" radius="2">
+    <npc name="Telas" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33173" centery="31801" centerz="6" radius="2">
+    <npc name="Mirabell" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33214" centery="31801" centerz="6" radius="2">
+    <npc name="Beatrice" x="1" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33170" centery="31807" centerz="6" radius="1">
+    <npc name="Tereban" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33212" centery="31812" centerz="6" radius="2">
+    <npc name="Rudolph" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32381" centery="31814" centerz="6" radius="3">
+    <npc name="Guide Alexena" x="2" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32302" centery="31815" centerz="6" radius="2">
+    <npc name="Cerdras" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32388" centery="31823" centerz="6" radius="2">
+    <npc name="Captain Greyhound" x="-1" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32348" centery="31829" centerz="6" radius="3">
+    <npc name="Lea" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33268" centery="31835" centerz="6" radius="3">
+    <npc name="Wyrdin" x="-2" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33268" centery="31848" centerz="6" radius="1">
+    <npc name="Eliza" x="0" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32031" centery="31872" centerz="6" radius="1">
+    <npc name="Captain Dreadnought" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32063" centery="31881" centerz="6" radius="3">
+    <npc name="Wentworth" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33622" centery="31883" centerz="6" radius="1">
+    <npc name="Maro" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33635" centery="31883" centerz="6" radius="1">
+    <npc name="Flint" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33611" centery="31886" centerz="6" radius="1">
+    <npc name="Graham" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32059" centery="31889" centerz="6" radius="1">
+    <npc name="Oressa" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33639" centery="31897" centerz="6" radius="1">
+    <npc name="Fyodor" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33593" centery="31899" centerz="6" radius="1">
+    <npc name="Azalea" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33287" centery="31956" centerz="6" radius="2">
+    <npc name="Pemaret" x="-1" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32189" centery="31957" centerz="6" radius="1">
+    <npc name="Captain Jack" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32096" centery="31964" centerz="6" radius="1">
+    <npc name="Captain Kurt" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32726" centery="31980" centerz="6" radius="4">
+    <npc name="Wyda" x="-2" y="-4" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32568" centery="32018" centerz="6" radius="1">
+    <npc name="Kevin" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32959" centery="32021" centerz="6" radius="3">
+    <npc name="Captain Fearless" x="-2" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32875" centery="32028" centerz="6" radius="3">
+    <npc name="Christoph" x="2" y="3" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32952" centery="32030" centerz="6" radius="1">
+    <npc name="Guide Elena" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32973" centery="32035" centerz="6" radius="3">
+    <npc name="Rose" x="-3" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32980" centery="32035" centerz="6" radius="3">
+    <npc name="Livielle" x="2" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32973" centery="32042" centerz="6" radius="3">
+    <npc name="Rodney" x="-3" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33015" centery="32049" centerz="6" radius="3">
+    <npc name="Carina" x="0" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33022" centery="32049" centerz="6" radius="3">
+    <npc name="Rokyn" x="-1" y="3" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33015" centery="32056" centerz="6" radius="3">
+    <npc name="Odemara" x="0" y="3" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32987" centery="32063" centerz="6" radius="3">
+    <npc name="Allen" x="3" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33001" centery="32063" centerz="6" radius="3">
+    <npc name="Yulas" x="-1" y="2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32945" centery="32070" centerz="6" radius="3">
+    <npc name="Arnold" x="-3" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32994" centery="32070" centerz="6" radius="3">
+    <npc name="Borkas" x="-1" y="-2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32882" centery="32077" centerz="6" radius="3">
+    <npc name="Julian" x="1" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32889" centery="32077" centerz="6" radius="3">
+    <npc name="Chephan" x="1" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32921" centery="32078" centerz="6" radius="8">
+    <npc name="Lightfoot" x="-7" y="-2" z="6" spawntime="60" direction="2" />
+    <npc name="Dustrunner" x="-7" y="2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32970" centery="32080" centerz="6" radius="1">
+    <npc name="Frans" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32981" centery="32080" centerz="6" radius="1">
+    <npc name="Chatterbone" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32882" centery="32084" centerz="6" radius="3">
+    <npc name="Nelliem" x="1" y="3" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32889" centery="32084" centerz="6" radius="3">
+    <npc name="Shiantis" x="1" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32959" centery="32087" centerz="6" radius="1">
+    <npc name="Ashtamor" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32979" centery="32087" centerz="6" radius="1">
+    <npc name="Smiley" x="1" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32971" centery="32088" centerz="6" radius="1">
+    <npc name="Digger" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33053" centery="32095" centerz="6" radius="3">
+    <npc name="Rafzan" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32952" centery="32098" centerz="6" radius="3">
+    <npc name="Pyro Peter" x="-3" y="-3" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33015" centery="32098" centerz="6" radius="3">
+    <npc name="Norman The Foreman" x="1" y="2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33029" centery="32098" centerz="6" radius="3">
+    <npc name="Chuck The Worker" x="-1" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32945" centery="32105" centerz="6" radius="3">
+    <npc name="Velvet" x="-2" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32952" centery="32105" centerz="6" radius="3">
+    <npc name="Norbert" x="0" y="-2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33029" centery="32105" centerz="6" radius="3">
+    <npc name="Jack The Worker" x="1" y="-2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32882" centery="32112" centerz="6" radius="3">
+    <npc name="Ottokar" x="1" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32910" centery="32112" centerz="6" radius="3">
+    <npc name="Yanni" x="0" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32952" centery="32112" centerz="6" radius="3">
+    <npc name="Aldo" x="0" y="-2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33022" centery="32112" centerz="6" radius="3">
+    <npc name="Bob The Worker" x="-1" y="-3" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32903" centery="32119" centerz="6" radius="3">
+    <npc name="Xed" x="1" y="-2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32910" centery="32119" centerz="6" radius="3">
+    <npc name="Romella" x="3" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32882" centery="32126" centerz="6" radius="3">
+    <npc name="Alwin" x="-1" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32938" centery="32140" centerz="6" radius="3">
+    <npc name="Warbert" x="-3" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32539" centery="32143" centerz="6" radius="2">
+    <npc name="Hoggle" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32311" centery="32172" centerz="6" radius="2">
+    <npc name="Stutch" x="-1" y="-2" z="6" spawntime="60" direction="2" />
+    <npc name="Harsky" x="1" y="-2" z="6" spawntime="60" direction="2" />
+    <npc name="King Tibianus" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32314" centery="32178" centerz="6" radius="1">
+    <npc name="Noodles" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32091" centery="32182" centerz="6" radius="3">
+    <npc name="Dallheim" x="2" y="-2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32348" centery="32184" centerz="6" radius="2">
+    <npc name="Chester Kahs" x="1" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32105" centery="32189" centerz="6" radius="3">
+    <npc name="The Oracle" x="-1" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32406" centery="32201" centerz="6" radius="2">
+    <npc name="Gregor" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32021" centery="32203" centerz="6" radius="3">
+    <npc name="Zerbrus" x="1" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32114" centery="32204" centerz="6" radius="1">
+    <npc name="Compra Tudo Rook" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32339" centery="32206" centerz="6" radius="2">
+    <npc name="Black Bert" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32320" centery="32208" centerz="6" radius="2">
+    <npc name="Guide Luke" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32105" centery="32210" centerz="6" radius="3">
+    <npc name="Dixi" x="0" y="-3" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32310" centery="32210" centerz="6" radius="2">
+    <npc name="Captain Bluebear" x="0" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32363" centery="32210" centerz="6" radius="1">
+    <npc name="Todd" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32425" centery="32225" centerz="6" radius="3">
+    <npc name="Tim, The Guard" x="0" y="-2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32342" centery="32245" centerz="6" radius="2">
+    <npc name="Galuna" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32288" centery="32252" centerz="6" radius="2">
+    <npc name="Robin" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32816" centery="32261" centerz="6" radius="2">
+    <npc name="Oldrak" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32303" centery="32267" centerz="6" radius="2">
+    <npc name="Lungelen" x="0" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32034" centery="32273" centerz="6" radius="1">
+    <npc name="Santiago" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32196" centery="32294" centerz="6" radius="3">
+    <npc name="Kepar" x="-3" y="3" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32203" centery="32294" centerz="6" radius="3">
+    <npc name="Jorge" x="-2" y="-2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32210" centery="32294" centerz="6" radius="3">
+    <npc name="Charos" x="0" y="2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32197" centery="32304" centerz="6" radius="1">
+    <npc name="Yana" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33631" centery="32343" centerz="6" radius="3">
+    <npc name="Morax" x="-3" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32347" centery="32364" centerz="6" radius="2">
+    <npc name="Norf" x="-2" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33512" centery="32364" centerz="6" radius="3">
+    <npc name="Zedrulon The Fallen" x="3" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32056" centery="32368" centerz="6" radius="1">
+    <npc name="Captain Tiberius" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33715" centery="32378" centerz="6" radius="3">
+    <npc name="Dream Butterfly" x="1" y="-2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33230" centery="32391" centerz="6" radius="2">
+    <npc name="Kazzan" x="1" y="-2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33239" centery="32391" centerz="6" radius="2">
+    <npc name="Morun" x="1" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33270" centery="32440" centerz="6" radius="1">
+    <npc name="Chemar" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33287" centery="32474" centerz="6" radius="2">
+    <npc name="Guide Behil" x="0" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33290" centery="32481" centerz="6" radius="1">
+    <npc name="Petros" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33067" centery="32530" centerz="6" radius="3">
+    <npc name="Jean Pierre" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33101" centery="32532" centerz="6" radius="1">
+    <npc name="Umar" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32161" centery="32556" centerz="6" radius="3">
+    <npc name="Jack Fate Goroma" x="0" y="2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32827" centery="32575" centerz="6" radius="1">
+    <npc name="Hairycles" x="-1" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33046" centery="32622" centerz="6" radius="1">
+    <npc name="Ubaid" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="31914" centery="32710" centerz="6" radius="3">
+    <npc name="Captain Max Calassa" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32620" centery="32738" centerz="6" radius="1">
+    <npc name="Gail" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32635" centery="32738" centerz="6" radius="1">
+    <npc name="Ferks" x="-1" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32620" centery="32747" centerz="6" radius="1">
+    <npc name="Ray" x="0" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32635" centery="32747" centerz="6" radius="1">
+    <npc name="Brengus" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32580" centery="32751" centerz="6" radius="1">
+    <npc name="Myra" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32572" centery="32752" centerz="6" radius="1">
+    <npc name="Helor" x="0" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32580" centery="32756" centerz="6" radius="1">
+    <npc name="Ustan" x="0" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32330" centery="32766" centerz="6" radius="3">
+    <npc name="Percy Silverhand" x="0" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32694" centery="32767" centerz="6" radius="2">
+    <npc name="Grizzly Adams" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32532" centery="32777" centerz="6" radius="2">
+    <npc name="Guide Tiko" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32529" centery="32784" centerz="6" radius="2">
+    <npc name="Charles" x="0" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32363" centery="32787" centerz="6" radius="2">
+    <npc name="Theodore Loveless" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33126" centery="32810" centerz="6" radius="1">
+    <npc name="Ahmet" x="0" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33134" centery="32810" centerz="6" radius="1">
+    <npc name="Memech" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33126" centery="32820" centerz="6" radius="1">
+    <npc name="Jezzara" x="0" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33134" centery="32820" centerz="6" radius="1">
+    <npc name="Tesha" x="1" y="1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33148" centery="32867" centerz="6" radius="2">
+    <npc name="Tothdral" x="1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33083" centery="32884" centerz="6" radius="3">
+    <npc name="Guide Rahlkora" x="2" y="2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33092" centery="32884" centerz="6" radius="2">
+    <npc name="Captain Sinbeard" x="-1" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33070" centery="32886" centerz="6" radius="1">
+    <npc name="Arito" x="0" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32028" centery="32889" centerz="6" radius="3">
+    <npc name="One-Eyed Joe" x="-2" y="-2" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32287" centery="32891" centerz="6" radius="2">
+    <npc name="Jack Fate" x="-1" y="0" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32298" centery="32896" centerz="6" radius="2">
+    <npc name="Captain Max" x="0" y="-1" z="6" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32350" centery="31026" centerz="7" radius="3">
+    <npc name="Hjaern" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32329" centery="31046" centerz="7" radius="2">
+    <npc name="Nilsor" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33102" centery="31056" centerz="7" radius="1">
+    <npc name="zurakarena" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32894" centery="31061" centerz="7" radius="2">
+    <npc name="Tamara" x="-2" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32878" centery="31077" centerz="7" radius="2">
+    <npc name="Ethan" x="1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32301" centery="31081" centerz="7" radius="1">
+    <npc name="Iskan" x="1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32426" centery="31085" centerz="7" radius="2">
+    <npc name="Sinatuki" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32230" centery="31097" centerz="7" radius="1">
+    <npc name="Halvar" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32802" centery="31103" centerz="7" radius="1">
+    <npc name="Reed" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32319" centery="31112" centerz="7" radius="1">
+    <npc name="Bertha" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32741" centery="31113" centerz="7" radius="1">
+    <npc name="Bruce" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32326" centery="31118" centerz="7" radius="3">
+    <npc name="Sirik" x="2" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32279" centery="31132" centerz="7" radius="1">
+    <npc name="Janz" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32212" centery="31133" centerz="7" radius="3">
+    <npc name="Kjesse" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32308" centery="31134" centerz="7" radius="1">
+    <npc name="Nelly" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32319" centery="31135" centerz="7" radius="2">
+    <npc name="Lurik" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32300" centery="31138" centerz="7" radius="2">
+    <npc name="Jessica" x="-1" y="-2" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32895" centery="31139" centerz="7" radius="1">
+    <npc name="Yaman" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32285" centery="31140" centerz="7" radius="5">
+    <npc name="Fynn" x="3" y="-5" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32217" centery="31142" centerz="7" radius="3">
+    <npc name="Eirik" x="2" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32202" centery="31154" centerz="7" radius="1">
+    <npc name="Sven" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32884" centery="31159" centerz="7" radius="1">
+    <npc name="Barry" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32201" centery="31161" centerz="7" radius="1">
+    <npc name="Dankwart" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32463" centery="31174" centerz="7" radius="2">
+    <npc name="Buddel Helheim" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32942" centery="31182" centerz="7" radius="2">
+    <npc name="Taraksunken" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32801" centery="31188" centerz="7" radius="1">
+    <npc name="YalahariNPC" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32800" centery="31190" centerz="7" radius="1">
+    <npc name="Golem Guardian" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32802" centery="31190" centerz="7" radius="1">
+    <npc name="Golem Guardian" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32688" centery="31191" centerz="7" radius="1">
+    <npc name="Hal" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33129" centery="31197" centerz="7" radius="1">
+    <npc name="Gate Guardian" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32255" centery="31198" centerz="7" radius="3">
+    <npc name="Buddel" x="0" y="-3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32915" centery="31199" centerz="7" radius="2">
+    <npc name="Tarakinner" x="2" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32852" centery="31208" centerz="7" radius="1">
+    <npc name="Serafin" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33081" centery="31220" centerz="7" radius="1">
+    <npc name="Zlak" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32821" centery="31221" centerz="7" radius="1">
+    <npc name="Soilance" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32801" centery="31223" centerz="7" radius="1">
+    <npc name="Palimuth" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32789" centery="31226" centerz="7" radius="2">
+    <npc name="Timothy" x="-2" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32333" centery="31228" centerz="7" radius="2">
+    <npc name="Buddel Tyrsung" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32895" centery="31228" centerz="7" radius="1">
+    <npc name="Oliver" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32777" centery="31236" centerz="7" radius="2">
+    <npc name="Orc BerserkerNPC" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32783" centery="31236" centerz="7" radius="1">
+    <npc name="Dorbin" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32787" centery="31237" centerz="7" radius="1">
+    <npc name="Oiriz" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32821" centery="31239" centerz="7" radius="1">
+    <npc name="A Grumpy Cyclops" x="1" y="-1" z="7" spawntime="60" direction="2" />
+    <npc name="Morpel" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32811" centery="31243" centerz="7" radius="4">
+    <npc name="Lisander" x="2" y="0" z="7" spawntime="60" direction="2" />
+    <npc name="Menacing Mummy" x="-4" y="3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32821" centery="31249" centerz="7" radius="1">
+    <npc name="Znozel" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32809" centery="31252" centerz="7" radius="1">
+    <npc name="Pugwah" x="1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32695" centery="31256" centerz="7" radius="1">
+    <npc name="Tony" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32830" centery="31276" centerz="7" radius="2">
+    <npc name="Julius" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32787" centery="31277" centerz="7" radius="1">
+    <npc name="Lorietta" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32721" centery="31288" centerz="7" radius="2">
+    <npc name="Zarak" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32021" centery="31293" centerz="7" radius="3">
+    <npc name="Buddel Raider Camp" x="-1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32850" centery="31300" centerz="7" radius="1">
+    <npc name="Iriana" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32857" centery="31302" centerz="7" radius="1">
+    <npc name="Peter" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33449" centery="31309" centerz="7" radius="1">
+    <npc name="Orockle" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32564" centery="31313" centerz="7" radius="1">
+    <npc name="MarisFenrock" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33457" centery="31321" centerz="7" radius="1">
+    <npc name="Old Rock Boy" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33466" centery="31324" centerz="7" radius="1">
+    <npc name="Alternative Rock" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32860" centery="31326" centerz="7" radius="1">
+    <npc name="ArmeniusNPC" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33453" centery="31330" centerz="7" radius="1">
+    <npc name="Rock Steady" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32837" centery="31364" centerz="7" radius="1">
+    <npc name="Harlow" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32225" centery="31381" centerz="7" radius="2">
+    <npc name="Buddel Okolnir" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33174" centery="31394" centerz="7" radius="1">
+    <npc name="Curos" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32640" centery="31438" centerz="7" radius="1">
+    <npc name="MarisMistrock" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32002" centery="31444" centerz="7" radius="2">
+    <npc name="Nor" x="2" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32856" centery="31549" centerz="7" radius="1">
+    <npc name="Harlow Vengoth" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32046" centery="31581" centerz="7" radius="3">
+    <npc name="Svenson" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32416" centery="31583" centerz="7" radius="1">
+    <npc name="Ajax" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32693" centery="31587" centerz="7" radius="3">
+    <npc name="Brasith" x="-1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32486" centery="31605" centerz="7" radius="1">
+    <npc name="Bruno" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32672" centery="31608" centerz="7" radius="3">
+    <npc name="Elvith" x="-2" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32686" centery="31608" centerz="7" radius="3">
+    <npc name="Irea" x="2" y="2" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32489" centery="31623" centerz="7" radius="2">
+    <npc name="Graubart" x="1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32362" centery="31624" centerz="7" radius="1">
+    <npc name="Gelagos" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32481" centery="31625" centerz="7" radius="3">
+    <npc name="Marlene" x="1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32365" centery="31627" centerz="7" radius="1">
+    <npc name="Bron" x="1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32499" centery="31627" centerz="7" radius="1">
+    <npc name="Mortimer" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32732" centery="31635" centerz="7" radius="1">
+    <npc name="Maealil" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33195" centery="31646" centerz="7" radius="1">
+    <npc name="Messenger of Heaven" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32672" centery="31657" centerz="7" radius="3">
+    <npc name="Anerui" x="-2" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33624" centery="31657" centerz="7" radius="3">
+    <npc name="Ghorza" x="3" y="-2" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33659" centery="31657" centerz="7" radius="3">
+    <npc name="Nibble" x="-2" y="-3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32137" centery="31659" centerz="7" radius="1">
+    <npc name="Scott" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32128" centery="31660" centerz="7" radius="1">
+    <npc name="Anderson" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33638" centery="31664" centerz="7" radius="3">
+    <npc name="Vuzrog" x="0" y="-3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33659" centery="31664" centerz="7" radius="3">
+    <npc name="Larek" x="-3" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32428" centery="31667" centerz="7" radius="3">
+    <npc name="Aneus" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32139" centery="31671" centerz="7" radius="2">
+    <npc name="Vera" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32696" centery="31674" centerz="7" radius="1">
+    <npc name="Cyclop" x="0" y="0" z="7" spawntime="1200" direction="2" />
+  </npc>
+  <npc centerx="32234" centery="31676" centerz="7" radius="3">
+    <npc name="Nielson" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32658" centery="31678" centerz="7" radius="3">
+    <npc name="Faluae" x="-2" y="-2" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33631" centery="31678" centerz="7" radius="3">
+    <npc name="Mugruu" x="3" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32661" centery="31685" centerz="7" radius="5">
+    <npc name="Lavirias" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33348" centery="31687" centerz="7" radius="1">
+    <npc name="Gladys" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33345" centery="31691" centerz="7" radius="3">
+    <npc name="Cornell" x="-3" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32023" centery="31692" centerz="7" radius="3">
+    <npc name="Carlson" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32217" centery="31699" centerz="7" radius="3">
+    <npc name="Arkarra" x="-1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32672" centery="31699" centerz="7" radius="3">
+    <npc name="Olrik" x="1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32224" centery="31706" centerz="7" radius="3">
+    <npc name="Lothar" x="2" y="-2" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="31953" centery="31719" centerz="7" radius="2">
+    <npc name="Ruprecht" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32665" centery="31720" centerz="7" radius="3">
+    <npc name="Ceiron" x="0" y="-3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33305" centery="31720" centerz="7" radius="1">
+    <npc name="Cornell" x="-1" y="0" z="7" spawntime="1200" direction="2" />
+  </npc>
+  <npc centerx="32413" centery="31727" centerz="7" radius="3">
+    <npc name="A Fluffy Squirrel" x="-1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32595" centery="31745" centerz="7" radius="2">
+    <npc name="Benevola" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32344" centery="31748" centerz="7" radius="3">
+    <npc name="Trisha" x="2" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32314" centery="31754" centerz="7" radius="2">
+    <npc name="Barbara" x="1" y="-2" z="7" spawntime="60" direction="2" />
+    <npc name="Queen Eloise" x="0" y="0" z="7" spawntime="60" direction="2" />
+    <npc name="Fenbala" x="1" y="2" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32462" centery="31755" centerz="7" radius="3">
+    <npc name="Huntsman" x="-3" y="2" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33274" centery="31755" centerz="7" radius="3">
+    <npc name="Jack" x="3" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33240" centery="31758" centerz="7" radius="2">
+    <npc name="Jerom" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33313" centery="31762" centerz="7" radius="2">
+    <npc name="Albert" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32368" centery="31764" centerz="7" radius="2">
+    <npc name="Phillip" x="2" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33254" centery="31764" centerz="7" radius="7">
+    <npc name="Avar Tar" x="-3" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33280" centery="31771" centerz="7" radius="2">
+    <npc name="James" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32383" centery="31777" centerz="7" radius="1">
+    <npc name="Shauna" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33190" centery="31778" centerz="7" radius="2">
+    <npc name="Falk" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32325" centery="31779" centerz="7" radius="1">
+    <npc name="Eva" x="1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32360" centery="31782" centerz="7" radius="2">
+    <npc name="Alia" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32295" centery="31783" centerz="7" radius="1">
+    <npc name="Perac" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32315" centery="31783" centerz="7" radius="3">
+    <npc name="Tibra" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32298" centery="31785" centerz="7" radius="1">
+    <npc name="Legola" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32332" centery="31785" centerz="7" radius="1">
+    <npc name="Liane" x="1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32391" centery="31785" centerz="7" radius="2">
+    <npc name="Blossom Bonecrusher" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32381" centery="31786" centerz="7" radius="2">
+    <npc name="Percybald" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33191" centery="31789" centerz="7" radius="2">
+    <npc name="Edron Guardsman" x="-2" y="-1" z="7" spawntime="60" direction="2" />
+    <npc name="Edron Guardsman" x="2" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32294" centery="31790" centerz="7" radius="2">
+    <npc name="Busty Bonecrusher" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32721" centery="31790" centerz="7" radius="3">
+    <npc name="Cruleo" x="1" y="-3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32323" centery="31793" centerz="7" radius="2">
+    <npc name="Rowenna" x="1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32353" centery="31794" centerz="7" radius="2">
+    <npc name="Lector" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32335" centery="31795" centerz="7" radius="2">
+    <npc name="Cornelia" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33191" centery="31796" centerz="7" radius="2">
+    <npc name="Daniel Steelsoul" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32362" centery="31797" centerz="7" radius="2">
+    <npc name="Florentine" x="1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32335" centery="31800" centerz="7" radius="1">
+    <npc name="Imalas" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33167" centery="31800" centerz="7" radius="1">
+    <npc name="Bonifacius" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33173" centery="31800" centerz="7" radius="1">
+    <npc name="Ebenizer" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32335" centery="31806" centerz="7" radius="1">
+    <npc name="Sarina" x="1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33174" centery="31811" centerz="7" radius="1">
+    <npc name="Chrystal" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33299" centery="31811" centerz="7" radius="1">
+    <npc name="Sane Mage" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32301" centery="31815" centerz="7" radius="2">
+    <npc name="Padreia" x="1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32327" centery="31827" centerz="7" radius="1">
+    <npc name="Nydala" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32342" centery="31828" centerz="7" radius="2">
+    <npc name="Rachel" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33217" centery="31832" centerz="7" radius="2">
+    <npc name="Iwan" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33228" centery="31832" centerz="7" radius="2">
+    <npc name="Edvard" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33313" centery="31836" centerz="7" radius="1">
+    <npc name="Servant Sentry" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33257" centery="31840" centerz="7" radius="1">
+    <npc name="Sandra" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33268" centery="31848" centerz="7" radius="2">
+    <npc name="Ursula" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33701" centery="31853" centerz="7" radius="3">
+    <npc name="Flora" x="-1" y="3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33547" centery="31864" centerz="7" radius="1">
+    <npc name="Mr Brandon" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32601" centery="31875" centerz="7" radius="1">
+    <npc name="Dukosch" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33326" centery="31883" centerz="7" radius="5">
+    <npc name="Eremo" x="1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33570" centery="31927" centerz="7" radius="3">
+    <npc name="Fillias" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32553" centery="31930" centerz="7" radius="3">
+    <npc name="Pukosch" x="-3" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32178" centery="31936" centerz="7" radius="1">
+    <npc name="Costello" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32318" centery="31938" centerz="7" radius="2">
+    <npc name="Penny" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33584" centery="31941" centerz="7" radius="1">
+    <npc name="Roswitha" x="0" y="0" z="7" spawntime="1200" direction="2" />
+  </npc>
+  <npc centerx="32617" centery="31946" centerz="7" radius="1">
+    <npc name="Lukosch" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33645" centery="31950" centerz="7" radius="3">
+    <npc name="Terrence" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33547" centery="31951" centerz="7" radius="3">
+    <npc name="Chavis" x="1" y="-3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33596" centery="31951" centerz="7" radius="3">
+    <npc name="A Beggar" x="1" y="2" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32588" centery="31965" centerz="7" radius="3">
+    <npc name="Storkus" x="1" y="-3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32523" centery="31966" centerz="7" radius="1">
+    <npc name="Melfar" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33303" centery="31967" centerz="7" radius="3">
+    <npc name="Yoem" x="1" y="-2" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33689" centery="31982" centerz="7" radius="30">
+    <npc name="A Bearded Woman" x="-29" y="8" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33189" centery="31983" centerz="7" radius="1">
+    <npc name="Scrutinon" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33492" centery="31983" centerz="7" radius="1">
+    <npc name="A Bearded Woman" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33479" centery="31986" centerz="7" radius="1">
+    <npc name="Captain Gulliver" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32096" centery="31989" centerz="7" radius="3">
+    <npc name="Raffael" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32110" centery="31991" centerz="7" radius="1">
+    <npc name="Paladin Narai" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32088" centery="31992" centerz="7" radius="1">
+    <npc name="Knight Hykrion" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33036" centery="32000" centerz="7" radius="3">
+    <npc name="Scott The Scout" x="3" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32089" centery="32003" centerz="7" radius="1">
+    <npc name="Sorcerer Estrella" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32108" centery="32004" centerz="7" radius="1">
+    <npc name="Druid Yandur" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33029" centery="32007" centerz="7" radius="3">
+    <npc name="George The Boyscout" x="2" y="3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32070" centery="32014" centerz="7" radius="3">
+    <npc name="Tylius" x="1" y="-3" z="7" spawntime="60" direction="2" />
+    <npc name="Ula" x="-3" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32084" centery="32014" centerz="7" radius="3">
+    <npc name="Shanoya" x="1" y="-3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32565" centery="32019" centerz="7" radius="1">
+    <npc name="Wally" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32063" centery="32021" centerz="7" radius="3">
+    <npc name="Willem" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32077" centery="32028" centerz="7" radius="3">
+    <npc name="Neill" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32539" centery="32028" centerz="7" radius="3">
+    <npc name="Lesser Messenger of Heaven" x="-3" y="-2" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32271" centery="32052" centerz="7" radius="1">
+    <npc name="Valentina" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32255" centery="32053" centerz="7" radius="3">
+    <npc name="Tokel" x="-2" y="2" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32282" centery="32056" centerz="7" radius="2">
+    <npc name="Ulrik" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32919" centery="32074" centerz="7" radius="1">
+    <npc name="Dove" x="-1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32958" centery="32076" centerz="7" radius="3">
+    <npc name="Yberius" x="1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33022" centery="32112" centerz="7" radius="3">
+    <npc name="Bill The Worker" x="2" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32488" centery="32119" centerz="7" radius="2">
+    <npc name="Lubo" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32854" centery="32126" centerz="7" radius="3">
+    <npc name="Appaloosa" x="-2" y="-2" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33036" centery="32133" centerz="7" radius="3">
+    <npc name="Roger The Worker" x="-1" y="2" z="7" spawntime="60" direction="2" />
+    <npc name="Pat The Worker" x="2" y="3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32386" centery="32136" centerz="7" radius="5">
+    <npc name="Loria" x="1" y="-4" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33043" centery="32140" centerz="7" radius="3">
+    <npc name="Frank The Plank" x="3" y="-3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="31987" centery="32156" centerz="7" radius="1">
+    <npc name="An Orc Guard" x="-1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32408" centery="32170" centerz="7" radius="1">
+    <npc name="Gamon" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32415" centery="32170" centerz="7" radius="1">
+    <npc name="Topsy" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32098" centery="32175" centerz="7" radius="3">
+    <npc name="Norma" x="-1" y="2" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32414" centery="32178" centerz="7" radius="1">
+    <npc name="Turvy" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32063" centery="32182" centerz="7" radius="3">
+    <npc name="Al Dee" x="0" y="-3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32373" centery="32182" centerz="7" radius="1">
+    <npc name="Grof, The Guard" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32314" centery="32183" centerz="7" radius="2">
+    <npc name="Bozo" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32106" centery="32189" centerz="7" radius="3">
+    <npc name="Seymour" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32322" centery="32189" centerz="7" radius="3">
+    <npc name="Baxter" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32014" centery="32196" centerz="7" radius="3">
+    <npc name="Loui" x="1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32021" centery="32196" centerz="7" radius="3">
+    <npc name="Lee'Delle" x="3" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32084" centery="32196" centerz="7" radius="3">
+    <npc name="Tom" x="1" y="3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32105" centery="32196" centerz="7" radius="3">
+    <npc name="Vascalir" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32359" centery="32198" centerz="7" radius="2">
+    <npc name="Sam" x="2" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32332" centery="32199" centerz="7" radius="1">
+    <npc name="Lynda" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32378" centery="32200" centerz="7" radius="2">
+    <npc name="Gorn" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32652" centery="32201" centerz="7" radius="1">
+    <npc name="Rottin Wood" x="0" y="0" z="7" spawntime="1200" direction="2" />
+  </npc>
+  <npc centerx="32049" centery="32203" centerz="7" radius="3">
+    <npc name="Billy" x="1" y="3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32070" centery="32203" centerz="7" radius="3">
+    <npc name="Willie" x="-2" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32112" centery="32203" centerz="7" radius="3">
+    <npc name="Obi" x="-3" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32355" centery="32209" centerz="7" radius="2">
+    <npc name="Frodo" x="-1" y="0" z="7" spawntime="1200" direction="2" />
+  </npc>
+  <npc centerx="32372" centery="32214" centerz="7" radius="5">
+    <npc name="Aruda" x="-4" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32327" centery="32218" centerz="7" radius="5">
+    <npc name="Towncryer" x="2" y="-2" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32097" centery="32219" centerz="7" radius="3">
+    <npc name="Cipfried" x="0" y="-2" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32349" centery="32219" centerz="7" radius="1">
+    <npc name="Benjamin" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32381" centery="32220" centerz="7" radius="1">
+    <npc name="Oswald" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32390" centery="32220" centerz="7" radius="1">
+    <npc name="Quero" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32407" centery="32220" centerz="7" radius="1">
+    <npc name="Hanna" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32398" centery="32221" centerz="7" radius="1">
+    <npc name="Xodet" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32063" centery="32224" centerz="7" radius="3">
+    <npc name="Lily" x="3" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32449" centery="32226" centerz="7" radius="1">
+    <npc name="Palomino" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32388" centery="32228" centerz="7" radius="3">
+    <npc name="Donald McRonald" x="1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32342" centery="32229" centerz="7" radius="1">
+    <npc name="Naji" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32400" centery="32231" centerz="7" radius="2">
+    <npc name="PigNPC" x="1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32342" centery="32235" centerz="7" radius="1">
+    <npc name="Elane" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32369" centery="32237" centerz="7" radius="3">
+    <npc name="Quentin" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32391" centery="32238" centerz="7" radius="3">
+    <npc name="Sherry McRonald" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32320" centery="32258" centerz="7" radius="1">
+    <npc name="Suzy" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32076" centery="32263" centerz="7" radius="1">
+    <npc name="Ottokar" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32296" centery="32263" centerz="7" radius="2">
+    <npc name="Muriel" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32288" centery="32264" centerz="7" radius="2">
+    <npc name="Kulag, The Guard" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32325" centery="32276" centerz="7" radius="1">
+    <npc name="Wyat" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32338" centery="32278" centerz="7" radius="1">
+    <npc name="Walter, The Guard" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32290" centery="32292" centerz="7" radius="1">
+    <npc name="Eclesius" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32210" centery="32294" centerz="7" radius="3">
+    <npc name="Rotem Valos" x="-1" y="3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32190" centery="32295" centerz="7" radius="1">
+    <npc name="Cledwyn" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32192" centery="32300" centerz="7" radius="1">
+    <npc name="Zethra" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32692" centery="32311" centerz="7" radius="4">
+    <npc name="Lorbas" x="-2" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32270" centery="32333" centerz="7" radius="10">
+    <npc name="Hardek" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32346" centery="32362" centerz="7" radius="4">
+    <npc name="Edowir" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33541" centery="32383" centerz="7" radius="1">
+    <npc name="Asnarus" x="1" y="0" z="7" spawntime="1200" direction="2" />
+  </npc>
+  <npc centerx="33274" centery="32385" centerz="7" radius="3">
+    <npc name="Bozarn" x="0" y="3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33526" centery="32385" centerz="7" radius="1">
+    <npc name="Auron" x="0" y="0" z="7" spawntime="1200" direction="2" />
+  </npc>
+  <npc centerx="33559" centery="32388" centerz="7" radius="1">
+    <npc name="Siestaar" x="0" y="0" z="7" spawntime="1200" direction="2" />
+  </npc>
+  <npc centerx="33221" centery="32389" centerz="7" radius="1">
+    <npc name="Muzir" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33220" centery="32403" centerz="7" radius="1">
+    <npc name="Asima" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33221" centery="32409" centerz="7" radius="1">
+    <npc name="Shalmar" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33229" centery="32409" centerz="7" radius="2">
+    <npc name="Dabui" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32078" centery="32416" centerz="7" radius="1">
+    <npc name="Satsu" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33220" centery="32416" centerz="7" radius="1">
+    <npc name="Mugluf" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33228" centery="32417" centerz="7" radius="1">
+    <npc name="Omur" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33231" centery="32422" centerz="7" radius="1">
+    <npc name="Ishina" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33217" centery="32423" centerz="7" radius="1">
+    <npc name="Halif" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32169" centery="32428" centerz="7" radius="3">
+    <npc name="Eddy" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33232" centery="32430" centerz="7" radius="1">
+    <npc name="Edoch" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33217" centery="32431" centerz="7" radius="1">
+    <npc name="Azil" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33225" centery="32434" centerz="7" radius="1">
+    <npc name="Habdel" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32081" centery="32437" centerz="7" radius="1">
+    <npc name="Tanaro" x="1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32165" centery="32437" centerz="7" radius="2">
+    <npc name="Dermot" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33269" centery="32441" centerz="7" radius="5">
+    <npc name="Hofech" x="1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32190" centery="32443" centerz="7" radius="1">
+    <npc name="Timur" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32074" centery="32447" centerz="7" radius="1">
+    <npc name="Nienna" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32091" centery="32447" centerz="7" radius="1">
+    <npc name="Alissa" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32153" centery="32457" centerz="7" radius="2">
+    <npc name="Ferryman Kamil" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32088" centery="32470" centerz="7" radius="2">
+    <npc name="Ferryman Kamil Meluna" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32186" centery="32472" centerz="7" radius="4">
+    <npc name="Simon The Beggar" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33239" centery="32483" centerz="7" radius="1">
+    <npc name="Miraia" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32329" centery="32528" centerz="7" radius="1">
+    <npc name="Marina" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33498" centery="32546" centerz="7" radius="3">
+    <npc name="Gederas" x="-1" y="3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32362" centery="32549" centerz="7" radius="1">
+    <npc name="Chondur" x="-1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33505" centery="32553" centerz="7" radius="3">
+    <npc name="Sandomo" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33519" centery="32560" centerz="7" radius="3">
+    <npc name="Maun" x="3" y="2" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33494" centery="32568" centerz="7" radius="2">
+    <npc name="Captain Chelop" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32351" centery="32589" centerz="7" radius="2">
+    <npc name="Raymond Striker" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32337" centery="32592" centerz="7" radius="1">
+    <npc name="Ariella" x="-1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32323" centery="32599" centerz="7" radius="1">
+    <npc name="Morgan" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32331" centery="32604" centerz="7" radius="3">
+    <npc name="Duncan" x="-1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33021" centery="32605" centerz="7" radius="1">
+    <npc name="The Blind Prophet" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32348" centery="32624" centerz="7" radius="2">
+    <npc name="Sebastian" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33038" centery="32627" centerz="7" radius="2">
+    <npc name="Rata'Mari" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33169" centery="32637" centerz="7" radius="3">
+    <npc name="Messenger of Heaven" x="3" y="-3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32564" centery="32652" centerz="7" radius="3">
+    <npc name="Vescu" x="1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32611" centery="32652" centerz="7" radius="3">
+    <npc name="Yawno" x="3" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33028" centery="32706" centerz="7" radius="1">
+    <npc name="An Ancient Priest" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32276" centery="32708" centerz="7" radius="3">
+    <npc name="Braden" x="1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32245" centery="32714" centerz="7" radius="3">
+    <npc name="Ross" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32670" centery="32729" centerz="7" radius="1">
+    <npc name="Angus" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32184" centery="32736" centerz="7" radius="3">
+    <npc name="Irvin" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32594" centery="32745" centerz="7" radius="2">
+    <npc name="Brewster" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32573" centery="32752" centerz="7" radius="1">
+    <npc name="Clyde" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32202" centery="32756" centerz="7" radius="3">
+    <npc name="Doug" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32185" centery="32770" centerz="7" radius="4">
+    <npc name="Gordon" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32225" centery="32770" centerz="7" radius="3">
+    <npc name="Norris" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32628" centery="32772" centerz="7" radius="1">
+    <npc name="Old Adall" x="1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32678" centery="32774" centerz="7" radius="1">
+    <npc name="Lorek" x="1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32557" centery="32782" centerz="7" radius="1">
+    <npc name="Imbul" x="1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32199" centery="32792" centerz="7" radius="5">
+    <npc name="Hamilton" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32365" centery="32792" centerz="7" radius="2">
+    <npc name="Chantalle" x="-2" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32184" centery="32795" centerz="7" radius="5">
+    <npc name="Parlan" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32356" centery="32798" centerz="7" radius="2">
+    <npc name="Bertram" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32295" centery="32806" centerz="7" radius="2">
+    <npc name="Peggy" x="-1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32345" centery="32807" centerz="7" radius="1">
+    <npc name="Frederik" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32220" centery="32809" centerz="7" radius="4">
+    <npc name="Fergus" x="1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32359" centery="32812" centerz="7" radius="1">
+    <npc name="Berenice" x="0" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32026" centery="32814" centerz="7" radius="2">
+    <npc name="Sebastian Nargor" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33159" centery="32816" centerz="7" radius="17">
+    <npc name="Melchior" x="-17" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32293" centery="32817" centerz="7" radius="2">
+    <npc name="Cedrik" x="-1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32282" centery="32822" centerz="7" radius="2">
+    <npc name="Red Lilly" x="1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32317" centery="32824" centerz="7" radius="2">
+    <npc name="Tyrias" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32182" centery="32826" centerz="7" radius="3">
+    <npc name="Torence" x="2" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32297" centery="32831" centerz="7" radius="2">
+    <npc name="Lyonel" x="1" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32338" centery="32833" centerz="7" radius="1">
+    <npc name="Jefrey" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32300" centery="32837" centerz="7" radius="2">
+    <npc name="Bradford" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32331" centery="32839" centerz="7" radius="1">
+    <npc name="Herbert" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32203" centery="32840" centerz="7" radius="3">
+    <npc name="Cameron" x="-2" y="-3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32269" centery="32841" centerz="7" radius="1">
+    <npc name="Charlotta" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33157" centery="32849" centerz="7" radius="2">
+    <npc name="Ishebad" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32347" centery="32859" centerz="7" radius="1">
+    <npc name="Captain Waverider" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32317" centery="32862" centerz="7" radius="4">
+    <npc name="Marcus" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33067" centery="32877" centerz="7" radius="1">
+    <npc name="Jakahr" x="-1" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32259" centery="32882" centerz="7" radius="1">
+    <npc name="Evan" x="0" y="-1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33067" centery="32886" centerz="7" radius="1">
+    <npc name="Feizuhl" x="-1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32133" centery="32917" centerz="7" radius="3">
+    <npc name="Captain WaveriderIsland" x="-2" y="-3" z="7" spawntime="1200" direction="2" />
+  </npc>
+  <npc centerx="32042" centery="32931" centerz="7" radius="3">
+    <npc name="Captain Waverider" x="1" y="0" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32154" centery="32938" centerz="7" radius="3">
+    <npc name="Jason" x="3" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32189" centery="32952" centerz="7" radius="3">
+    <npc name="Danlon" x="1" y="-3" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32196" centery="32973" centerz="7" radius="3">
+    <npc name="Meraya" x="-2" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33198" centery="31060" centerz="8" radius="1">
+    <npc name="Rebel" x="0" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33384" centery="31067" centerz="8" radius="1">
+    <npc name="Lizard Tunnel Guard" x="1" y="1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33388" centery="31076" centerz="8" radius="1">
+    <npc name="Lizard Tunnel Guard" x="-1" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33371" centery="31079" centerz="8" radius="1">
+    <npc name="Lizard Tunnel Guard" x="1" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33325" centery="31082" centerz="8" radius="1">
+    <npc name="Lizard Tunnel Guard" x="0" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33383" centery="31099" centerz="8" radius="1">
+    <npc name="Lizard Tunnel Guard" x="0" y="1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33378" centery="31107" centerz="8" radius="1">
+    <npc name="Lizard Tunnel Guard" x="0" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33388" centery="31118" centerz="8" radius="1">
+    <npc name="Lizard Tunnel Guard" x="-1" y="1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33183" centery="31195" centerz="8" radius="3">
+    <npc name="Nina" x="-2" y="3" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33366" centery="31205" centerz="8" radius="1">
+    <npc name="Zumtah" x="1" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32659" centery="31212" centerz="8" radius="1">
+    <npc name="Tamerin" x="0" y="-1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33452" centery="31308" centerz="8" radius="1">
+    <npc name="Eighty" x="0" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32584" centery="31402" centerz="8" radius="3">
+    <npc name="Kihil, The Guard" x="-3" y="-1" z="8" spawntime="60" direction="2" />
+    <npc name="Frok, The Guard" x="3" y="-1" z="8" spawntime="60" direction="2" />
+    <npc name="Emperor Rehal" x="-1" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33355" centery="31411" centerz="8" radius="1">
+    <npc name="Zalamon" x="-1" y="-1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32672" centery="31601" centerz="8" radius="3">
+    <npc name="Mysterious Ornate Chest" x="2" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32658" centery="31657" centerz="8" radius="3">
+    <npc name="Shanar" x="1" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32672" centery="31657" centerz="8" radius="3">
+    <npc name="Bashira" x="-2" y="-3" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32637" centery="31664" centerz="8" radius="3">
+    <npc name="Briasol" x="-1" y="3" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33638" centery="31678" centerz="8" radius="3">
+    <npc name="Kaya" x="-2" y="1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32686" centery="31685" centerz="8" radius="3">
+    <npc name="Finarfin" x="0" y="2" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33736" centery="31734" centerz="8" radius="3">
+    <npc name="A Goblin Exile" x="0" y="-1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32318" centery="31796" centerz="8" radius="1">
+    <npc name="Karl" x="-1" y="1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32318" centery="31803" centerz="8" radius="3">
+    <npc name="William" x="-1" y="-1" z="8" spawntime="60" direction="2" />
+    <npc name="Toothless Tim" x="2" y="1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33217" centery="31814" centerz="8" radius="4">
+    <npc name="Amanda" x="0" y="-1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32307" centery="31838" centerz="8" radius="2">
+    <npc name="Dane" x="1" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33268" centery="31847" centerz="8" radius="2">
+    <npc name="Puffels" x="-1" y="1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="31986" centery="31881" centerz="8" radius="3">
+    <npc name="Woblin" x="1" y="2" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32525" centery="31902" centerz="8" radius="3">
+    <npc name="Budrik" x="0" y="3" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32648" centery="31904" centerz="8" radius="1">
+    <npc name="Lokur" x="-1" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33568" centery="31909" centerz="8" radius="3">
+    <npc name="Elliott" x="3" y="-1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32618" centery="31939" centerz="8" radius="1">
+    <npc name="Duria" x="0" y="-1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32518" centery="31958" centerz="8" radius="3">
+    <npc name="Jagran" x="3" y="1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32085" centery="31977" centerz="8" radius="1">
+    <npc name="Weaponmaster" x="0" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33575" centery="31986" centerz="8" radius="3">
+    <npc name="The Beggar King" x="-2" y="-3" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33354" centery="31992" centerz="8" radius="3">
+    <npc name="A Majestic Warwolf" x="1" y="-1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32449" centery="32039" centerz="8" radius="2">
+    <npc name="Skjaar" x="1" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32931" centery="32071" centerz="8" radius="2">
+    <npc name="Nurik" x="0" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32660" centery="32112" centerz="8" radius="3">
+    <npc name="Adrenius" x="-1" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32389" centery="32119" centerz="8" radius="3">
+    <npc name="Lugri" x="0" y="-1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32105" centery="32180" centerz="8" radius="1">
+    <npc name="Amber" x="-1" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32112" centery="32189" centerz="8" radius="3">
+    <npc name="Paulie" x="3" y="-1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32658" centery="32189" centerz="8" radius="3">
+    <npc name="Snake Eye" x="-1" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32337" centery="32207" centerz="8" radius="3">
+    <npc name="Gamel" x="-1" y="1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32317" centery="32209" centerz="8" radius="2">
+    <npc name="Dorian" x="1" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32445" centery="32213" centerz="8" radius="2">
+    <npc name="Marvik" x="0" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32252" centery="32217" centerz="8" radius="3">
+    <npc name="Victor" x="3" y="-1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32314" centery="32267" centerz="8" radius="2">
+    <npc name="Henricus" x="2" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32324" centery="32280" centerz="8" radius="1">
+    <npc name="Partos" x="-1" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33278" centery="32390" centerz="8" radius="3">
+    <npc name="Mazarius" x="1" y="-1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32248" centery="32604" centerz="8" radius="2">
+    <npc name="Gnommander" x="0" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32580" centery="32756" centerz="8" radius="1">
+    <npc name="Uso" x="-1" y="-1" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32517" centery="32911" centerz="8" radius="1">
+    <npc name="Erayo" x="1" y="0" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33155" centery="32987" centerz="8" radius="3">
+    <npc name="Brutus" x="-2" y="-3" z="8" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33220" centery="31049" centerz="9" radius="1">
+    <npc name="Rebel" x="1" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33209" centery="31050" centerz="9" radius="1">
+    <npc name="Rebel" x="1" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33213" centery="31058" centerz="9" radius="1">
+    <npc name="Chartan" x="1" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33222" centery="31059" centerz="9" radius="1">
+    <npc name="Ezean" x="1" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33444" centery="31322" centerz="9" radius="1">
+    <npc name="Rock With A Soft Spot" x="0" y="-1" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33640" centery="31377" centerz="9" radius="1">
+    <npc name="Navigator" x="-1" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32592" centery="31445" centerz="9" radius="1">
+    <npc name="Harog" x="0" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32644" centery="31657" centerz="9" radius="3">
+    <npc name="Shirith" x="0" y="-2" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32684" centery="31672" centerz="9" radius="1">
+    <npc name="Elathriel" x="0" y="-1" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32981" centery="31732" centerz="9" radius="4">
+    <npc name="The Orc King" x="2" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32797" centery="31765" centerz="9" radius="1">
+    <npc name="Gnomette" x="1" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33379" centery="31832" centerz="9" radius="3">
+    <npc name="Shadowpunch" x="-2" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33533" centery="31832" centerz="9" radius="3">
+    <npc name="Roughington" x="2" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32963" centery="31876" centerz="9" radius="2">
+    <npc name="Gnomeral" x="0" y="-1" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32598" centery="31879" centerz="9" radius="2">
+    <npc name="Humgolf" x="0" y="1" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32652" centery="31887" centerz="9" radius="3">
+    <npc name="Kroox" x="-1" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32636" centery="31888" centerz="9" radius="3">
+    <npc name="Jimbin" x="2" y="0" z="9" spawntime="60" direction="2" />
+    <npc name="Maryza" x="-2" y="1" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33007" centery="31891" centerz="9" radius="2">
+    <npc name="Gnomission" x="0" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32663" centery="31895" centerz="9" radius="1">
+    <npc name="Uzgod" x="1" y="-1" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32658" centery="31909" centerz="9" radius="1">
+    <npc name="Bezil" x="-1" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32661" centery="31909" centerz="9" radius="1">
+    <npc name="Nezil" x="-1" y="1" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32657" centery="31923" centerz="9" radius="1">
+    <npc name="Tezila" x="-1" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33568" centery="31986" centerz="9" radius="3">
+    <npc name="Jacob" x="2" y="-1" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32567" centery="32021" centerz="9" radius="3">
+    <npc name="Dronk" x="0" y="1" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32931" centery="32070" centerz="9" radius="3">
+    <npc name="Zebron" x="0" y="1" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32910" centery="32077" centerz="9" radius="3">
+    <npc name="A Strange Fellow" x="-1" y="-1" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32910" centery="32084" centerz="9" radius="3">
+    <npc name="Maria" x="1" y="-3" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32287" centery="32294" centerz="9" radius="3">
+    <npc name="A Confused Frog" x="2" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33022" centery="32455" centerz="9" radius="3">
+    <npc name="Omrabas" x="-2" y="-1" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33278" centery="32527" centerz="9" radius="1">
+    <npc name="Muhad" x="0" y="-1" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32078" centery="32533" centerz="9" radius="1">
+    <npc name="Atrad" x="-1" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32242" centery="32599" centerz="9" radius="2">
+    <npc name="Gnomilly" x="0" y="0" z="9" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32258" centery="31100" centerz="10" radius="3">
+    <npc name="A Restless Soul" x="-2" y="1" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33238" centery="31224" centerz="10" radius="1">
+    <npc name="A Sleeping Dragon" x="1" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32533" centery="31436" centerz="10" radius="1">
+    <npc name="Bolfona" x="0" y="1" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32533" centery="31438" centerz="10" radius="2">
+    <npc name="Drog" x="0" y="2" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33013" centery="31494" centerz="10" radius="4">
+    <npc name="Murim" x="-1" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33029" centery="31514" centerz="10" radius="1">
+    <npc name="Cael" x="-1" y="-1" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33036" centery="31530" centerz="10" radius="2">
+    <npc name="Esrik" x="0" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33009" centery="31532" centerz="10" radius="2">
+    <npc name="Rabaz" x="0" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33014" centery="31540" centerz="10" radius="1">
+    <npc name="Broken Servant Sentry" x="1" y="0" z="10" spawntime="1200" direction="2" />
+  </npc>
+  <npc centerx="32993" centery="31543" centerz="10" radius="2">
+    <npc name="Swolt" x="0" y="-1" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33023" centery="31543" centerz="10" radius="2">
+    <npc name="Ongulf" x="0" y="-1" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33037" centery="31543" centerz="10" radius="2">
+    <npc name="Pompan" x="0" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33025" centery="31552" centerz="10" radius="1">
+    <npc name="Thorgrin" x="0" y="1" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32595" centery="31615" centerz="10" radius="3">
+    <npc name="A Bearded Woman" x="-1" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33631" centery="31713" centerz="10" radius="3">
+    <npc name="An Imprisoned Goblin" x="0" y="3" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32775" centery="31745" centerz="10" radius="1">
+    <npc name="Gnomerik" x="0" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32795" centery="31746" centerz="10" radius="1">
+    <npc name="Gnomally" x="0" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32826" centery="31750" centerz="10" radius="1">
+    <npc name="Gnomillion" x="-1" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32765" centery="31755" centerz="10" radius="1">
+    <npc name="Gnomespector" x="1" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32804" centery="31758" centerz="10" radius="1">
+    <npc name="Gnominus" x="0" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32769" centery="31770" centerz="10" radius="1">
+    <npc name="Doctor Gnomedix" x="-1" y="1" z="10" spawntime="60" direction="2" />
+    <npc name="Gnomenursey" x="0" y="1" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32786" centery="31776" centerz="10" radius="1">
+    <npc name="Gnomejam" x="1" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32805" centery="31782" centerz="10" radius="1">
+    <npc name="Gnomegica" x="0" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32763" centery="31786" centerz="10" radius="5">
+    <npc name="Gnomaticus" x="1" y="3" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32787" centery="31788" centerz="10" radius="1">
+    <npc name="Gnomerrow" x="0" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32802" centery="31791" centerz="10" radius="1">
+    <npc name="Bigfoot Soldier" x="0" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32796" centery="31795" centerz="10" radius="1">
+    <npc name="Gnomailion" x="0" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32804" centery="31798" centerz="10" radius="1">
+    <npc name="Commander Stone" x="1" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32759" centery="31808" centerz="10" radius="5">
+    <npc name="Gnomewart" x="0" y="-1" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32775" centery="31808" centerz="10" radius="5">
+    <npc name="Gnomelvis" x="-1" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32996" centery="31918" centerz="10" radius="3">
+    <npc name="Gnomad" x="0" y="1" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32556" centery="32069" centerz="10" radius="3">
+    <npc name="Junkar Mines" x="0" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32910" centery="32084" centerz="10" radius="3">
+    <npc name="Urkalio" x="2" y="-2" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32617" centery="32108" centerz="10" radius="3">
+    <npc name="Nemal" x="0" y="-1" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32653" centery="32151" centerz="10" radius="3">
+    <npc name="Hagor" x="-1" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32829" centery="32245" centerz="10" radius="1">
+    <npc name="A Ghostly Sage" x="-1" y="0" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33023" centery="32312" centerz="10" radius="2">
+    <npc name="Oblivion" x="0" y="1" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32854" centery="32318" centerz="10" radius="1">
+    <npc name="Demonguard" x="0" y="1" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32633" centery="32401" centerz="10" radius="2">
+    <npc name="Angelina" x="0" y="1" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32854" centery="32427" centerz="10" radius="3">
+    <npc name="The Gate Keeper" x="1" y="-1" z="10" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33169" centery="31231" centerz="11" radius="1">
+    <npc name="Ztiss" x="1" y="0" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32656" centery="31358" centerz="11" radius="1">
+    <npc name="Pyromental" x="1" y="1" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32749" centery="31601" centerz="11" radius="3">
+    <npc name="Repenter" x="3" y="0" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32763" centery="31601" centerz="11" radius="3">
+    <npc name="Repenter" x="2" y="-2" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32777" centery="31601" centerz="11" radius="3">
+    <npc name="Larfion the Shaman" x="2" y="0" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32756" centery="31608" centerz="11" radius="3">
+    <npc name="Repenter" x="-1" y="3" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32763" centery="31608" centerz="11" radius="3">
+    <npc name="Ashari" x="3" y="2" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32756" centery="31622" centerz="11" radius="3">
+    <npc name="Repenter" x="-3" y="3" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32773" centery="31626" centerz="11" radius="3">
+    <npc name="Repenter" x="0" y="1" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33267" centery="31790" centerz="11" radius="3">
+    <npc name="Telas Golem" x="0" y="-2" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33274" centery="31790" centerz="11" radius="3">
+    <npc name="Telas" x="-1" y="-2" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32623" centery="31860" centerz="11" radius="3">
+    <npc name="Xelvar" x="-2" y="0" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32652" centery="31893" centerz="11" radius="4">
+    <npc name="Pydar" x="-2" y="1" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32651" centery="31909" centerz="11" radius="3">
+    <npc name="Ferus" x="-2" y="2" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32652" centery="31926" centerz="11" radius="1">
+    <npc name="Isimov" x="1" y="0" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33007" centery="31937" centerz="11" radius="3">
+    <npc name="Gnomercy" x="1" y="2" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32931" centery="32077" centerz="11" radius="3">
+    <npc name="Asrak" x="0" y="-2" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32854" centery="32326" centerz="11" radius="5">
+    <npc name="A Ghostly Knight" x="0" y="1" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33015" centery="32357" centerz="11" radius="3">
+    <npc name="Elyen Ravenlock" x="-3" y="2" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32980" centery="32420" centerz="11" radius="3">
+    <npc name="Tomruk The Ruddy" x="3" y="-2" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33043" centery="32483" centerz="11" radius="3">
+    <npc name="Zarifan" x="-3" y="1" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32242" centery="32598" centerz="11" radius="3">
+    <npc name="Gnombold" x="0" y="0" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32119" centery="32966" centerz="11" radius="3">
+    <npc name="Polly" x="-3" y="2" z="11" spawntime="60" direction="2" />
+    <npc name="Skip" x="3" y="2" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32133" centery="32973" centerz="11" radius="3">
+    <npc name="Skeleton Guard" x="-2" y="-3" z="11" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33104" centery="31120" centerz="12" radius="1">
+    <npc name="Zizzle" x="1" y="0" z="12" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32683" centery="31392" centerz="12" radius="1">
+    <npc name="Zirkon" x="-1" y="0" z="12" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33038" centery="31533" centerz="12" radius="1">
+    <npc name="Esrik" x="-1" y="0" z="12" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33023" centery="31540" centerz="12" radius="1">
+    <npc name="Ongulf" x="1" y="-1" z="12" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33035" centery="31544" centerz="12" radius="1">
+    <npc name="Pompan" x="0" y="-1" z="12" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33024" centery="31553" centerz="12" radius="1">
+    <npc name="Thorgrin" x="0" y="1" z="12" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32700" centery="31832" centerz="12" radius="3">
+    <npc name="Brom" x="3" y="0" z="12" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32441" centery="31853" centerz="12" radius="3">
+    <npc name="Lucius" x="-1" y="-2" z="12" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32563" centery="31895" centerz="12" radius="2">
+    <npc name="Talphion" x="1" y="0" z="12" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32406" centery="31916" centerz="12" radius="3">
+    <npc name="A Dwarven Ghost" x="1" y="2" z="12" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32209" centery="31924" centerz="12" radius="1">
+    <npc name="A Lost Soul" x="0" y="0" z="12" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32216" centery="31926" centerz="12" radius="1">
+    <npc name="A Tainted Soul" x="0" y="0" z="12" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32207" centery="31927" centerz="12" radius="1">
+    <npc name="A Tortured Soul" x="0" y="1" z="12" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32679" centery="31951" centerz="12" radius="3">
+    <npc name="Shortsighted Dwarf" x="-1" y="1" z="12" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32644" centery="31970" centerz="12" radius="3">
+    <npc name="Kawill" x="-1" y="-1" z="12" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32731" centery="32564" centerz="12" radius="1">
+    <npc name="Ghost Of A Priest" x="1" y="0" z="12" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32905" centery="31168" centerz="13" radius="5">
+    <npc name="Maritima" x="-3" y="-1" z="13" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32788" centery="31690" centerz="13" radius="1">
+    <npc name="A Wrinkled Bonelord" x="0" y="0" z="13" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33295" centery="31790" centerz="13" radius="3">
+    <npc name="Falonzo" x="-3" y="2" z="13" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32525" centery="32021" centerz="13" radius="3">
+    <npc name="Robson" x="-1" y="2" z="13" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32393" centery="32138" centerz="13" radius="1">
+    <npc name="A Prisoner" x="1" y="0" z="13" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32368" centery="32181" centerz="13" radius="3">
+    <npc name="Junkar Thais" x="0" y="0" z="13" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32783" centery="32528" centerz="13" radius="1">
+    <npc name="Ghost Of A Priest" x="1" y="0" z="13" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32242" centery="32611" centerz="13" radius="1">
+    <npc name="Gnomux" x="0" y="0" z="13" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32210" centery="31377" centerz="14" radius="3">
+    <npc name="Messenger of Heaven" x="-3" y="0" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32727" centery="31420" centerz="14" radius="1">
+    <npc name="Tehlim" x="0" y="0" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32606" centery="31490" centerz="14" radius="1">
+    <npc name="Nokmir" x="1" y="0" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32585" centery="31501" centerz="14" radius="1">
+    <npc name="Frafnar" x="0" y="-1" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32614" centery="31502" centerz="14" radius="1">
+    <npc name="Xorlosh" x="0" y="0" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32609" centery="31514" centerz="14" radius="1">
+    <npc name="Grombur" x="0" y="1" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33036" centery="31531" centerz="14" radius="3">
+    <npc name="Esrik" x="-1" y="0" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33008" centery="31538" centerz="14" radius="3">
+    <npc name="Broken Servant Sentry" x="2" y="0" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33023" centery="31543" centerz="14" radius="2">
+    <npc name="Ongulf" x="1" y="0" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33036" centery="31545" centerz="14" radius="3">
+    <npc name="Pompan" x="-3" y="-2" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33024" centery="31553" centerz="14" radius="1">
+    <npc name="Thorgrin" x="0" y="1" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32260" centery="31864" centerz="14" radius="3">
+    <npc name="The Queen Of The Banshees" x="-3" y="1" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32684" centery="31987" centerz="14" radius="1">
+    <npc name="Rapanaio" x="-1" y="0" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32700" centery="31993" centerz="14" radius="1">
+    <npc name="Rapanaioboat" x="0" y="-1" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32525" centery="32028" centerz="14" radius="3">
+    <npc name="Lunch" x="2" y="1" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32525" centery="32035" centerz="14" radius="3">
+    <npc name="Junkar Robsons" x="0" y="3" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32793" centery="32226" centerz="14" radius="2">
+    <npc name="The Bone Master" x="0" y="-1" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32844" centery="32227" centerz="14" radius="2">
+    <npc name="The Dream Master" x="0" y="1" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32835" centery="32289" centerz="14" radius="1">
+    <npc name="A Ghostly Woman" x="-1" y="0" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32755" centery="32346" centerz="14" radius="1">
+    <npc name="A Ghostly Guardian" x="0" y="0" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33233" centery="32522" centerz="14" radius="4">
+    <npc name="The Crone" x="-3" y="0" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32245" centery="32600" centerz="14" radius="2">
+    <npc name="Gnomargery" x="0" y="0" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32808" centery="32641" centerz="14" radius="1">
+    <npc name="Ghost Of A Priest" x="1" y="0" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33365" centery="32856" centerz="14" radius="1">
+    <npc name="CobraNPC" x="1" y="-1" z="14" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33062" centery="31153" centerz="15" radius="1">
+    <npc name="Awarness Of The Emperor" x="0" y="0" z="15" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32761" centery="31376" centerz="15" radius="1">
+    <npc name="Rehon" x="-1" y="0" z="15" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32590" centery="31407" centerz="15" radius="1">
+    <npc name="Pythius The RottenNPC" x="-1" y="0" z="15" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33026" centery="31525" centerz="15" radius="1">
+    <npc name="Prezil" x="1" y="0" z="15" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32665" centery="31678" centerz="15" radius="3">
+    <npc name="Demon SkeletonNPC" x="1" y="-3" z="15" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33259" centery="31938" centerz="15" radius="2">
+    <npc name="A Dark Priestess" x="-1" y="0" z="15" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32641" centery="31943" centerz="15" radius="1">
+    <npc name="Basilisk" x="0" y="-1" z="15" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32659" centery="31957" centerz="15" radius="2">
+    <npc name="Brodrosch" x="0" y="0" z="15" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="33310" centery="31988" centerz="15" radius="2">
+    <npc name="Gurbasch" x="1" y="0" z="15" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32418" centery="32148" centerz="15" radius="4">
+    <npc name="Markwin" x="-2" y="-3" z="15" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32737" centery="32268" centerz="15" radius="2">
+    <npc name="A Dead Bureaucrat4" x="0" y="0" z="15" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32729" centery="32278" centerz="15" radius="2">
+    <npc name="A Dead Bureaucrat3" x="0" y="0" z="15" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32737" centery="32283" centerz="15" radius="2">
+    <npc name="A Dead Bureaucrat2" x="0" y="0" z="15" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32729" centery="32292" centerz="15" radius="2">
+    <npc name="A Dead Bureaucrat1" x="0" y="1" z="15" spawntime="60" direction="2" />
+  </npc>
+</npcs>

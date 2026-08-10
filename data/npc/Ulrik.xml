@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Ulrik" script="Ulrik.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="131" head="41" body="70" legs="97" feet="95" addons="0" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="chain helmet, 3352,52;leather helmet, 3355,12;chain legs, 3558,80;chain armor, 3358,200;brass armor, 3359,450;leather armor, 3361,35;steel shield, 3409,240;wooden shield, 3412,15;viking shield, 3431,260;dagger, 3267,5;rapier, 3272,15;sabre, 3273,35;mace, 3286,90" />
+		<parameter key="shop_sellable" value="steel helmet, 3351,190;chain helmet, 3352,17;iron helmet, 3353,150;leather helmet, 3355,4;chain legs, 3558,25;plate armor, 3357,400;chain armor, 3358,70;brass armor, 3359,150;leather armor, 3361,12;steel shield, 3409,80;wooden shield, 3412,5;battle shield, 3413,95;viking shield, 3431,85;two handed sword, 3265,450;dagger, 3267,2;spike sword, 3271,240;rapier, 3272,5;sabre, 3273,12;short sword, 3294,10;morning star, 3282,90;mace, 3286,30;battle hammer, 3305,120" />
+	</parameters>
+</npc>

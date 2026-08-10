@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Iriana" script="Iriana.lua" walkinterval="2000">
+	<health now="100" max="100" />
+	<look type="264" head="78" body="116" legs="95" feet="121" />
+	<parameters>
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="backpack, 2854,10;bag, 235,5;fishing rod, 3483,150;worm, 3492,1" />
+	</parameters>
+</npc>

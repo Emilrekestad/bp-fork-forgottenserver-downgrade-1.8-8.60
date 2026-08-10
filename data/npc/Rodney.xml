@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Rodney" script="Rodney.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="128" head="95" body="100" legs="116" feet="76" addons="0" />
+<voices>
+<voice text="Apples, cherries, grapes and pears! All fresh, all tasty!" interval2="100" margin="1" yell="no" />
+</voices>
+	<parameters>
+		<parameter key="message_greet" value="Greetings, |PLAYERNAME|. If you're looking for {fruits}, you've come to the right place." />
+		<parameter key="message_farewell" value="Good bye, |PLAYERNAME|." />
+		<parameter key="module_keywords" value="1" />
+		<parameter key="keywords" value="fruits;job;" />
+		<parameter key="keyword_reply1" value="I have apples, cherries, grapes, plums, raspberries and pears. Ask me for a {trade} if you're interested." />
+		<parameter key="keyword_reply2" value="I sell some local fruits." />
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="cherry, 3590,1;grapes, 3592,3;pear, 3584,4;plum, 8011,3;raspberry, 8012,1;red apple, 3585,3" />
+	</parameters>
+</npc>

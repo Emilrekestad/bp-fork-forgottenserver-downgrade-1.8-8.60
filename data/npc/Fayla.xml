@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Fayla" script="Fayla.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="140" head="78" body="117" legs="113" feet="2" addons="1" />
+	
+	<voices>
+<voice text="Let's make noise?" interval2="90" margin="1" yell="no" />
+</voices>
+	<parameters>
+	<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="Drum, 2952,140;Harp Kit, 2808,50;Lute, 2950,195;Lyre, 2949,120;Simple Fanfare, 2954,150;Piano Kit, 2807,200" />
+
+		
+	</parameters>
+</npc>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Gnomerrow" script="Gnomerrow.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="493" head="131" body="131" legs="131" feet="132" addons="0" />
+	<parameters>
+		<parameter key="message_greet" value="Hi |PLAYERNAME|!" />
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="arrow, 3447,3;bolt, 3446,4;bow, 3350,400;crossbow, 3349,500;spear, 3277,10;royal spear,7378,15;throwing star, 3287,42;earth arrow, 774,5;flaming arrow, 763,5;flash arrow, 761,5;onyx arrow,7365,7;piercing bolt,7363,5;power bolt, 3450,7;shiver arrow, 762,5;sniper arrow,7364,5" />
+		<parameter key="shop_sellable" value="bow, 3350,100;crossbow, 3349,120" />
+		<parameter key="message_farewell" value="Good bye." />
+	</parameters>
+</npc>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Perod" script="Perod.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="128" head="39" body="125" legs="29" feet="114" addons="0" />
+<parameters>
+<parameter key="message_greet" value="Greetings, dear |PLAYERNAME|. What do you need? I sell general {equipment} and {distance} weapons." />
+		<parameter key="message_sendtrade" value="Of course, just browse through my wares. If you're only interested in {distance} equipment or a {football}, let me know." />
+		<parameter key="module_shop" value="1" />
+		<parameter key="shop_buyable" value="camouflage backpack, 2872,20;camouflage bag, 2864,5;fishing rod, 3483,150;machete, 3308,40;pick, 3456,50;present, 906,10;rope, 3003,50;scroll, 347,5;scythe, 3453,50;shovel, 3457,50;torch, 2920,2;valentine's card,6538,30;watch,6091,20;worm, 3492,1;bow, 3350,400;crossbow, 3349,500;royal spear,7378,15;spear, 3277,10;throwing star, 3287,42;arrow, 3447,3;earth arrow, 774,5;flaming arrow, 763,5;flash arrow, 761,5;onyx arrow,7365,7;shiver arrow, 762,5;sniper arrow,7364,5;bolt, 3446,4;piercing bolt,7363,5;power bolt, 3450,7" />
+		<parameter key="shop_sellable" value="bow, 3350,100;crossbow, 3349,120;spear, 3277,3" />
+	</parameters>
+</npc>
+
