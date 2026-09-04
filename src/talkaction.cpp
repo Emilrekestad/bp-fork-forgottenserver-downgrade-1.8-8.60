@@ -6,6 +6,7 @@
 #include "talkaction.h"
 
 #include "condition.h"
+#include "gameevents.h"
 #include "player.h"
 #include "pugicast.h"
 #include "logger.h"
@@ -109,6 +110,23 @@ TalkActionResult TalkActions::playerSaySpell(Player* player, SpeakClasses type, 
 					player->addCondition(std::move(condition));
 				}
 			}
+		}
+
+		// Admin console: record staff commands, and only staff commands.
+		//
+		// This is deliberately narrow. Everything a player types passes through
+		// here, and the console's whole posture is that it does not store player
+		// conversation -- only that a message happened, on what kind of channel.
+		// A talkaction that ordinary players can use is gameplay; one gated
+		// behind an account type is an administrative action, and those are what
+		// an audit trail is for. The parameter is stored because "who was given
+		// what" is the question this exists to answer.
+		if (it->second.getNeedAccess() || it->second.getRequiredAccountType() > ACCOUNT_TYPE_NORMAL) {
+			GameEvents::emit("gm.command", "talkaction", std::string{talkactionWords},
+			                 fmt::format(R"({{"command":"{:s}","param":"{:s}","by":"{:s}"}})",
+			                             GameEvents::jsonEscape(talkactionWords), GameEvents::jsonEscape(param),
+			                             GameEvents::jsonEscape(player->getName())),
+			                 player->getAccount(), player->getGUID());
 		}
 
 		if (it->second.executeSay(player, words, param, type)) {

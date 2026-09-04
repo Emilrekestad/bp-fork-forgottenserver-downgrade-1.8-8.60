@@ -1,7 +1,23 @@
+-- Every world message players see from Lua passes through here, which makes
+-- this the one place worth recording them from. The C++ `g_game.broadcastMessage`
+-- has its own path and does not reach this function -- raid announcements in
+-- particular -- so the console also records broadcasts on the C++ side; see
+-- Game::broadcastMessage in src/game.cpp.
+--
+-- The emit is fire-and-forget by design. A broadcast that fails to be recorded
+-- is a gap in a feed; a broadcast the players do not receive because a database
+-- write stalled is a visible fault, so the message goes out first.
 function Game.broadcastMessage(message, messageType)
 	if not messageType then messageType = MESSAGE_STATUS_WARNING end
 
 	for _, player in ipairs(Game.getPlayers()) do player:sendTextMessage(messageType, message) end
+
+	if GameEvents and GameEvents.emit then
+		GameEvents.emit("world.message", {
+			subjectType = "broadcast",
+			payload = {text = tostring(message), message_type = messageType, origin = "lua"},
+		})
+	end
 end
 
 function Game.convertIpToString(ip)

@@ -2656,7 +2656,17 @@ function Player.addAchievement(self, ach, hideMsg)
 		-- Storage above stays authoritative; see lib/achievements/achievements_db.lua.
 		if AchievementsDB then AchievementsDB.recordUnlock(self, achievement.id, unlockedAt) end
 		if not hideMsg then
-			IntegrationEvents.recordWorldFirst(self, achievement)
+			-- recordWorldFirst returns true only for the character that
+			-- actually claimed the achievement first, so the console's feed
+			-- can mark world firsts without a second query.
+			local worldFirst = IntegrationEvents.recordWorldFirst(self, achievement)
+			GameEvents.emitForPlayer("player.achievement", self, {
+				name = achievement.name,
+				points = achievement.points or 0,
+				grade = achievement.grade or 1,
+				secret = achievement.secret and true or false,
+				world_first = worldFirst and true or false,
+			}, "achievement", tostring(achievement.id))
 			self:sendTextMessage(MESSAGE_EVENT_ADVANCE, "Congratulations! You earned the achievement \"" .. achievement.name .. "\".")
 			if self.isUsingAstraClient and self:isUsingAstraClient() then
 				local msg = NetworkMessage(self)

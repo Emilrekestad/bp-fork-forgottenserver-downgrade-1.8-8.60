@@ -7,6 +7,7 @@
 
 #include "configmanager.h"
 #include "game.h"
+#include "gameevents.h"
 #include "monster.h"
 #include "pugicast.h"
 #include "scheduler.h"
@@ -220,6 +221,15 @@ void Raids::checkRaids()
 			Raid* raid = it->get();
 			setRunning(raid);
 			raid->startRaid(!raid->canBeRepeated());
+
+			// Admin console. Raids are selected and started here, entirely in
+			// C++, so this is the only place that knows a raid fired and which
+			// one. The announcement players see is recorded separately as a
+			// world.message; that is the wording, this is the fact.
+			GameEvents::emit("raid.start", "raid", raid->getName(),
+			                 fmt::format(R"({{"name":"{:s}","repeatable":{:s}}})",
+			                             GameEvents::jsonEscape(raid->getName()),
+			                             raid->canBeRepeated() ? "true" : "false"));
 		}
 	}
 

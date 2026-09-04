@@ -27,6 +27,7 @@ set(tfs_SRC
 	${CMAKE_CURRENT_LIST_DIR}/events.cpp
 	${CMAKE_CURRENT_LIST_DIR}/fileloader.cpp
 	${CMAKE_CURRENT_LIST_DIR}/game.cpp
+	${CMAKE_CURRENT_LIST_DIR}/gameevents.cpp
 	${CMAKE_CURRENT_LIST_DIR}/globalevent.cpp
 	${CMAKE_CURRENT_LIST_DIR}/groups.cpp
 	${CMAKE_CURRENT_LIST_DIR}/guild.cpp
@@ -177,6 +178,7 @@ set(tfs_HDR
 	${CMAKE_CURRENT_LIST_DIR}/fileloader.h
 	${CMAKE_CURRENT_LIST_DIR}/fonticakclient.h
 	${CMAKE_CURRENT_LIST_DIR}/game.h
+	${CMAKE_CURRENT_LIST_DIR}/gameevents.h
 	${CMAKE_CURRENT_LIST_DIR}/globalevent.h
 	${CMAKE_CURRENT_LIST_DIR}/groups.h
 	${CMAKE_CURRENT_LIST_DIR}/guild.h

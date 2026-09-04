@@ -102,6 +102,18 @@ function playerDeath.onDeath(player, corpse, killer, mostDamageKiller, lastHitUn
         end
     end)
 
+    -- Admin console: one typed row per death, so the World feed can show what
+    -- the server has been doing and the analyst can answer "what is killing
+    -- people at level 200". The level is carried in the payload so the feed
+    -- can lift notable deaths without joining anything.
+    GameEvents.emitForPlayer("player.death", player, {
+        level = player:getLevel(),
+        killer = killerName,
+        by_player = byPlayer,
+        most_damage_by = killerNameMostDamage,
+        unjust = lastHitUnjustified and true or false,
+    }, "killer", killerName)
+
     return true
 end
 playerDeath:register()

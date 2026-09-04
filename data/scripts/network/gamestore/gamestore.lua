@@ -1021,6 +1021,18 @@ function buyHandler.onReceive(player, msg)
 	local historyCount = offer.oftype == "item" and offer.count or (offer.oftype == "house" and math.max(#(offer.items or {}), offer.count or 1) or (offer.oftype == "prey_wildcard" and offer.value or 1))
 	addStoreHistory(player:getAccountId(), player:getGuid(), offer.name, -offer.price, historyCount, nil)
 
+	-- Recorded only once delivery succeeded, so a reversed purchase never
+	-- appears in the feed as a sale. The coin ledger keeps both rows because
+	-- money moved twice; this stream is about what happened, not about cash.
+	GameEvents.emitForPlayer("store.purchase", player, {
+		offer = offer.name,
+		offer_id = offerId,
+		category = offer.category,
+		oftype = offer.oftype,
+		coins = offer.price,
+		count = historyCount,
+	}, "offer", tostring(offerId))
+
 	if isGlobalBoostOfferType(offer.oftype) then
 		-- The broadcast has already gone out from GlobalBoosts.extend; this
 		-- is the buyer's own confirmation, and it reports the new total rather

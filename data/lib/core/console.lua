@@ -40,19 +40,21 @@ end
 -- ---------------------------------------------------------------- events
 
 GameEvents.VERSIONS = {
-	["session.login"]   = 1,
-	["session.logout"]  = 1,
-	["player.death"]    = 1,
-	["player.level"]    = 1,
-	["quest.progress"]  = 1,
-	["store.purchase"]  = 1,
-	["chat.message"]    = 1,
-	["gm.command"]      = 1,
-	["server.start"]    = 1,
-	["server.stop"]     = 1,
-	["server.save"]     = 1,
-	["agent.action"]    = 1,
-	["raid.start"]      = 1,
+	["session.login"]      = 1,
+	["session.logout"]     = 1,
+	["player.death"]       = 1,
+	["player.level"]       = 1,
+	["player.achievement"] = 1,
+	["quest.progress"]     = 1,
+	["store.purchase"]     = 1,
+	["chat.message"]       = 1,
+	["gm.command"]         = 1,
+	["server.start"]       = 1,
+	["server.stop"]        = 1,
+	["server.save"]        = 1,
+	["agent.action"]       = 1,
+	["raid.start"]         = 1,
+	["world.message"]      = 1,
 }
 
 --- Records that something happened.

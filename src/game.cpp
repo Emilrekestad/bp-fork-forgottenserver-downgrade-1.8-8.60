@@ -15,6 +15,7 @@
 #include "databasetasks.h"
 #include "enums.h"
 #include "events.h"
+#include "gameevents.h"
 #include "globalevent.h"
 #include "housetile.h"
 #include "instance_utils.h"
@@ -7904,6 +7905,14 @@ void Game::broadcastMessage(std::string_view text, MessageClasses type) const
 	for (const auto& player : getPlayers()) {
 		player->sendTextMessage(type, text);
 	}
+
+	// Admin console. This catches raid announcements and every other C++
+	// broadcast, none of which pass through the Lua Game.broadcastMessage
+	// override in data/lib/core/game.lua. Lua broadcasts are recorded there
+	// instead, so each message is recorded exactly once whichever side sent it.
+	GameEvents::emit("world.message", "broadcast", "",
+	                 fmt::format(R"({{"text":"{:s}","message_type":{:d},"origin":"cpp"}})",
+	                             GameEvents::jsonEscape(text), static_cast<int>(type)));
 }
 
 void Game::updateCreatureWalkthrough(const Creature* creature)

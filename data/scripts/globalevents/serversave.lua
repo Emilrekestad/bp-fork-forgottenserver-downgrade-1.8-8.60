@@ -2,12 +2,22 @@ local config = {
     time = "09:55:00"
 }
 
+-- The console records how long each save took. A save whose duration is
+-- creeping up is one of the earliest honest warnings a server gives, and
+-- until now nothing was measuring it. The emit is deliberately after the
+-- game state is back to normal, so nothing here can delay players getting
+-- back in.
 local function ServerSave()
     if CustomMarket and CustomMarket.updateStatistics then
         CustomMarket.updateStatistics()
     end
 
-    if configManager.getBoolean(configKeys.SERVER_SAVE_SHUTDOWN) then
+    local onlineBefore = #Game.getPlayers()
+    local startedAt = os.mtime()
+    local shuttingDown = configManager.getBoolean(configKeys.SERVER_SAVE_SHUTDOWN)
+    local cleanedMap = false
+
+    if shuttingDown then
         Game.setGameState(GAME_STATE_SHUTDOWN)
     else
         local closeAtServerSave = configManager.getBoolean(configKeys.SERVER_SAVE_CLOSE)
@@ -19,12 +29,28 @@ local function ServerSave()
 
         if configManager.getBoolean(configKeys.SERVER_SAVE_CLEAN_MAP) then
             cleanMap()
+            cleanedMap = true
         end
 
         if closeAtServerSave then
             Game.setGameState(GAME_STATE_NORMAL)
         end
     end
+
+    local onlineAfter = #Game.getPlayers()
+    GameEvents.emit("server.save", {
+        -- Synchronous on the shutdown path only: an async query is handed to a
+        -- worker thread the process does not wait for, so a save that ends in
+        -- a shutdown would never be recorded at all.
+        sync = shuttingDown,
+        payload = {
+            duration_ms = os.mtime() - startedAt,
+            players_online = onlineBefore,
+            kicked = math.max(0, onlineBefore - onlineAfter),
+            cleaned_map = cleanedMap,
+            shutdown = shuttingDown,
+        },
+    })
 end
 
 local function ServerSaveWarning(remainingTime)
