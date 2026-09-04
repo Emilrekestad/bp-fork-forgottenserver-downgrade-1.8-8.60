@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <raid>
 	<!-- Message broadcast -->
-	<announce delay="1000" type="warning" message="Dragons are attacking in Dragons Mountain!" />
+	<announce delay="1000" type="event" message="Dragons are attacking in Dragons Mountain!" />
 
 	<!-- Floor (z = 7) -->
 	<areaspawn delay="2000" radius="18" centerx="1146" centery="1112" centerz="7">

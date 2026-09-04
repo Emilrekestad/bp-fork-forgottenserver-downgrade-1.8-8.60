@@ -5,6 +5,7 @@
 
 #include "character_bazaar.h"
 
+#include "coins.h"
 #include "configmanager.h"
 #include "database.h"
 #include "game.h"
@@ -177,49 +178,14 @@ bool isPlayerOnActiveAuction(uint32_t playerId)
 	    AUCTION_STATUS_ACTIVE));
 }
 
-uint64_t getTransferableCoins(uint32_t accountId)
-{
-	if (accountId == 0) {
-		return 0;
-	}
-	auto result = Database::getInstance().storeQuery(
-	    fmt::format("SELECT `tibia_coins` FROM `accounts` WHERE `id` = {:d}", accountId));
-	return result ? result->getNumber<uint64_t>("tibia_coins") : 0;
-}
+// Thin forwarders to the shared Coins module (src/coins.h). The guarded-UPDATE
+// implementations used to live here; they were promoted so the Item Bazaar
+// shares one copy rather than re-deriving the same atomicity trick.
+uint64_t getTransferableCoins(uint32_t accountId) { return Coins::getBalance(accountId); }
 
-bool debitTransferableCoins(uint32_t accountId, uint64_t amount)
-{
-	if (accountId == 0) {
-		return false;
-	}
-	if (amount == 0) {
-		return true;
-	}
-	Database& db = Database::getInstance();
-	return db.executeQuery(fmt::format(
-	           "UPDATE `accounts` SET `tibia_coins` = `tibia_coins` - {:d} WHERE `id` = {:d} AND `tibia_coins` >= {:d}",
-	           amount, accountId, amount)) &&
-	       db.getAffectedRows() == 1;
-}
+bool debitTransferableCoins(uint32_t accountId, uint64_t amount) { return Coins::debit(accountId, amount); }
 
-bool creditTransferableCoins(uint32_t accountId, uint64_t amount)
-{
-	if (accountId == 0) {
-		return false;
-	}
-	if (amount == 0) {
-		return true;
-	}
-	if (amount > MAX_TIBIA_COINS) {
-		return false;
-	}
-	Database& db = Database::getInstance();
-	return db.executeQuery(fmt::format(
-	           "UPDATE `accounts` SET `tibia_coins` = `tibia_coins` + {:d} WHERE `id` = {:d} "
-	           "AND `tibia_coins` <= {:d}",
-	           amount, accountId, MAX_TIBIA_COINS - amount)) &&
-	       db.getAffectedRows() == 1;
-}
+bool creditTransferableCoins(uint32_t accountId, uint64_t amount) { return Coins::credit(accountId, amount); }
 
 bool addHistory(uint32_t auctionId, const std::string& action, uint32_t accountId, uint32_t playerId, uint64_t amount,
 	            const std::string& message)
@@ -278,7 +244,7 @@ bool canCreateAuction(Player* player, std::string& reason)
 		return false;
 	}
 	if (getTransferableCoins(player->getAccount()) < getAuctionFee()) {
-		reason = "You do not have enough transferable Tibia Coins for the auction fee.";
+		reason = "You do not have enough transferable Bp Coins for the auction fee.";
 		return false;
 	}
 
@@ -324,7 +290,7 @@ bool createAuction(Player* player, uint32_t startPrice, uint32_t durationSeconds
 			return false;
 		}
 		if (!debitTransferableCoins(accountId, getAuctionFee())) {
-			reason = "You do not have enough transferable Tibia Coins for the auction fee.";
+			reason = "You do not have enough transferable Bp Coins for the auction fee.";
 			return false;
 		}
 		const Outfit_t outfit = player->getCurrentOutfit();

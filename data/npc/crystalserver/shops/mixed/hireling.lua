@@ -2087,6 +2087,7 @@ function createHirelingType(HirelingName)
 		BANK = 1200,
 		FOOD = 1300,
 		GOODS = 1400,
+		OUTFIT = 1500,
 		IMBUEMENT_START = 2000,
 		IMBUEMENT_BUY = 2001,
 		IMBUEMENT_END = 2002,
@@ -2379,13 +2380,22 @@ function createHirelingType(HirelingName)
 				end
 
 				npcHandler:say("Are you sure you want me to go back to my lamp?", npc, creature)
-			elseif MsgContains(message, "outfit") then
+			elseif MsgContains(message, "outfit") or MsgContains(message, "dress") then
 				if player:getGuid() ~= hireling:getOwnerId() then
 					return false
 				end
 
-				hireling:requestOutfitChange()
-				npcHandler:say("As you wish!", npc, creature)
+				-- Dresses are chosen BY NAME here rather than through the outfit
+				-- window. That window needs a custom protocol this client has no
+				-- code for, and a mismatched reply changes the PLAYER's outfit
+				-- instead of the hireling's.
+				local dresses = {}
+				for _, outfitData in ipairs(hireling:getAvailableOutfits(false)) do
+					dresses[#dresses + 1] = "{" .. outfitData.name .. "}"
+				end
+
+				npcHandler:setTopic(playerId, TOPIC.OUTFIT)
+				npcHandler:say("I can wear " .. table.concat(dresses, ", ") .. ". Which shall it be?", npc, creature)
 			end
 		elseif npcHandler:getTopic(playerId) == TOPIC.LAMP then
 			if MsgContains(message, "yes") then
@@ -2393,6 +2403,33 @@ function createHirelingType(HirelingName)
 			else
 				npcHandler:setTopic(playerId, TOPIC.SERVICES)
 				npcHandler:say("Alright then, I will be here.", npc, creature)
+			end
+		elseif npcHandler:getTopic(playerId) == TOPIC.OUTFIT then
+			if player:getGuid() ~= hireling:getOwnerId() then
+				return false
+			end
+
+			local wanted = message:lower()
+			local chosen
+			for _, outfitData in ipairs(hireling:getAvailableOutfits(false)) do
+				if outfitData.name:lower() == wanted then
+					chosen = outfitData
+					break
+				end
+			end
+
+			if not chosen then
+				npcHandler:say("I do not own that dress. You can buy dresses for me in the store.", npc, creature)
+			else
+				-- Keep the colours the hireling already wears; only the dress changes.
+				local outfit = hireling:getOutfit()
+				outfit.lookType = chosen.lookType
+				if hireling:changeOutfit(player, outfit) then
+					npcHandler:setTopic(playerId, TOPIC.SERVICES)
+					npcHandler:say("There. How do I look?", npc, creature)
+				else
+					npcHandler:say("I could not change into that, sorry.", npc, creature)
+				end
 			end
 		elseif npcHandler:getTopic(playerId) == TOPIC.BANK then
 			enableBankSystem[playerId] = true
@@ -2419,12 +2456,23 @@ function createHirelingType(HirelingName)
 			end
 		end
 		if enableBankSystem[playerId] then
-			-- Parse bank
-			npc:parseBank(message, npc, creature, npcHandler)
-			-- Parse guild bank
-			npc:parseGuildBank(message, npc, creature, playerId, npcHandler)
-			-- Normal messages
-			npc:parseBankMessages(message, npc, creature, npcHandler)
+			-- npc:parseBank / parseGuildBank / parseBankMessages are called by every
+			-- crystalserver NPC that offers banking, and are DEFINED NOWHERE in
+			-- this codebase -- calling them raises a Lua error and drops the rest
+			-- of the reply. Banking itself works fine; it lives in a different
+			-- dialogue framework (see data/npc/crystalserver/bank/banker.lua),
+			-- which still has to be ported into this handler.
+			--
+			-- Until then, say so plainly instead of throwing.
+			if npc.parseBank then
+				npc:parseBank(message, npc, creature, npcHandler)
+				npc:parseGuildBank(message, npc, creature, playerId, npcHandler)
+				npc:parseBankMessages(message, npc, creature, npcHandler)
+			else
+				enableBankSystem[playerId] = nil
+				npcHandler:setTopic(playerId, TOPIC.SERVICES)
+				npcHandler:say("My ledgers are not in order yet -- please use a banker in town for now.", npc, creature)
+			end
 		end
 		return true
 	end

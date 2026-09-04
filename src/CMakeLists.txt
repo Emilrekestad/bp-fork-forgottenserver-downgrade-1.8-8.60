@@ -8,6 +8,7 @@ set(tfs_SRC
 	${CMAKE_CURRENT_LIST_DIR}/bed.cpp
 	${CMAKE_CURRENT_LIST_DIR}/chat.cpp
 	${CMAKE_CURRENT_LIST_DIR}/character_bazaar.cpp
+	${CMAKE_CURRENT_LIST_DIR}/coins.cpp
 	${CMAKE_CURRENT_LIST_DIR}/combat.cpp
 	${CMAKE_CURRENT_LIST_DIR}/condition.cpp
 	${CMAKE_CURRENT_LIST_DIR}/configmanager.cpp
@@ -83,6 +84,7 @@ set(tfs_SRC
 	${CMAKE_CURRENT_LIST_DIR}/mailbox.cpp
 	${CMAKE_CURRENT_LIST_DIR}/map.cpp
 	${CMAKE_CURRENT_LIST_DIR}/mapcache.cpp
+	${CMAKE_CURRENT_LIST_DIR}/item_bazaar.cpp
 	${CMAKE_CURRENT_LIST_DIR}/market.cpp
 	${CMAKE_CURRENT_LIST_DIR}/stash.cpp
 	${CMAKE_CURRENT_LIST_DIR}/matrixarea.cpp
@@ -152,6 +154,7 @@ set(tfs_HDR
 	${CMAKE_CURRENT_LIST_DIR}/bed.h
 	${CMAKE_CURRENT_LIST_DIR}/chat.h
 	${CMAKE_CURRENT_LIST_DIR}/character_bazaar.h
+	${CMAKE_CURRENT_LIST_DIR}/coins.h
 	${CMAKE_CURRENT_LIST_DIR}/combat.h
 	${CMAKE_CURRENT_LIST_DIR}/condition.h
 	${CMAKE_CURRENT_LIST_DIR}/configmanager.h
@@ -199,6 +202,7 @@ set(tfs_HDR
 	${CMAKE_CURRENT_LIST_DIR}/mailbox.h
 	${CMAKE_CURRENT_LIST_DIR}/map.h
 	${CMAKE_CURRENT_LIST_DIR}/mapcache.h
+	${CMAKE_CURRENT_LIST_DIR}/item_bazaar.h
 	${CMAKE_CURRENT_LIST_DIR}/market.h
 	${CMAKE_CURRENT_LIST_DIR}/stash.h
 	${CMAKE_CURRENT_LIST_DIR}/matrixarea.h

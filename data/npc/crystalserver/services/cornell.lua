@@ -26,7 +26,7 @@ npcConfig.flags = {
 npcConfig.voices = {
 	interval = 15000,
 	chance = 50,
-	{ text = "Passage to Grimvale and Edron." },
+	{ text = "Passage to Edron." },
 }
 
 local keywordHandler = KeywordHandler:new()
@@ -63,14 +63,20 @@ local function addTravelKeyword(keyword, cost, destination, action)
 	travelKeyword:addChildKeyword({ "no" }, StdModule.say, { npcHandler = npcHandler, text = "We would like to serve you some time.", reset = true })
 end
 
-addTravelKeyword("grimvale", 100, Position(33341, 31691, 7))
+-- Grimvale is closed off: the passage there is deliberately not registered.
+-- Both Cornell instances (Edron dock 33305,31720 and Grimvale dock
+-- 33345,31691 - see data/world/world-npc.xml) share this one script, so
+-- dropping the keyword removes the only scripted route onto the island while
+-- the Edron passage below stays available - that is intentional, it keeps a
+-- way OFF Grimvale for anyone already there or who logs in on it.
 addTravelKeyword("edron", 100, Position(33304, 31719, 7))
 
 -- Kick
 
 -- Basic
-keywordHandler:addKeyword({ "sail" }, StdModule.say, { npcHandler = npcHandler, text = "I can travel you to {Grimvale} or {Edron}." })
-npcHandler:setMessage(MESSAGE_GREET, "Welcome on board, |PLAYERNAME|. Where can I {sail} you today, to {Grimvale} or {Edron}?")
+keywordHandler:addKeyword({ "sail" }, StdModule.say, { npcHandler = npcHandler, text = "I can travel you to {Edron}." })
+keywordHandler:addKeyword({ "grimvale" }, StdModule.say, { npcHandler = npcHandler, text = "No. Nobody sails to Grimvale any more, and I'll not be the first to break that. Ask me about {Edron} instead." })
+npcHandler:setMessage(MESSAGE_GREET, "Welcome on board, |PLAYERNAME|. Can I {sail} you to {Edron}?")
 npcHandler:setMessage(MESSAGE_FAREWELL, "Good bye. Recommend us if you were satisfied with our service.")
 npcHandler:setMessage(MESSAGE_WALKAWAY, "Good bye then.")
 

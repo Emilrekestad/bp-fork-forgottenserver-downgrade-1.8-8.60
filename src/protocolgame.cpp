@@ -3486,6 +3486,10 @@ void ProtocolGame::sendChannelMessage(std::string_view author, std::string_view 
 	bool isLootChannel = (channel == 10);
 	bool isPlayerInChannel = (varChannel && varChannel->getUsers().contains(player->getID()));
 
+	// By design: players are never auto-joined to the Loot channel (they open
+	// it themselves from the Channels list, same as Trade/Help). While closed,
+	// loot messages fall back to an onscreen MESSAGE_INFO_DESCR status message
+	// instead - that's the intended "loot flashes over your character" UX.
 	if (isLootChannel && !isPlayerInChannel) {
 		player->sendTextMessage(MESSAGE_INFO_DESCR, messageText);
 		return;

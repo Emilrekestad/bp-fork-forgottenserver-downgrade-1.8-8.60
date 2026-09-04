@@ -99,6 +99,10 @@ local function creatureSayCallback(cid, type, msg)
 				player:teleportTo(Position(32202, 31812, 8), false)
 				player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 				player:setStorageValue(Storage.QueenOfBansheesQuest.Kiss, 1)
+				-- Quest log fix: quests.xml's final "All Seals" mission reads
+				-- LastSeal (50021), which nothing ever set even though all 6
+				-- individual seals + the Kiss reward were already wired.
+				player:setStorageValue(Storage.QueenOfBansheesQuest.LastSeal, 1)
 			else
 				npcHandler:say("You have spilled too much blood recently and the dead are hungry for your soul. Perhaps return when you regained you inner balance.", cid)
 				npcHandler.topic[cid] = 0

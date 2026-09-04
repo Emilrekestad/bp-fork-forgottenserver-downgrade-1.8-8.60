@@ -76,13 +76,87 @@ local function getLootItemValue(item)
 	return (tonumber(value) or 0) * count
 end
 
+-- Rarity items get their own display name colored in-line, everything else
+-- in the same loot line stays whatever the message's base talktype is
+-- (white). This rides a real client feature independent of Astra's
+-- value-based {id:value|text} bracket format above: this fork's OTClient
+-- console (modules/game_console/console.lua, getBBColorData/checkBBData)
+-- parses a [color=NAME]text[/color] BBCode-style tag on ANY channel message
+-- by default, matching named colors from its own hexColorStrings table
+-- (blue/purple/yellow/orange all present) -- no client changes needed.
+-- Per owner spec 2026-08-25: tiers renamed (Rare->Scarce, Epic->Adept,
+-- Legendary->Superior) and Prime added as a new top tier above Superior.
+-- Colors (also revised twice same day): Scarce=grey, Adept=lightblue,
+-- Superior=lightgreen, Prime=lightred. "grey" isn't one of the client's
+-- named hexColorStrings (checked -- only light/dark variants of green/teal/
+-- red/purple/orange/yellow/blue exist there), so it's a literal hex code --
+-- the [color=...] tag accepts either a name from that table or a raw
+-- #RRGGBB directly, confirmed in getBBColorData's regex.
+local RARITY_COLOR = {
+	scarce = "#AAAAAA",
+	adept = "lightblue",
+	superior = "lightgreen",
+	prime = "lightred",
+	-- Dormant (owner spec 2026-08-30): now the prominent, common-case
+	-- loot-channel color, since virtually every real rarity roll surfaces
+	-- as Dormant first -- scarce/adept/superior/prime only show up here
+	-- anymore via the GM /roll <tier> testing bypass. Orange, matching the
+	-- client's Dormant sparkle color exactly (src/client/uiitem.cpp /
+	-- item.cpp).
+	dormant = "orange",
+}
+
+-- Bag you Desire (34109) / Bag you Covet (43895): boss loot, not equipment,
+-- so they never go through RarityStats.rollRarity and never get an article
+-- containing a tier name - always shown in Prime's color regardless, per
+-- owner spec 2026-08-26.
+local ALWAYS_PRIME_ITEM_IDS = {
+	[34109] = true, -- bag you desire
+	[43895] = true, -- bag you covet
+}
+
+local function wrapRarityColor(description, item)
+	if ALWAYS_PRIME_ITEM_IDS[item:getId()] then
+		return ("[color=%s]%s[/color]"):format(RARITY_COLOR.prime, description)
+	end
+
+	local article = item:getAttribute(ITEM_ATTRIBUTE_ARTICLE)
+	if not article or article == "" then
+		return description
+	end
+
+	-- Checked highest tier first since e.g. "superior" doesn't substring-
+	-- match "prime" or vice versa, but keeping the same highest-wins order
+	-- as the old rare/epic/legendary check for consistency. "dormant" never
+	-- collides with any of the real tier names, so its position in this
+	-- chain doesn't matter.
+	local tier = (article:find("prime") and "prime")
+		or (article:find("superior") and "superior")
+		or (article:find("adept") and "adept")
+		or (article:find("scarce") and "scarce")
+		or (article:find("dormant") and "dormant")
+		or nil
+	if not tier then
+		return description
+	end
+
+	return ("[color=%s]%s[/color]"):format(RARITY_COLOR[tier], description)
+end
+
 function Container:getContentDescription(colorizedLootValue)
 	local items = self:getItems()
 	if items and #items > 0 then
 		local loot = {}
 		for _, lootItem in ipairs(items) do
 			local description = lootItem:getNameDescription(lootItem:getSubType(), true)
-			if colorizedLootValue then description = ("{%d:%d|%s}"):format(lootItem:getId(), getLootItemValue(lootItem), description) end
+			if colorizedLootValue then
+				-- Astra's own value-based coloring -- left untouched, [color]
+				-- tags aren't mixed in here since Astra's bracket parser is a
+				-- separate, not-fully-documented system on our end.
+				description = ("{%d:%d|%s}"):format(lootItem:getId(), getLootItemValue(lootItem), description)
+			else
+				description = wrapRarityColor(description, lootItem)
+			end
 			loot[#loot + 1] = description
 		end
 

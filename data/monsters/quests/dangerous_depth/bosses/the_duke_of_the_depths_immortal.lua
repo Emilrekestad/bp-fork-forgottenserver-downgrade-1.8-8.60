@@ -14,6 +14,11 @@ monster.outfit = {
 	lookMount = 0,
 }
 
+monster.bosstiary = {
+	bossRaceId = 1522,
+	bossRace = RARITY_BANE,
+}
+
 monster.health = 350000
 monster.maxHealth = 350000
 monster.race = "blood"
@@ -39,7 +44,7 @@ monster.flags = {
 	hostile = true,
 	convinceable = false,
 	pushable = false,
-	rewardBoss = false,
+	rewardBoss = true,
 	illusionable = false,
 	canPushItems = true,
 	canPushCreatures = true,

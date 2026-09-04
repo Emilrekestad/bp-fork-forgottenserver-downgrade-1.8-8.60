@@ -3,7 +3,8 @@ actionIds = {
 	pickHole = 105, -- hidden mud hole
 	levelDoor = 1000, -- level door
 	citizenship = 30020, -- citizenship teleport
-	citizenshipLast = 30050 -- citizenship teleport last
+	citizenshipLast = 30050, -- citizenship teleport last
+	outfitStatue = 45000 -- shared aid for the outfit statue system, see data/scripts/actions/systems/outfit_statues.lua
 }
 
 uniqueIds = {}

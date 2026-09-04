@@ -114,7 +114,8 @@
 	<item id="127" article="a" name="magical inkwell">
 		<attribute key="weight" value="200" />
 	</item>
-	<item id="128" article="a" name="signed contract">
+	<item id="128" article="a" name="trader's contract">
+		<attribute key="description" value="A hireling who reads this will take up trading. Use it on your hireling." />
 		<attribute key="weight" value="200" />
 	</item>
 	<item id="129" article="a" name="contract">
@@ -39743,8 +39744,8 @@
 		<attribute key="weight" value="2500" />
 	</item>
 	<item id="22117" name="RESERVED SPRITE" />
-	<item id="22118" name="Tibia coins">
-		<attribute key="description" value="Tibia Coins are needed to shop exclusive products in the Store, including fabulous mounts, classy outfits, a Name Change or even Premium Time" />
+	<item id="22118" name="Bp coins">
+		<attribute key="description" value="Bp Coins are needed to shop exclusive products in the Store, including fabulous mounts, classy outfits, a Name Change or even Premium Time" />
 		<attribute key="weight" value="0" />
 	</item>
 	<item id="22119" article="a" name="burst arrow">
@@ -40658,9 +40659,9 @@
 		<attribute key="description" value="It seems to be hundreds of years old" />
 		<attribute key="weight" value="330" />
 	</item>
-	<item id="22706" article="a" name="rolled-up parchment">
-		<attribute key="description" value="This parchment has been rolled-up and sealed" />
-		<attribute key="weight" value="20" />
+	<item id="22706" article="a" name="banker's contract">
+		<attribute key="description" value="A hireling who reads this will take up banking. Use it on your hireling." />
+		<attribute key="weight" value="200" />
 	</item>
 	<item id="22707" article="an" name="Opticompass sphere">
 		<attribute key="description" value="This strange box holds a dark sphere with a small needle in it. It spins sometimes" />
@@ -42170,8 +42171,9 @@
 		<attribute key="weight" value="900" />
 	</item>
 	<item id="23546" name="arena leaderboard" />
-	<item id="23547" name="arena certificate">
-		<attribute key="description" value="An arena certificate" />
+	<item id="23547" article="a" name="cook's contract">
+		<attribute key="description" value="A hireling who reads this will take up cooking. Use it on your hireling." />
+		<attribute key="weight" value="200" />
 	</item>
 	<item fromid="23548" toid="23552" name="arena leaderboard" />
 	<item id="23553" article="a" name="dead Buster">
@@ -43124,8 +43126,17 @@
 	<item fromid="24954" toid="24959" article="a" name="part of a rune">
 		<attribute key="weight" value="850" />
 	</item>
-	<item id="24960" article="an" name="astral shaper rune">
-		<attribute key="weight" value="850" />
+	<!-- Repurposed from "astral shaper rune" for Old Man Bao's Dormant trade.
+	     Nothing else referenced this id. The Astral Shaper quest (Albinius)
+	     now grants the Stone Rhino mount directly instead of handing over this
+	     rune to be used for taming, so that chain is one step shorter and
+	     otherwise unchanged. showcharges makes the remaining uses visible in
+	     the item's name, which is the whole point of a charge carrier. -->
+	<item id="24960" article="a" name="dormancy rune" plural="dormancy runes">
+		<attribute key="description" value="Use its charge at a Dormant Shrine or with a Dormant Waker to put eligible equipment to sleep. What wakes up is anyone's guess." />
+		<attribute key="weight" value="120" />
+		<attribute key="charges" value="1" />
+		<attribute key="showcharges" value="1" />
 	</item>
 	<item id="24961" article="a" name="tiger eye" plural="tiger eyes">
 		<attribute key="weight" value="120" />
@@ -43240,7 +43251,7 @@
 		<attribute key="description" value="The rune has become inert and will need some hours to regain full strength" />
 		<attribute key="weight" value="850" />
 	</item>
-	<item fromid="25060" toid="25061" article="an" name="imbuing shrine">
+	<item fromid="25060" toid="25061" article="a" name="dormant shrine">
 	</item>
 	<item id="25062" article="a" name="Pinata Dragon">
 		<attribute key="weight" value="3800" />
@@ -46627,8 +46638,11 @@
 	<item id="27445" name="silver nuggets">
 		<attribute key="weight" value="2000" />
 	</item>
-	<item id="27446" name="gold dust">
-		<attribute key="weight" value="2000" />
+	<item id="27446" article="a" name="loot seller" plural="loot sellers">
+		<attribute key="description" value="Use it on a piece of loot equipment and the item crumbles to dust, paying out half of what a shop would give you. Only equipment a shop would buy for up to 1000 gold can be sold this way." />
+		<attribute key="weight" value="100" />
+		<attribute key="charges" value="100" />
+		<attribute key="showcharges" value="1" />
 	</item>
 	<item id="27447" name="silver dust">
 		<attribute key="weight" value="1700" />
@@ -62816,7 +62830,7 @@
 	<item id="37313" article="a" name="palette and brushes">
 		<attribute key="weight" value="350" />
 	</item>
-	<item id="37317" article="a" name="Tibia Coin" />
+	<item id="37317" article="a" name="Bp Coin" />
 	<item id="37321" article="a" name="Halls of Hope picture">
 		<attribute key="weight" value="100" />
 	</item>
@@ -64996,8 +65010,9 @@
 	<item id="39240" article="a" name="foam stalker spume">
 		<attribute key="weight" value="180" />
 	</item>
-	<item id="39241" name="glass lens">
+	<item id="39241" article="a" name="dormant waker">
 		<attribute key="weight" value="95" />
+		<attribute key="description" value="A permanent tool for dormancy rituals anywhere. It replaces the need to return to a Dormant Shrine." />
 	</item>
 	<item id="39242" article="an" name="empty bucket" editorsuffix="Timira">
 		<attribute key="weight" value="2000" />
@@ -77100,6 +77115,34 @@
 		<attribute key="description" value="A mysterious talisman, studded with colourful jewels, that can be upgraded to grant bonuses against Bounty Task creatures." />
 		<attribute key="weight" value="75" />
 		<attribute key="slotType" value="ammo" />
+	</item>
+	<!-- Wheel of Destiny promotion scrolls.
+	     These ids exist in items.otb and are already handled by two scripts
+	     (data/scripts/actions/items/wheel_scrolls.lua redeems them, and
+	     data/scripts/network/wheel/wheel.lua reads the resulting unlocks for
+	     extra Wheel points) but they had NO items.xml entry, so the
+	     ItemType had no name, no article and no weight. They rendered as
+	     blank-named items and could not sensibly be sold or described.
+	     Named here so the feature is actually usable. -->
+	<item id="43946" article="an" name="abridged promotion scroll" plural="abridged promotion scrolls">
+		<attribute key="description" value="Reading this grants 3 permanent Wheel of Destiny points." />
+		<attribute key="weight" value="120" />
+	</item>
+	<item id="43947" article="a" name="basic promotion scroll" plural="basic promotion scrolls">
+		<attribute key="description" value="Reading this grants 5 permanent Wheel of Destiny points." />
+		<attribute key="weight" value="120" />
+	</item>
+	<item id="43948" article="a" name="revised promotion scroll" plural="revised promotion scrolls">
+		<attribute key="description" value="Reading this grants 9 permanent Wheel of Destiny points." />
+		<attribute key="weight" value="120" />
+	</item>
+	<item id="43949" article="an" name="extended promotion scroll" plural="extended promotion scrolls">
+		<attribute key="description" value="Reading this grants 13 permanent Wheel of Destiny points." />
+		<attribute key="weight" value="120" />
+	</item>
+	<item id="43950" article="an" name="advanced promotion scroll" plural="advanced promotion scrolls">
+		<attribute key="description" value="Reading this grants 20 permanent Wheel of Destiny points." />
+		<attribute key="weight" value="120" />
 	</item>
 	<item id="65000" name="QA non-stackable test item">
 		<attribute key="weight" value="100" />

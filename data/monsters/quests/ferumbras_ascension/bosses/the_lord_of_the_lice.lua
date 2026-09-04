@@ -3,7 +3,7 @@ local monster = {}
 
 monster.name = "The Lord of the Lice"
 monster.description = "The Lord of the Lice"
-monster.experience = 0
+monster.experience = 42000
 monster.outfit = {
 	lookType = 305,
 	lookHead = 0,
@@ -61,6 +61,13 @@ monster.flags = {
 monster.light = {
 	level = 0,
 	color = 0,
+}
+
+monster.summon = {
+	maxSummons = 4,
+	summons = {
+		{ name = "Giant Rat", chance = 20, interval = 3000, count = 4 },
+	},
 }
 
 monster.voices = {

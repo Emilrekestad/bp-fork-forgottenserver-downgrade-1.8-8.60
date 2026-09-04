@@ -17,6 +17,12 @@ using ItemBlockList = std::list<std::pair<int32_t, ObserverPtr<Item>>>;
 class IOLoginData
 {
 public:
+	// Hard ceiling on how many Depot Inbox entries savePlayer() will persist.
+	// Items beyond this are dropped on save (see the inbox loop in
+	// iologindata.cpp), so anything delivering into an inbox must check
+	// occupancy against this first rather than silently destroying an item.
+	static constexpr uint32_t INBOX_SAVE_LIMIT = 100;
+
 	static Account loadAccount(uint32_t accno);
 
 	static bool loginserverAuthentication(std::string_view name, std::string_view password, Account& account);

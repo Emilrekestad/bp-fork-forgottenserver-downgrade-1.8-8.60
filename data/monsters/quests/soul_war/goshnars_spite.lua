@@ -90,6 +90,7 @@ monster.loot = {
 	{ name = "figurine of spite", chance = 400 },
 	{ name = "spite's spirit", chance = 400 },
 	{ name = "bag you desire", chance = 100 },
+	{ name = "bag you covet", chance = 100 },
 }
 
 monster.attacks = {

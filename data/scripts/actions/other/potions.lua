@@ -164,7 +164,16 @@ function potionsAction.onUse(player, item, fromPosition, target, toPosition, isH
 
 	else
 		if potion.health then
-			doTargetCombat(0, target, COMBAT_HEALING, potion.health[1], potion.health[2])
+			-- Bao's Ledger "Field Medicine". Scales the roll's bounds rather than
+			-- the result, so the healing stays a range instead of collapsing to a
+			-- single value, and floors at the original so a rank can never heal
+			-- for less.
+			local lo, hi = potion.health[1], potion.health[2]
+			if BaoLedger then
+				local mult = BaoLedger.potionMultiplier(player)
+				lo, hi = math.floor(lo * mult), math.floor(hi * mult)
+			end
+			doTargetCombat(0, target, COMBAT_HEALING, lo, hi)
 		end
 
 		if potion.mana then

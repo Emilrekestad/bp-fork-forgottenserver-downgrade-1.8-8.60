@@ -42,6 +42,8 @@ local ACTION_SELECT_WILDCARD = 2
 local ACTION_SELECT = 3
 local ACTION_REMOVE = 4
 local ACTION_COLLECT = 5
+local ACTION_REQUEST_SYNC = 6
+local ACTION_UNLOCK_SLOT = 7
 
 local FREE_REROLL_SECONDS = 20 * 60 * 60
 local REROLL_PRICE_PER_LEVEL = 200
@@ -51,6 +53,13 @@ local KILL_SAVE_INTERVAL = 5
 local RESOURCE_BANK = 0
 local RESOURCE_INVENTORY_GOLD = 1
 local RESOURCE_PREY_WILDCARDS = 10
+
+-- Mirrors Prey's own third-slot purchase (prey_system.lua's
+-- PREY_STORAGE_PERMANENT_SLOT / PREY_PERMANENT_SLOT_COST): a dedicated
+-- storage flag paid for with Tibia Coins through the Store.
+local THIRD_SLOT = 2
+local THIRD_SLOT_STORAGE_KEY = 990500
+local THIRD_SLOT_COST = 900
 
 local taskCache = {}
 local schemaReady = nil
@@ -62,7 +71,13 @@ local function debug(message, ...)
 end
 
 local function supportsAstra(player)
-	return player and player.isUsingAstraClient and player:isUsingAstraClient()
+	if not player then
+		return false
+	end
+	if player.isUsingAstraClient and player:isUsingAstraClient() then
+		return true
+	end
+	return player.isUsingOtClient and player:isUsingOtClient() or false
 end
 
 local function clamp(value, minimum, maximum)
@@ -165,10 +180,10 @@ local function parseRaceList(raw)
 end
 
 local function getSlotLockType(player, slot)
-	-- Crystal uses a premium second slot and a purchasable third slot. The TFS
-	-- implementation keeps all three usable until the store integration exists,
-	-- while still supporting the protocol's locked state.
 	if slot < 0 or slot >= SLOT_COUNT then
+		return 1
+	end
+	if slot == THIRD_SLOT and player:getStorageValue(THIRD_SLOT_STORAGE_KEY) ~= 1 and not player:isPremium() then
 		return 1
 	end
 	return nil
@@ -280,6 +295,9 @@ local function isBestiaryComplete(entry, kills)
 	return entry and (kills[entry.raceId] or 0) >= (entry.toKill or math.huge)
 end
 
+-- Rewards now pay out real Tibia Coins instead of Task Hunting Points, so
+-- the whole table is scaled down by 10 (floored) to keep payouts sane -
+-- e.g. an internal value of 40 pays 4 coins, 371 pays 37.
 local function buildRewardData()
 	local rewards = {}
 	local kills = 25
@@ -290,9 +308,9 @@ local function buildRewardData()
 				difficulty = difficulty,
 				rarity = rarity,
 				firstKills = kills,
-				firstReward = reward,
+				firstReward = math.floor(reward / 10),
 				secondKills = kills * 2,
-				secondReward = reward * 2,
+				secondReward = math.floor((reward * 2) / 10),
 			}
 			reward = math.floor(reward * (115 + difficulty * 5) / 100 + 0.5)
 		end
@@ -502,30 +520,23 @@ local function sendBalances(player)
 	sendResourceBalance(player, RESOURCE_BANK, player:getBankBalance())
 	sendResourceBalance(player, RESOURCE_INVENTORY_GOLD, player:getMoney())
 	sendResourceBalance(player, RESOURCE_PREY_WILDCARDS, getPlayerWildcards(player))
-	sendResourceBalance(player, TaskBoard.Resources.TASK_HUNTING, player:getTaskHuntingPoints())
+	-- Hunting Task rewards pay out real Tibia Coins (matching the Gift Shop
+	-- balance) rather than a separate, now-retired Task Hunting Points
+	-- counter. Reused wire slot, different underlying value.
+	sendResourceBalance(player, TaskBoard.Resources.TASK_HUNTING, player:getTibiaCoins())
 	return true
 end
 
 function TaskHunting.sendBasicData(player)
+	debug("sendBasicData called astra=%s bestiary=%s monstersByRaceId=%s",
+		tostring(supportsAstra(player)), tostring(CustomBestiary ~= nil),
+		tostring(CustomBestiary and CustomBestiary.monstersByRaceId ~= nil))
 	if not supportsAstra(player) or not CustomBestiary or not CustomBestiary.monstersByRaceId then
 		return false
 	end
 
-	local kills = getBestiaryKills(player)
-	local raceIds = {}
-	for raceId in pairs(CustomBestiary.monstersByRaceId) do
-		raceIds[#raceIds + 1] = raceId
-	end
-	table.sort(raceIds)
-
 	local out = NetworkMessage(player)
 	out:addByte(OPCODE_BASE_DATA)
-	out:addU16(clamp(#raceIds, 0, 0xFFFF))
-	for _, raceId in ipairs(raceIds) do
-		local entry = CustomBestiary.getMonster(raceId)
-		out:addU16(raceId)
-		out:addByte(getDifficulty(entry))
-	end
 
 	out:addByte(#REWARD_DATA)
 	for _, option in ipairs(REWARD_DATA) do
@@ -541,8 +552,53 @@ function TaskHunting.sendBasicData(player)
 	out:addU32(getRerollPrice(player))
 	out:addByte(WILDCARD_SELECT_PRICE)
 	out:addByte(WILDCARD_REWARD_REROLL_PRICE)
-	debug("send basic data opcode=0xBA player=%s monsters=%d", player:getName(), #raceIds)
-	return out:sendToPlayer(player)
+	debug("send basic data opcode=0xBA player=%s", player:getName())
+	local sendResult = out:sendToPlayer(player)
+	debug("sendBasicData sendToPlayer result=%s", tostring(sendResult))
+	return sendResult
+end
+
+-- Mirrors prey_system.lua's getMonsterOutfit/writeMonster so the client's
+-- shared getOutfit(msg, true) parser (used for Prey creature portraits) can
+-- read Task Hunting creature entries identically.
+local function getMonsterOutfit(name)
+	local monsterType = name and name ~= "" and MonsterType(name)
+	if not monsterType then
+		return {
+			lookType = 21,
+			lookTypeEx = 0,
+			lookHead = 0,
+			lookBody = 0,
+			lookLegs = 0,
+			lookFeet = 0,
+			lookAddons = 0,
+		}
+	end
+
+	local outfit = monsterType:outfit()
+	return {
+		lookType = outfit.lookType or 21,
+		lookTypeEx = outfit.lookTypeEx or 0,
+		lookHead = outfit.lookHead or 0,
+		lookBody = outfit.lookBody or 0,
+		lookLegs = outfit.lookLegs or 0,
+		lookFeet = outfit.lookFeet or 0,
+		lookAddons = outfit.lookAddons or 0,
+	}
+end
+
+local function writeMonsterOutfit(out, name)
+	local outfit = getMonsterOutfit(name)
+	out:addU16(outfit.lookType)
+	if outfit.lookType == 0 then
+		out:addU16(outfit.lookTypeEx or 0)
+		return
+	end
+	out:addByte(outfit.lookHead)
+	out:addByte(outfit.lookBody)
+	out:addByte(outfit.lookLegs)
+	out:addByte(outfit.lookFeet)
+	out:addByte(outfit.lookAddons)
 end
 
 local function writeRaceList(out, raceList, kills)
@@ -551,6 +607,8 @@ local function writeRaceList(out, raceList, kills)
 		local entry = CustomBestiary and CustomBestiary.getMonster(raceId)
 		out:addU16(clamp(raceId, 0, 0xFFFF))
 		out:addByte(isBestiaryComplete(entry, kills) and 1 or 0)
+		out:addString(entry and entry.name or "Unknown")
+		writeMonsterOutfit(out, entry and entry.name)
 	end
 end
 
@@ -581,6 +639,7 @@ function TaskHunting.sendSlotData(player, slot)
 
 	if state == STATE_LOCKED then
 		out:addByte(lockType)
+		out:addU32(THIRD_SLOT_COST)
 	elseif state == STATE_SELECT or state == STATE_WILDCARD then
 		local raceList = state == STATE_WILDCARD and generateWildcardRaceList(data, slot) or slotData.raceList
 		writeRaceList(out, raceList, getBestiaryKills(player))
@@ -588,16 +647,22 @@ function TaskHunting.sendSlotData(player, slot)
 		local entry = CustomBestiary and CustomBestiary.getMonster(slotData.selectedRaceId)
 		local option = getRewardOption(entry, slotData.rarity)
 		local requiredKills = option and (slotData.upgraded and option.secondKills or option.firstKills) or 0
+		local reward = option and (slotData.upgraded and option.secondReward or option.firstReward) or 0
 		out:addU16(clamp(slotData.selectedRaceId, 0, 0xFFFF))
+		out:addString(entry and entry.name or "Unknown")
+		writeMonsterOutfit(out, entry and entry.name)
 		out:addByte(slotData.upgraded and 1 or 0)
 		out:addU16(requiredKills)
 		out:addU16(clamp(slotData.currentKills, 0, requiredKills))
 		out:addByte(clamp(slotData.rarity, 1, 5))
+		out:addU16(clamp(reward, 0, 0xFFFF))
 	end
 
 	out:addU32(clamp(math.max(0, (slotData.freeRerollAt or 0) - os.time()), 0, 0xFFFFFFFF))
-	debug("send slot opcode=0xBB player=%s slot=%d state=%d", player:getName(), slot, state)
-	return out:sendToPlayer(player)
+	debug("send slot opcode=0xBB player=%s slot=%d state=%d len=%d", player:getName(), slot, state, out:len())
+	local sendResult = out:sendToPlayer(player)
+	debug("sendSlotData sendToPlayer result=%s", tostring(sendResult))
+	return sendResult
 end
 
 function TaskHunting.sendFullSync(player)
@@ -615,11 +680,15 @@ function TaskHunting.sendFullSync(player)
 		saveSlot(player, slot)
 	end
 
+	-- Balances first: the client colors each card's affordability at the
+	-- moment its slot data is built, so if the balance arrived after the
+	-- slot packets it would be stale (or still the pre-login default) and
+	-- never get corrected once the real value showed up.
+	sendBalances(player)
 	TaskHunting.sendBasicData(player)
 	for slot = 0, SLOT_COUNT - 1 do
 		TaskHunting.sendSlotData(player, slot)
 	end
-	sendBalances(player)
 	debug("full sync sent player=%s", player:getName())
 	return true
 end
@@ -684,9 +753,47 @@ local function shouldPersistKillProgress(previousKills, currentKills, completedN
 	return math.floor(previousKills / KILL_SAVE_INTERVAL) ~= math.floor(currentKills / KILL_SAVE_INTERVAL)
 end
 
+local function handleUnlockSlot(player, slot, wantsTemporary)
+	if slot ~= THIRD_SLOT then
+		return sendFailure(player, "This slot cannot be purchased.")
+	end
+	if not getSlotLockType(player, slot) then
+		TaskHunting.sendSlotData(player, slot)
+		return sendFailure(player, "This slot is already unlocked.")
+	end
+
+	if wantsTemporary then
+		if not player:isPremium() then
+			return sendFailure(player, "You need an active Premium account to temporarily unlock this slot.")
+		end
+		-- Premium status is checked live by getSlotLockType, so nothing is persisted here;
+		-- the slot re-locks on its own the moment Premium Time runs out.
+		player:sendTextMessage(MESSAGE_STATUS_DEFAULT, "Your third Hunting Task slot is unlocked while your Premium Time is active.")
+		TaskHunting.sendSlotData(player, slot)
+		return true
+	end
+
+	if player:getTibiaCoins() < THIRD_SLOT_COST then
+		return sendFailure(player, string.format("You need %d Bp Coins to unlock this slot.", THIRD_SLOT_COST))
+	end
+	if not player:removeTibiaCoins(THIRD_SLOT_COST) then
+		return sendFailure(player, "Failed to remove Bp Coins.")
+	end
+
+	player:setStorageValue(THIRD_SLOT_STORAGE_KEY, 1)
+	player:sendTextMessage(MESSAGE_STATUS_DEFAULT, "Your third Hunting Task slot is now permanently unlocked.")
+	TaskHunting.sendSlotData(player, slot)
+	sendBalances(player)
+	return true
+end
+
 local function handleAction(player, slot, action, wantsUpgrade, raceId)
 	if slot < 0 or slot >= SLOT_COUNT then
 		return sendFailure(player, "Invalid slot.")
+	end
+
+	if action == ACTION_UNLOCK_SLOT then
+		return handleUnlockSlot(player, slot, wantsUpgrade)
 	end
 
 	local data = loadTaskData(player)
@@ -777,8 +884,8 @@ local function handleAction(player, slot, action, wantsUpgrade, raceId)
 			return sendFailure(player, "Task reward data is unavailable.")
 		end
 		local reward = slotData.upgraded and option.secondReward or option.firstReward
-		player:addTaskHuntingPoints(reward)
-		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, string.format("[Task Hunting] You received %d Task Hunting Points.", reward))
+		player:addTibiaCoins(reward)
+		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, string.format("[Task Hunting] You received %d Bp Coins.", reward))
 		resetSlot(player, data, slot)
 
 	else
@@ -786,14 +893,22 @@ local function handleAction(player, slot, action, wantsUpgrade, raceId)
 	end
 
 	saveSlot(player, slot)
-	TaskHunting.sendSlotData(player, slot)
+	-- Balances before slot data, same reasoning as sendFullSync: the client
+	-- rebuilds this card's price/affordability color the moment slot data
+	-- arrives, so if the balance packet arrived after, the card would
+	-- render with the pre-action count and never visibly update.
 	sendBalances(player)
+	TaskHunting.sendSlotData(player, slot)
 	return true
 end
 
 local taskHuntingActionHandler = PacketHandler(OPCODE_BASE_DATA)
 function taskHuntingActionHandler.onReceive(player, msg)
+	debug("onReceive fired player=%s astra=%s remaining=%d", player and player:getName() or "nil",
+		tostring(supportsAstra(player)), msg:len() - msg:tell())
+
 	if not supportsAstra(player) or (msg:len() - msg:tell()) < 5 then
+		debug("onReceive bailed early")
 		return
 	end
 
@@ -801,6 +916,15 @@ function taskHuntingActionHandler.onReceive(player, msg)
 	local action = msg:getByte()
 	local wantsUpgrade = msg:getByte() ~= 0
 	local raceId = msg:getU16()
+
+	debug("onReceive slot=%d action=%d upgraded=%s raceId=%d", slot, action, tostring(wantsUpgrade), raceId)
+
+	if action == ACTION_REQUEST_SYNC then
+		debug("onReceive: full sync requested")
+		TaskHunting.sendFullSync(player)
+		return
+	end
+
 	handleAction(player, slot, action, wantsUpgrade, raceId)
 end
 taskHuntingActionHandler:register()

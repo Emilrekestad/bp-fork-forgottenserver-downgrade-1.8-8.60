@@ -157,6 +157,12 @@ local function releaseOwnerPlayer(player, isOffline)
 	end
 end
 
+local function decorateHirelingLamp(lamp, hireling)
+	lamp:setAttribute(ITEM_ATTRIBUTE_DESCRIPTION, makeHirelingLampDescription(hireling))
+	lamp:setCustomAttribute("Hireling", hireling:getId())
+	return lamp
+end
+
 local function addHirelingLampToInbox(player, hireling)
 	local inbox = player and player:getStoreInbox()
 	if not inbox then
@@ -168,9 +174,31 @@ local function addHirelingLampToInbox(player, hireling)
 		return nil
 	end
 
-	lamp:setAttribute(ITEM_ATTRIBUTE_DESCRIPTION, makeHirelingLampDescription(hireling))
-	lamp:setCustomAttribute("Hireling", hireling:getId())
-	return lamp
+	return decorateHirelingLamp(lamp, hireling)
+end
+
+-- Hand the lamp over directly, for an NPC giving it to you face to face.
+--
+-- The lamp is `movable="0"`, so it can never be a chest reward -- the player
+-- would not be able to pick it up. It also is not a generic item: each lamp
+-- carries a custom attribute naming one database row, and a lamp without that
+-- attribute deletes itself with an error when used. So a quest has to CREATE
+-- the hireling and hand over the lamp it gets back, which is what
+-- Player:addNewHireling does.
+--
+-- Falls back to the Store Inbox when the backpack cannot take it, so a full
+-- or overloaded player never loses a quest reward.
+local function addHirelingLampToPlayer(player, hireling)
+	local lamp = player:addItem(HIRELING_LAMP, 1)
+	if lamp then
+		return decorateHirelingLamp(lamp, hireling), "backpack"
+	end
+
+	local inboxLamp = addHirelingLampToInbox(player, hireling)
+	if inboxLamp then
+		return inboxLamp, "inbox"
+	end
+	return nil
 end
 
 local function persistHirelingReturn(owner, hireling)
@@ -469,14 +497,47 @@ function Hireling:changeOutfit(player, outfit)
 	return true
 end
 
+-- Jobs are stored PER HIRELING, not per character.
+--
+-- They used to hang off the owner's kv directly, so one purchase taught every
+-- hireling that character owned. That was defensible while jobs came from the
+-- store as an account-wide unlock. It is wrong now that a job arrives as a
+-- physical contract the player uses on one specific hireling: handing a
+-- contract to Bella and watching Rufus learn to cook makes the item a lie.
+--
+-- The scope is still the OWNER's kv (hirelings have no kv of their own), just
+-- keyed by hireling id underneath. Dresses stay per character on purpose --
+-- those are bought in the store and apply to everyone you own.
+local function hirelingSkillStore(player, hirelingId)
+	return player:kv():scoped("hireling-skills"):scoped(tostring(hirelingId))
+end
+
 function Hireling:hasSkill(skillName)
 	local player, isOffline = getOwnerPlayer(self:getOwnerId())
 	local hasSkill = false
 	if player then
-		hasSkill = player:kv():scoped("hireling-skills"):get(skillName) == true
+		hasSkill = hirelingSkillStore(player, self:getId()):get(skillName) == true
 	end
 	releaseOwnerPlayer(player, isOffline)
 	return hasSkill
+end
+
+-- Returns false when the hireling already had the job, so callers can tell a
+-- wasted contract from a successful one before consuming the item.
+function Hireling:enableSkill(skillName)
+	local player, isOffline = getOwnerPlayer(self:getOwnerId())
+	if not player then
+		return false
+	end
+
+	local store = hirelingSkillStore(player, self:getId())
+	local granted = false
+	if store:get(skillName) ~= true then
+		store:set(skillName, true)
+		granted = true
+	end
+	releaseOwnerPlayer(player, isOffline)
+	return granted
 end
 
 function Hireling:setCreature(creature)
@@ -737,7 +798,16 @@ function Player:hasHirelings()
 	return self:getHirelingsCount() > 0
 end
 
-function Player:addNewHireling(name, sex)
+-- `deliverTo` picks where the lamp lands: "hand" for an NPC giving it to you
+-- (backpack, falling back to the Store Inbox), anything else for the Store
+-- Inbox. Quest NPCs want "hand"; keep the default so existing callers are
+-- unaffected.
+--
+-- Returns the hireling on success, or false plus a message the caller can say
+-- out loud. On any failure after the row is written, the row is deleted again,
+-- so a failed hand-over can never leave an orphan hireling that the player
+-- owns but has no lamp for.
+function Player:addNewHireling(name, sex, deliverTo)
 	if not hirelingSystemEnabled() then
 		return false, "Hireling system is disabled."
 	end
@@ -761,16 +831,24 @@ function Player:addNewHireling(name, sex)
 		return false, "Failed to save hireling."
 	end
 
-	local lamp = addHirelingLampToInbox(self, hireling)
+	local lamp, landedIn
+	if deliverTo == "hand" then
+		lamp, landedIn = addHirelingLampToPlayer(self, hireling)
+	else
+		lamp, landedIn = addHirelingLampToInbox(self, hireling), "inbox"
+	end
+
 	if not lamp then
 		db.query("DELETE FROM `player_hirelings` WHERE `id`=" .. hireling:getId())
-		return false, "Your store inbox is not available."
+		return false, "You have no room for the lamp."
 	end
 
 	PLAYER_HIRELINGS[self:getGuid()] = PLAYER_HIRELINGS[self:getGuid()] or {}
 	table.insert(PLAYER_HIRELINGS[self:getGuid()], hireling)
 	table.insert(HIRELINGS, hireling)
-	return hireling
+	-- Third return says where the lamp actually landed ("backpack" or "inbox")
+	-- so a quest NPC can tell the player where to look for it.
+	return hireling, nil, landedIn
 end
 
 function Player:isChangingHirelingOutfit()
@@ -848,17 +926,16 @@ function Player:findHirelingLamp(hirelingId)
 	return nil
 end
 
+-- Kept for callers that ask "does this character have a hireling who can do X"
+-- rather than asking about one hireling. Jobs themselves live per hireling
+-- (see Hireling:hasSkill), so this is an ANY across the character's hirelings.
 function Player:hasHirelingSkill(skillName)
-	return self:kv():scoped("hireling-skills"):get(skillName) == true
-end
-
-function Player:enableHirelingSkill(skillName)
-	local skillScoped = self:kv():scoped("hireling-skills")
-	if skillScoped:get(skillName) then
-		return false
+	for _, hireling in ipairs(self:getHirelings()) do
+		if hireling:hasSkill(skillName) then
+			return true
+		end
 	end
-	skillScoped:set(skillName, true)
-	return true
+	return false
 end
 
 function Player:hasHirelingOutfit(outfitName)
@@ -875,9 +952,14 @@ function Player:enableHirelingOutfit(outfitName)
 end
 
 function Player:clearAllHirelingStats()
+	-- Jobs are per hireling now, so clear each one's scope rather than a
+	-- single shared list.
 	local skillsScoped = self:kv():scoped("hireling-skills")
-	for _, skill in pairs(HIRELING_SKILLS) do
-		skillsScoped:set(skill[2], false)
+	for _, hireling in ipairs(self:getHirelings()) do
+		local hirelingScope = skillsScoped:scoped(tostring(hireling:getId()))
+		for _, skill in pairs(HIRELING_SKILLS) do
+			hirelingScope:set(skill[2], false)
+		end
 	end
 
 	local outfitsScoped = self:kv():scoped("hireling-outfits")

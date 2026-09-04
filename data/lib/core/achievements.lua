@@ -2649,8 +2649,14 @@ function Player.addAchievement(self, ach, hideMsg)
 	end
 
 	if not self:hasAchievement(achievement.id) then
-		self:setStorageValue(PlayerStorageKeys.achievementsBase + achievement.id, os.time())
+		local unlockedAt = os.time()
+		self:setStorageValue(PlayerStorageKeys.achievementsBase + achievement.id, unlockedAt)
+		-- Mirror into the database so the website, the highscore and the
+		-- client window can see this without waiting for the next player save.
+		-- Storage above stays authoritative; see lib/achievements/achievements_db.lua.
+		if AchievementsDB then AchievementsDB.recordUnlock(self, achievement.id, unlockedAt) end
 		if not hideMsg then
+			IntegrationEvents.recordWorldFirst(self, achievement)
 			self:sendTextMessage(MESSAGE_EVENT_ADVANCE, "Congratulations! You earned the achievement \"" .. achievement.name .. "\".")
 			if self.isUsingAstraClient and self:isUsingAstraClient() then
 				local msg = NetworkMessage(self)
@@ -2676,17 +2682,31 @@ function Player.removeAchievement(self, ach)
 		return false
 	end
 
-	if self:hasAchievement(achievement.id) then self:removeStorageValue(PlayerStorageKeys.achievementsBase + achievement.id) end
+	if self:hasAchievement(achievement.id) then
+		self:removeStorageValue(PlayerStorageKeys.achievementsBase + achievement.id)
+		if AchievementsDB then AchievementsDB.recordRemoval(self, achievement.id) end
+	end
 	return true
 end
 
+-- (!) Both bulk operations suspend the database mirror and reconcile ONCE at
+-- the end. Left to run per-achievement they would fire roughly 1,200 queries
+-- for a single GM command; reconcilePlayer settles the whole character in two.
 function Player.addAllAchievements(self, hideMsg)
+	local mirror = AchievementsDB
+	AchievementsDB = nil
 	for i = ACHIEVEMENT_FIRST, ACHIEVEMENT_LAST do self:addAchievement(i, hideMsg) end
+	AchievementsDB = mirror
+	if AchievementsDB then AchievementsDB.reconcilePlayer(self) end
 	return true
 end
 
 function Player.removeAllAchievements(self)
+	local mirror = AchievementsDB
+	AchievementsDB = nil
 	for k = 1, #achievements do if self:hasAchievement(k) then self:removeAchievement(k) end end
+	AchievementsDB = mirror
+	if AchievementsDB then AchievementsDB.reconcilePlayer(self) end
 	return true
 end
 

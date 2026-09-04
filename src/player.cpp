@@ -243,9 +243,15 @@ uint32_t Player::playerAutoID = 0x10000000;
 
 Player::Player(ProtocolGame_ptr p) : Creature(), client(std::make_shared<ProtocolSpectator>(std::move(p))), lastPing(OTSYS_TIME()), lastPong(lastPing),
 	m_weaponProficiency(std::make_unique<WeaponProficiency>(*this)),
-	storeInbox(std::make_shared<StoreInbox>(ITEM_STORE_INBOX))
+	storeInbox(std::make_shared<StoreInbox>(ITEM_STORE_INBOX)), inbox(std::make_shared<Inbox>(ITEM_INBOX))
 {
 	storeInbox->setParent(this);
+	// One Inbox per player, shared by every depot locker -- the Depot Inbox is
+	// global (same contents from any town's depot), matching real Tibia and how
+	// mailbox parcels are expected to arrive. It used to be created per locker
+	// in getDepotLocker(), which silently siloed contents per town: an item
+	// delivered while you were in one town was invisible from every other.
+	inbox->setParent(this);
 	experienceRate.fill(100);
 }
 
@@ -387,6 +393,11 @@ Player::~Player()
 	if (storeInbox) {
 		storeInbox->setParent(nullptr);
 		storeInbox->stopDecaying();
+	}
+
+	if (inbox) {
+		inbox->setParent(nullptr);
+		inbox->stopDecaying();
 	}
 
 	setWriteItem(nullptr);
@@ -1958,11 +1969,10 @@ DepotLocker* Player::getDepotLocker(uint32_t depotId)
 		}
 	}
 
-	if (!hasInbox) {
-		auto inbox = Item::CreateItem(ITEM_INBOX);
-		if (inbox) {
-			it->second->internalAddThing(inbox.get());
-		}
+	// Attach the player's single shared Inbox rather than minting a new one per
+	// locker, so the same contents are visible from every depot.
+	if (!hasInbox && inbox) {
+		it->second->internalAddThing(inbox.get());
 	}
 
 	DepotChest* chest = getDepotChest(depotId, true);
@@ -5901,7 +5911,11 @@ double Player::getLostPercent() const
 		deathLosePercent -= blessCount;
 		deathLosePercent -= totalReduceSkillLoss;
 
-		return std::max<int32_t>(0, deathLosePercent) / 100.;
+		// Bao's "Hard to Kill" scales the FINAL loss rather than subtracting
+		// percentage points, so it stays independent of blessings, promotion
+		// and equipment instead of racing them to zero.
+		return (std::max<int32_t>(0, deathLosePercent) / 100.) *
+		       (1.0 - (baoExperienceLossReduction / 100.));
 	}
 
 	double lossPercent;
@@ -5920,7 +5934,9 @@ double Player::getLostPercent() const
 	percentReduction += blessCount * 8;
 	percentReduction += totalReduceSkillLoss;
 
-	return lossPercent * (1 - (percentReduction / 100.)) / 100.;
+	// Same treatment on the formula branch, applied last for the same reason.
+	return lossPercent * (1 - (percentReduction / 100.)) / 100. *
+	       (1.0 - (baoExperienceLossReduction / 100.));
 }
 
 uint8_t Player::getBlessingReduction() const
@@ -5944,7 +5960,10 @@ double Player::getEquipmentLossPercent(bool isContainer) const
 		case 4: lossPercent = 1; break;
 		default: lossPercent = 0; break;
 	}
-	return isContainer ? lossPercent * 10 : lossPercent;
+	// Bao's "Travelling Light". Scales whatever the blessing count left behind,
+	// so the two stack multiplicatively instead of one cancelling the other.
+	return (isContainer ? lossPercent * 10 : lossPercent) *
+	       (1.0f - (baoEquipmentLossReduction / 100.0f));
 }
 
 void Player::learnInstantSpell(std::string_view spellName)
@@ -7337,6 +7356,14 @@ void Player::addPendingLoot(std::string monsterName, Container* corpse)
 		if (!item) {
 			continue;
 		}
+
+		std::string_view article = item->getArticle();
+		if (article.find("rare") != std::string_view::npos || article.find("epic") != std::string_view::npos ||
+		    article.find("legendary") != std::string_view::npos) {
+			group->rarityItems.emplace_back(item->getID(), item->getNameDescription());
+			continue;
+		}
+
 		group->items[item->getID()] += item->getItemCount();
 	}
 
@@ -7367,7 +7394,7 @@ void Player::flushPendingLoot(const std::string& groupKey)
 	}
 
 	auto& group = it->second;
-	if (!group || group->items.empty()) {
+	if (!group || (group->items.empty() && group->rarityItems.empty())) {
 		std::string text;
 		if (!group) {
 			m_pendingLootGroups.erase(it);
@@ -7377,15 +7404,15 @@ void Player::flushPendingLoot(const std::string& groupKey)
 		const auto& party = getParty();
 		if (party && party->isSharedExperienceEnabled()) {
 			if (const auto& leader = party->getLeader()) {
-				leader->sendChannelMessage("", text, TALKTYPE_CHANNEL_O, 10);
+				leader->sendChannelMessage("", text, TALKTYPE_CHANNEL_W, 10);
 			}
 			for (auto& member : party->getMembers()) {
 				if (auto memberPtr = member.lock()) {
-					memberPtr->sendChannelMessage("", text, TALKTYPE_CHANNEL_O, 10);
+					memberPtr->sendChannelMessage("", text, TALKTYPE_CHANNEL_W, 10);
 				}
 			}
 		} else {
-			sendChannelMessage("", text, TALKTYPE_CHANNEL_O, 10);
+			sendChannelMessage("", text, TALKTYPE_CHANNEL_W, 10);
 		}
 		m_pendingLootGroups.erase(it);
 		return;
@@ -7405,6 +7432,22 @@ void Player::flushPendingLoot(const std::string& groupKey)
 		std::stringstream text;
 		text << prefix;
 		bool first = true;
+		// Rarity items first, listed individually (each already carries its
+		// own rolled name via getNameDescription(), captured at addPendingLoot
+		// time) rather than folded into the itemId-keyed count below.
+		for (auto& [itemId, name] : group->rarityItems) {
+			if (!first) {
+				text << ", ";
+			}
+			first = false;
+			if (colorized) {
+				const ItemType& itemType = Item::items[itemId];
+				const uint64_t itemValue = static_cast<uint64_t>(itemType.sellPrice > 0 ? itemType.sellPrice : itemType.buyPrice);
+				text << "{" << itemId << ":" << itemValue << "|" << name << "}";
+			} else {
+				text << name;
+			}
+		}
 		for (auto& [itemId, count] : group->items) {
 			const ItemType& itemType = Item::items[itemId];
 			if (!first) {
@@ -7434,9 +7477,15 @@ void Player::flushPendingLoot(const std::string& groupKey)
 	const bool colorizedLootEnabled = ConfigManager::getBoolean(ConfigManager::COLORIZED_LOOT_VALUE);
 	const std::string plainText = buildLootText(false);
 	const std::string colorizedText = colorizedLootEnabled ? buildLootText(true) : plainText;
+	// White by default; the whole line goes yellow if any item in this batch
+	// rolled a rarity tier -- native channel messages only support one color
+	// for the entire line (Yellow/White/Orange/Red are the only options),
+	// so per-item Blue/Purple isn't possible without client-side work. Per
+	// owner decision 2026-08-25.
+	const SpeakClasses lootTalkType = group->rarityItems.empty() ? TALKTYPE_CHANNEL_W : TALKTYPE_CHANNEL_Y;
 	const auto sendLootText = [&](Player& recipient) {
 		recipient.sendChannelMessage(
-		    "", colorizedLootEnabled && recipient.isAstraClient() ? colorizedText : plainText, TALKTYPE_CHANNEL_O, 10);
+		    "", colorizedLootEnabled && recipient.isAstraClient() ? colorizedText : plainText, lootTalkType, 10);
 	};
 
 	const auto& party = getParty();
@@ -8611,6 +8660,9 @@ void Player::addReset(uint32_t count /*= 1*/)
 void Player::applyOfflineTraining(uint32_t trainingTime)
 {
 	float efficiency = ConfigManager::getFloat(ConfigManager::OFFLINE_TRAINING_EFFICIENCY);
+	// Bao's "Night Watch". Applied to the try count before it is split across
+	// skills, so every vocation's split stays exactly as configured.
+	efficiency *= 1.0f + (baoOfflineTrainingBonus / 100.0f);
 	uint64_t tries = static_cast<uint64_t>(trainingTime * efficiency);
 	if (tries == 0) {
 		return;
@@ -8660,28 +8712,11 @@ void Player::applyOfflineTraining(uint32_t trainingTime)
 	}
 }
 
-Inbox* Player::getInbox()
-{
-	if (!town) {
-		return nullptr;
-	}
-	return getInbox(town->getID());
-}
+Inbox* Player::getInbox() { return inbox.get(); }
 
-Inbox* Player::getInbox(uint32_t depotId)
-{
-	DepotLocker* depotLocker = getDepotLocker(depotId);
-	if (!depotLocker) {
-		return nullptr;
-	}
-
-	for (const auto& item : depotLocker->getItemList()) {
-		if (item->getID() == ITEM_INBOX) {
-			return static_cast<Inbox*>(item.get());
-		}
-	}
-	return nullptr;
-}
+// The depot id is accepted for call-site compatibility but deliberately
+// ignored: there is exactly one Inbox per player and every locker shows it.
+Inbox* Player::getInbox(uint32_t) { return inbox.get(); }
 
 void Player::clearCooldowns()
 {

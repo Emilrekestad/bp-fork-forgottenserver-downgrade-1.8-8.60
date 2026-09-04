@@ -8,46 +8,30 @@ local town = {}
 local config = {
 
 	towns = {
-		["venore"] = 1,
-		["thais"] = 2,
-		["carlin"] = 4
+		["venore"] = 9,
+		["thais"] = 8,
+		["carlin"] = 6
 	},
 
 	vocations = {
 		["sorcerer"] = {
 			text = "A SORCERER! ARE YOU SURE? THIS DECISION IS IRREVERSIBLE!",
-			vocationId = 1,
-			--equipment spellbook, wand of vortex, magician's robe, mage hat, studded legs, leather boots, scarf
-			{{2175, 1}, {2190, 1}, {8819, 1}, {8820, 1}, {2468, 1}, {2643, 1}, {2661, 1}},
-			--container rope, shovel, mana potion
-			{{2120, 1}, {2554, 1}, {7620, 1}}
+			vocationId = 1
 		},
 
 		["druid"] = {
 			text = "A DRUID! ARE YOU SURE? THIS DECISION IS IRREVERSIBLE!",
-			vocationId = 2,
-			--equipment spellbook, snakebite rod, magician's robe, mage hat, studded legs, leather boots scarf
-			{{2175, 1}, {2182, 1}, {8819, 1}, {8820, 1}, {2468, 1}, {2643, 1}, {2661, 1}},
-			--container rope, shovel, mana potion
-			{{2120, 1}, {2554, 1}, {7620, 1}}
+			vocationId = 2
 		},
 
 		["paladin"] = {
 			text = "A PALADIN! ARE YOU SURE? THIS DECISION IS IRREVERSIBLE!",
-			vocationId = 3,
-			--equipment dwrven shield, 5 spear, ranger's cloak, ranger legs scarf, legion helmet
-			{{2525, 1}, {2389, 5}, {2660, 1}, {8923, 1}, {2643, 1}, {2661, 1}, {2480, 1}},
-			--container rope, shovel, health potion, bow, 50 arrow
-			{{2120, 1}, {2554, 1}, {7618, 1}, {2456, 1}, {2544, 50}}
+			vocationId = 3
 		},
 
 		["knight"] = {
 			text = "A KNIGHT! ARE YOU SURE? THIS DECISION IS IRREVERSIBLE!",
-			vocationId = 4,
-			--equipment dwarven shield, steel axe, brass armor, brass helmet, brass legs scarf
-			{{2525, 1}, {8601, 1}, {2465, 1}, {2460, 1}, {2478, 1}, {2643, 1}, {2661, 1}},
-			--container jagged sword, daramian mace, rope, shovel, health potion
-			{{8602, 1}, {2439, 1}, {2120, 1}, {2554, 1}, {7618, 1}}
+			vocationId = 4
 		}
 	}
 }
@@ -115,15 +99,6 @@ local function creatureSayCallback(cid, type, msg)
 			player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 			player:teleportTo(Town(town[cid]):getTemplePosition())
 			player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
-			player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You have received a backpack with starting items for reaching the mainlands.")
-			local targetVocation = config.vocations[Vocation(vocation[cid]):getName():lower()]
-			for i = 1, #targetVocation[1] do
-				player:addItem(targetVocation[1][i][1], targetVocation[1][i][2])
-			end
-			local backpack = player:addItem(1988)
-			for i = 1, #targetVocation[2] do
-				backpack:addItem(targetVocation[2][i][1], targetVocation[2][i][2])
-			end
 		else
 			npcHandler:say("THEN WHAT? {KNIGHT}, {PALADIN}, {SORCERER}, OR {DRUID}?", cid)
 			npcHandler.topic[cid] = 2

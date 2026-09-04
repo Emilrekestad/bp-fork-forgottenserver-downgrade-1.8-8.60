@@ -4,6 +4,7 @@ Reserved storage ranges:
 - 20000 to 21000+ reserved for achievement progress
 - 10000000 to 20000000 reserved for outfits and mounts on source
 - 40000 to 45000+ reserved for house protection system
+- 60000 to 60999 reserved for outfit statue claims (see PlayerStorageKeys.OutfitStatues)
 ]] --
 PlayerStorageKeys = {
     annihilatorReward = 30015,
@@ -364,6 +365,13 @@ PlayerStorageKeys = {
 
 		firstOrientalAddon = 50137,
 		secondOrientalAddon = 50138
+	},
+
+	-- Outfit Statue system (data/scripts/actions/systems/outfit_statues.lua)
+	-- One named key per statue, claim flag set the first time it's used. Range: 60000-60999.
+	OutfitStatues = {
+		CitizenStatue = 60000,
+		ForestWardenStatue = 60001
 	},
 
 	TheAncientTombs = {
@@ -813,6 +821,12 @@ PlayerStorageKeys = {
 		OutlawCampKey1 = 3301,
 		OutlawCampKey2 = 3302,
 		OutlawCampKey3 = 3303,
+		-- Rookgaard Chain Armor Quest: added 2026-08-25. Map-scan found 3
+		-- untagged "large trunk" containers (2483/2485) at the plausible
+		-- Rookgaard quest room but with no unique id baked into the map, so
+		-- this can't be wired the normal (uid-based) way without RME - see
+		-- data/scripts/globalevents/startup_quest_map_repair.lua.
+		ChainArmorQuest = 96001,
 		DoubletQuest = 64121,
 		HoneyFlower = 64131,
 		BananaPalm = 64132,

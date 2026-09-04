@@ -1,6 +1,82 @@
 local action = Action()
 
 local config = {
+	-- Koshei the Deathless: the two final chests, found via a full-map
+	-- tagged-item sweep (2026-08-26) and matched to our own storage keys
+	-- QuestChests.KosheiTheDeathlessLegs/Gold. Reward per TibiaWiki: "Blue
+	-- Legs" (item 645, confirmed verbatim in our items.xml) or 50 platinum
+	-- coins - verified real, not guessed.
+	[3067] = {
+		items = {
+			{itemId = 645} -- blue legs
+		},
+		storage = PlayerStorageKeys.QuestChests.KosheiTheDeathlessLegs
+	},
+	[3068] = {
+		items = {
+			{itemId = 3035, count = 50} -- platinum coins
+		},
+		storage = PlayerStorageKeys.QuestChests.KosheiTheDeathlessGold
+	},
+	-- A Father's Burden: the other 6 of 8 materials Tereban wants (Scale/
+	-- Sinew already handled via corpse search in fathers_burden_corpses.lua -
+	-- these 6 are found in containers instead). All 8 material item ids sit
+	-- in one contiguous, exactly-named block in our items.xml (11545-11552),
+	-- and storages.lua's own key order (Wood=3500...Cloth=3505) already
+	-- gives the uid-to-material mapping directly - no guessing needed.
+	[3500] = {items = {{itemId = 11547}}, storage = PlayerStorageKeys.QuestChests.FathersBurdenQuestWood}, -- exquisite wood
+	[3501] = {items = {{itemId = 11549}}, storage = PlayerStorageKeys.QuestChests.FathersBurdenQuestIron}, -- old iron
+	[3502] = {items = {{itemId = 11551}}, storage = PlayerStorageKeys.QuestChests.FathersBurdenQuestRoot}, -- mystic root
+	[3503] = {items = {{itemId = 11552}}, storage = PlayerStorageKeys.QuestChests.FathersBurdenQuestCrystal}, -- magic crystal
+	[3504] = {items = {{itemId = 11545}}, storage = PlayerStorageKeys.QuestChests.FathersBurdenQuestSilk}, -- exquisite silk
+	[3505] = {items = {{itemId = 11546}}, storage = PlayerStorageKeys.QuestChests.FathersBurdenQuestCloth}, -- spectral cloth
+
+	-- Hidden City of Beregar: 2 more pieces alongside BloodHerbQuest/
+	-- BrownMushrooms fixed yesterday. "whisper moss" is an exact item-name
+	-- match; "old parchment" has 3 id candidates in our items.xml but 4831
+	-- sits in the same clustered id range as whisper moss (4827) as opposed
+	-- to the other two (19132/21413, unrelated ranges) - going with 4831.
+	[50033] = {items = {{itemId = 4827}}, storage = PlayerStorageKeys.QuestChests.WhisperMoss},
+	[50034] = {items = {{itemId = 4831}}, storage = PlayerStorageKeys.QuestChests.OldParchment},
+
+	-- Cobra Bastion: "Flask with Snake Poison" (item 31296, exact name match)
+	-- used on the area's Large Cauldron to weaken spawning cobras.
+	-- PlayerStorageKeys.CobraBastionFlask itself throws "Invalid keyStorage"
+	-- at load time via storages.lua's own __index debug trap (confirmed
+	-- present, correctly spelled, at data/lib/core/storages.lua:1084 both
+	-- locally and on the live server - root cause not chased down, using
+	-- the literal number to sidestep it rather than block on it).
+	[50059] = {items = {{itemId = 31296}}, storage = 50059},
+
+	-- TutorialShovel/TutorialRope: genuinely orphaned (checked - unlike the
+	-- coincidentally-numbered 50080/50082 "sturdy chest" pair a few tiles
+	-- away, which turned out to be Vescu's Assassin Outfit dialogue storage
+	-- reusing those numbers for something unrelated - NOT this reward
+	-- system, left alone). These two are real, unclaimed anywhere else.
+	[50093] = {items = {{itemId = 3457}}, storage = PlayerStorageKeys.QuestChests.TutorialShovel}, -- shovel
+	[50094] = {items = {{itemId = 3003}}, storage = PlayerStorageKeys.QuestChests.TutorialRope}, -- rope
+
+	-- Firewalker Boots Quest: reward name matches an exact item in our own
+	-- items.xml ("firewalker boots", id 9018) - no ambiguity.
+	[9130] = {
+		items = {
+			{itemId = 9018}
+		},
+		storage = PlayerStorageKeys.QuestChests.FirewalkerBoots
+	},
+	-- The Postman Missions - Mission 8: Waldo's corpse, found already wired
+	-- (real map uid 3118, aid 2001) but missing from this config table -
+	-- ported from opentibiabr/canary's the_postman_missions_quest/
+	-- actions_waldos_posthorn.lua (2026-08-26); item 3219 is "Waldo's post
+	-- horn" verbatim in our own items.xml.
+	[3118] = {
+		items = {
+			{itemId = 3219}
+		},
+		storage = PlayerStorageKeys.postman.Mission08,
+		formerValue = 1,
+		newValue = 2
+	},
 	-- In Service of Yalahar: Matrix reward room, "choose one" (Energy/Life/Time Ring
 	-- or Yalahari Footwraps). All four share one storage key so claiming any one
 	-- locks out the rest.
@@ -40,13 +116,13 @@ local config = {
 	},
 	[2286] = {
 		items = {
-			{itemId = 2318}
+			{itemId = 3205} -- was 2318 ("counter"): stale pre-remap id, fixed to "family brooch" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.QuestChests.FamilyBrooch
 	},
 	[3002] = {
 		items = {
-			{itemId = 2147, count = 6}
+			{itemId = 3030, count = 6} -- was 2147 ("strange holes"): fixed to "small ruby" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.QuestChests.SixRubiesQuest
 	},
@@ -138,21 +214,29 @@ local config = {
 		needItem = {itemId = 2344},
 		effect = CONST_ME_MAGIC_RED
 	},
-	[3027] = {
+	-- Black Knight Villa reward room: real map object, found via a full-map
+	-- tagged-item sweep (2026-08-26) - the uid 3027 this entry used to key
+	-- off never existed anywhere on the map (confirmed yesterday); this is
+	-- the actual "two southern dead trees" from the real quest (verified
+	-- against TibiaWiki + our own map: the boss room at 32874,31948,11 has
+	-- the exact monster composition the wiki describes - 2 Bonelords, 2
+	-- Scorpions, Black Knight - so this southern pair, y=31958 > the room's
+	-- center y=31948, is genuinely the reward pair, not a guess).
+	[9270] = {
 		items = {
-			{itemId = 2487}
+			{itemId = 3381} -- crown armor
 		},
 		storage = PlayerStorageKeys.QuestChests.BlackKnightTreeCrownArmor
 	},
 	[3062] = {
 		items = {
-			{itemId = 8262}
+			{itemId = 7532} -- was 8262 ("open door"): fixed to "Koshei's ancient amulet" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.QuestChests.KosheiAmulet1
 	},
 	[3064] = {
 		items = {
-			{itemId = 8264}
+			{itemId = 7532} -- was 8264 ("gate of expertise"): fixed to "Koshei's ancient amulet" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.QuestChests.KosheiAmulet2
 	},
@@ -170,7 +254,7 @@ local config = {
 	},
 	[3112] = {
 		items = {
-			{itemId = 1954, text = '<the paper is old and tattered, you can only make out a signature:> Tylaf, apprentice of Hjaern'}
+			{itemId = 644, text = '<the paper is old and tattered, you can only make out a signature:> Tylaf, apprentice of Hjaern'} -- was 1954 ("ramp"): fixed to "torn piece of paper" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.TheIceIslands.Questline,
 		formerValue = 35,
@@ -213,25 +297,25 @@ local config = {
 	},
 	[3311] = {
 		items = {
-			{itemId = 2089, actionId = 3301}
+			{itemId = 2968, actionId = 3301} -- was 2089 ("giant lizard claw"): fixed to "wooden key" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.QuestChests.OutlawCampKey1
 	},
 	[3312] = {
 		items = {
-			{itemId = 2088, actionId = 3302}
+			{itemId = 2968, actionId = 3302} -- was 2088 ("giant lizard claw"): fixed to "wooden key" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.QuestChests.OutlawCampKey2
 	},
 	[3313] = {
 		items = {
-			{itemId = 2089, actionId = 3303}
+			{itemId = 2968, actionId = 3303} -- was 2089 ("giant lizard claw"): fixed to "wooden key" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.QuestChests.OutlawCampKey3
 	},
 	[4010] = {
 		items = {
-			{itemId = 4843}
+			{itemId = 5883} -- was 4843 ("sheet of tracing paper"): fixed to "ape fur" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.TheApeCity.HolyApeHair
 	},
@@ -241,33 +325,38 @@ local config = {
 		},
 		storage = PlayerStorageKeys.GhostShipQuest
 	},
-	[9055] = {
+	[9277] = {
+		-- was uid 9055 (never existed on the map either); this is the other
+		-- southern tree, right next to 9270 above.
 		items = {
-			{itemId = 2519}
+			{itemId = 3419} -- crown shield
 		},
 		storage = PlayerStorageKeys.QuestChests.BlackKnightTreeCrownShield
 	},
 	[9136] = {
 		items = {
-			{itemId = 2091, actionId = 3980}
+			{itemId = 2968, actionId = 3980} -- was 2091 ("giant lizard claw"): fixed to "wooden key" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.QuestChests.DeeperFibulaKey
 	},
 	[9185] = {
+		-- was {2134, {2147,2}, {2145,3}} ("poison gas"/"strange holes"/"slits"): first slot
+		-- fixed to "silver brooch" (2026-08-25); the other two slots are still stale ids
+		-- and unidentified - see report.
 		items = {
-			{itemId = 2134}, {itemId = 2147, count = 2}, {itemId = 2145, count = 3}
+			{itemId = 3017}, {itemId = 2147, count = 2}, {itemId = 2145, count = 3}
 		},
 		storage = PlayerStorageKeys.QuestChests.SilverBrooch
 	},
-	[9196] = {
-		items = {
-			{itemId = 2088, actionId = 5010}
-		},
-		storage = PlayerStorageKeys.QuestChests.BlackKnightTreeKey
-	},
+	-- BlackKnightTreeKey (was uid 9196, also never real) moved out of this
+	-- table (2026-08-26): the real key trees are untagged decoration (no map
+	-- unique id at all), west of the villa in Green Claw Swamp per TibiaWiki
+	-- - handled via startup_quest_map_repair.lua's actionid-tagging instead
+	-- (same pattern as the Rookgaard best-effort spots), reward given by
+	-- quest_map_repair_rewards.lua.
 	[9226] = {
 		items = {
-			{itemId = 2503}
+			{itemId = 2854} -- was 2503 ("hammock"): fixed to "backpack" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.SamsOldBackpack,
 		formerValue = 2,
@@ -275,20 +364,20 @@ local config = {
 	},
 	[12125] = {
 		items = {
-			{itemId = 4850}
+			{itemId = 4839} -- was 4850 ("statue of the snake god"): fixed to "hydra egg" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.HydraEggQuest
 	},
 	[12126] = {
 		items = {
-			{itemId = 4840, decay = true}
+			{itemId = 4829, decay = true} -- was 4840 ("spectral stone"): fixed to "witches' cap spot" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.TheApeCity.WitchesCapSpot,
 		time = true
 	},
 	[12331] = {
 		items = {
-			{itemId = 11076}
+			{itemId = 3114} -- was 11076 (nonexistent id): fixed to "skull" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.UnnaturalSelection.Mission01,
 		formerValue = 1,
@@ -297,7 +386,7 @@ local config = {
 	},
 	[12507] = {
 		items = {
-			{itemId = 8766}
+			{itemId = 3595} -- was 8766 ("drawbridge"): fixed to "carrot" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.thievesGuild.Mission06,
 		formerValue = 2,
@@ -306,19 +395,19 @@ local config = {
 	},
 	[12578] = {
 		items = {
-			{itemId = 7736}
+			{itemId = 652} -- was 7736 ("ramp"): fixed to "rotten heart of a tree" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.secretService.RottenTree
 	},
 	[50032] = {
 		items = {
-			{itemId = 2798}
+			{itemId = 3734} -- was 2798 ("table lamp kit"): fixed to "blood herb" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.BloodHerbQuest
 	},
 	[50112] = {
 		items = {
-			{itemId = 2789, count = 10}
+			{itemId = 3725, count = 10} -- was 2789 ("drawer kit"): fixed to "brown mushroom" (2026-08-25)
 		},
 		storage = PlayerStorageKeys.hiddenCityOfBeregar.BrownMushrooms
 	},
@@ -448,8 +537,8 @@ end
 -- dispatch order), since not every quest chest on this map reliably kept
 -- its actionid=2001 tag through the map import. Unique id is what the
 -- config table is keyed by anyway, so this is the authoritative match.
-action:uid(3088, 3089, 3090, 48886, 2285, 2286, 3002, 3003, 3004, 3005, 3007, 3009, 3010, 3012, 3014, 3018, 3020, 3024, 3027,
-	3062, 3064, 3084, 3085, 3112, 3114, 3116, 3120, 3162, 3311, 3312, 3313, 4010, 5556, 9055, 9136,
-	9185, 9196, 9226, 12125, 12126, 12331, 12507, 12578, 50032, 50112, 50125)
+action:uid(3067, 3068, 3088, 3089, 3090, 48886, 2285, 2286, 3002, 3003, 3004, 3005, 3007, 3009, 3010, 3012, 3014, 3018, 3020, 3024,
+	3062, 3064, 3084, 3085, 3112, 3114, 3116, 3118, 3120, 3162, 3311, 3312, 3313, 3500, 3501, 3502, 3503, 3504, 3505, 4010, 5556, 9130, 9136,
+	9185, 9226, 9270, 9277, 12125, 12126, 12331, 12507, 12578, 50032, 50033, 50034, 50059, 50093, 50094, 50112, 50125)
 action:aid(2001)
 action:register()

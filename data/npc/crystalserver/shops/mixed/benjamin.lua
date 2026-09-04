@@ -92,6 +92,43 @@ npcConfig.shop = {
 	{ itemName = "label", clientId = 3507, buy = 1 },
 	{ itemName = "letter", clientId = 3505, buy = 8 },
 	{ itemName = "parcel", clientId = 3503, buy = 15 },
+
+	-- Exercise weapons, deliberately expensive. 500 charges each, matching the
+	-- items.xml default, and priced at the same 347222 already used for the
+	-- identical item elsewhere in data/npc/ -- one item should not cost two
+	-- different amounts depending on which merchant a player happens to find.
+	--
+	-- These are worth buying despite `!reward exercise` handing out a free
+	-- 3000-charge weapon daily, because that reward is locked to your own
+	-- vocation's weapon. Cross-training any other skill has to be bought.
+	{ itemName = "exercise sword", clientId = 28552, buy = 347222, count = 500 },
+	{ itemName = "exercise axe", clientId = 28553, buy = 347222, count = 500 },
+	{ itemName = "exercise club", clientId = 28554, buy = 347222, count = 500 },
+	{ itemName = "exercise bow", clientId = 28555, buy = 347222, count = 500 },
+	{ itemName = "exercise rod", clientId = 28556, buy = 347222, count = 500 },
+	{ itemName = "exercise wand", clientId = 28557, buy = 347222, count = 500 },
+
+	-- Durable: 1800 charges (3.6x the base weapon) at 1250000, and Lasting:
+	-- 14400 charges (28.8x) at 10000000. Both prices are the ones already used
+	-- for these exact items elsewhere in data/npc/, kept identical here for the
+	-- same reason as above.
+	--
+	-- Note the tiers are deliberately NOT priced per-charge: base works out at
+	-- ~694 gold per charge, durable ~694, lasting ~694. Bulk buys no discount,
+	-- it only saves trips to Benjamin.
+	{ itemName = "durable exercise sword", clientId = 35279, buy = 1250000, count = 1800 },
+	{ itemName = "durable exercise axe", clientId = 35280, buy = 1250000, count = 1800 },
+	{ itemName = "durable exercise club", clientId = 35281, buy = 1250000, count = 1800 },
+	{ itemName = "durable exercise bow", clientId = 35282, buy = 1250000, count = 1800 },
+	{ itemName = "durable exercise rod", clientId = 35283, buy = 1250000, count = 1800 },
+	{ itemName = "durable exercise wand", clientId = 35284, buy = 1250000, count = 1800 },
+
+	{ itemName = "lasting exercise sword", clientId = 35285, buy = 10000000, count = 14400 },
+	{ itemName = "lasting exercise axe", clientId = 35286, buy = 10000000, count = 14400 },
+	{ itemName = "lasting exercise club", clientId = 35287, buy = 10000000, count = 14400 },
+	{ itemName = "lasting exercise bow", clientId = 35288, buy = 10000000, count = 14400 },
+	{ itemName = "lasting exercise rod", clientId = 35289, buy = 10000000, count = 14400 },
+	{ itemName = "lasting exercise wand", clientId = 35290, buy = 10000000, count = 14400 },
 }
 -- On buy npc shop message
 npcType.onBuyItem = function(npc, player, itemId, subType, amount, ignore, inBackpacks, totalCost)

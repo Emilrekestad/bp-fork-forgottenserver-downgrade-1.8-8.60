@@ -1379,7 +1379,7 @@ function BattlePassSystem.purchasePremium(player, skipCoinCharge)
 	end
 
 	if not skipCoinCharge and not player:removeTibiaCoins(config.deluxe.price) then
-		return "Not enough Tibia Coins."
+		return "Not enough Bp Coins."
 	end
 
 	state.premium = true

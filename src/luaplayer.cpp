@@ -258,6 +258,89 @@ int luaPlayerSetCapacity(lua_State* L)
 	return 1;
 }
 
+// Old Man Bao's Ledger. Three tracks whose effects live in C++ and have no
+// other Lua hook: experience lost on death, equipment dropped on death, and
+// offline training gained. Each takes a PERCENT and is clamped in the setter.
+//
+// Values are pushed down from Lua on login and after a Ledger purchase (see
+// data/scripts/creaturescripts/bao/bao_ledger_apply.lua) rather than persisted
+// here, because the ranks that produce them already live in the player's kv
+// store and a second copy would only drift.
+int luaPlayerSetBaoExperienceLossReduction(lua_State* L)
+{
+	// player:setBaoExperienceLossReduction(percent)
+	Player* player = getUserdata<Player>(L, 1);
+	if (player) {
+		player->setBaoExperienceLossReduction(getInteger<uint32_t>(L, 2));
+		pushBoolean(L, true);
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int luaPlayerGetBaoExperienceLossReduction(lua_State* L)
+{
+	// player:getBaoExperienceLossReduction()
+	const Player* player = getUserdata<const Player>(L, 1);
+	if (player) {
+		lua_pushinteger(L, player->baoExperienceLossReduction);
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int luaPlayerSetBaoEquipmentLossReduction(lua_State* L)
+{
+	// player:setBaoEquipmentLossReduction(percent)
+	Player* player = getUserdata<Player>(L, 1);
+	if (player) {
+		player->setBaoEquipmentLossReduction(getInteger<uint32_t>(L, 2));
+		pushBoolean(L, true);
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int luaPlayerGetBaoEquipmentLossReduction(lua_State* L)
+{
+	// player:getBaoEquipmentLossReduction()
+	const Player* player = getUserdata<const Player>(L, 1);
+	if (player) {
+		lua_pushinteger(L, player->baoEquipmentLossReduction);
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int luaPlayerSetBaoOfflineTrainingBonus(lua_State* L)
+{
+	// player:setBaoOfflineTrainingBonus(percent)
+	Player* player = getUserdata<Player>(L, 1);
+	if (player) {
+		player->setBaoOfflineTrainingBonus(getInteger<uint32_t>(L, 2));
+		pushBoolean(L, true);
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int luaPlayerGetBaoOfflineTrainingBonus(lua_State* L)
+{
+	// player:getBaoOfflineTrainingBonus()
+	const Player* player = getUserdata<const Player>(L, 1);
+	if (player) {
+		lua_pushinteger(L, player->baoOfflineTrainingBonus);
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
 int luaPlayerGetFreeCapacity(lua_State* L)
 {
 	// player:getFreeCapacity()
@@ -4614,6 +4697,14 @@ void LuaScriptInterface::registerPlayer()
 
 	registerMethod("Player", "getCapacity", luaPlayerGetCapacity);
 	registerMethod("Player", "setCapacity", luaPlayerSetCapacity);
+
+	// Old Man Bao's Ledger -- the three tracks with no other Lua hook.
+	registerMethod("Player", "setBaoExperienceLossReduction", luaPlayerSetBaoExperienceLossReduction);
+	registerMethod("Player", "getBaoExperienceLossReduction", luaPlayerGetBaoExperienceLossReduction);
+	registerMethod("Player", "setBaoEquipmentLossReduction", luaPlayerSetBaoEquipmentLossReduction);
+	registerMethod("Player", "getBaoEquipmentLossReduction", luaPlayerGetBaoEquipmentLossReduction);
+	registerMethod("Player", "setBaoOfflineTrainingBonus", luaPlayerSetBaoOfflineTrainingBonus);
+	registerMethod("Player", "getBaoOfflineTrainingBonus", luaPlayerGetBaoOfflineTrainingBonus);
 
 	registerMethod("Player", "getFreeCapacity", luaPlayerGetFreeCapacity);
 

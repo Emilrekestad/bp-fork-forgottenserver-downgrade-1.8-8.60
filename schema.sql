@@ -477,6 +477,30 @@ CREATE TABLE IF NOT EXISTS `player_bestiary_kills` (
     FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS `player_bestiary_charms` (
+  `player_id` INT NOT NULL,
+  `charm_id` TINYINT UNSIGNED NOT NULL,
+  `unlocked` TINYINT(1) NOT NULL DEFAULT 0,
+  `raceid` SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`player_id`, `charm_id`),
+  KEY `idx_player_bestiary_charms_race` (`player_id`, `raceid`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8;
+
+CREATE TABLE IF NOT EXISTS `player_bestiary_resources` (
+  `player_id` INT NOT NULL,
+  `minor_charm_echoes` INT UNSIGNED NOT NULL DEFAULT 0,
+  `max_minor_charm_echoes` INT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`player_id`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8;
+
+CREATE TABLE IF NOT EXISTS `player_bestiary_tracker` (
+  `player_id` INT NOT NULL,
+  `raceid` SMALLINT UNSIGNED NOT NULL,
+  `slot` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`player_id`, `raceid`),
+  KEY `idx_player_bestiary_tracker_slot` (`player_id`, `slot`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8;
+
 CREATE TABLE IF NOT EXISTS `player_weapon_proficiency` (
   `player_id` int NOT NULL,
   `item_id` smallint unsigned NOT NULL,
@@ -560,6 +584,26 @@ CREATE TABLE IF NOT EXISTS player_hunting_task_points (
   player_id int NOT NULL,
   points bigint NOT NULL DEFAULT 0,
   PRIMARY KEY (player_id)
+);
+
+CREATE TABLE IF NOT EXISTS bao_player (
+  player_id int NOT NULL,
+  reputation bigint unsigned NOT NULL DEFAULT 0,
+  marks bigint unsigned NOT NULL DEFAULT 0,
+  rank_id tinyint unsigned NOT NULL DEFAULT 0,
+  story_chapter tinyint unsigned NOT NULL DEFAULT 0,
+  updated_at bigint NOT NULL DEFAULT 0,
+  PRIMARY KEY (player_id)
+);
+
+CREATE TABLE IF NOT EXISTS bao_active_hunts (
+  player_id int NOT NULL,
+  slot tinyint unsigned NOT NULL,
+  hunt_id varchar(64) NOT NULL,
+  state tinyint unsigned NOT NULL DEFAULT 1,
+  progress int unsigned NOT NULL DEFAULT 0,
+  accepted_at bigint NOT NULL DEFAULT 0,
+  PRIMARY KEY (player_id, slot)
 );
 
 CREATE TABLE IF NOT EXISTS player_bounty_tasks (
@@ -736,7 +780,219 @@ CREATE TABLE IF NOT EXISTS `towns` (
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8;
 
-INSERT INTO server_config (config, value) VALUES ('db_version', '62'), ('motd_hash', ''), ('motd_num', '0'), ('players_record', '0');
+-- Item Bazaar -- account-wide auction house for rarity equipment, priced in
+-- BP Coins. Distinct from `character_auctions` (sells characters) and
+-- `market_offers` (bank gold, quantity-based): this escrows exact single
+-- item instances. See data/migrations/64.lua for the full design notes.
+
+CREATE TABLE IF NOT EXISTS `bazaar_items` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `item_uid` BIGINT UNSIGNED NOT NULL,
+  `owner_account_id` INT NOT NULL,
+  `origin_world_id` SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+  `itemtype` SMALLINT UNSIGNED NOT NULL,
+  `count` SMALLINT NOT NULL DEFAULT 1,
+  `tier` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `item_class` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `item_category` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `item_name` VARCHAR(255) NOT NULL DEFAULT '',
+  -- Rarity description snapshot taken at listing time, so the website and
+  -- client can show an item's bonuses without deserialising the blob.
+  `item_description` TEXT DEFAULT NULL,
+  `attributes` BLOB NOT NULL,
+  `state` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `current_auction_id` INT UNSIGNED DEFAULT NULL,
+  `source_player_id` INT DEFAULT NULL,
+  `created_at` INT UNSIGNED NOT NULL,
+  `updated_at` INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_bazaar_items_uid` (`item_uid`),
+  KEY `idx_bazaar_items_owner_state` (`owner_account_id`, `state`),
+  KEY `idx_bazaar_items_state_created` (`state`, `created_at`),
+  KEY `idx_bazaar_items_auction` (`current_auction_id`),
+  CONSTRAINT `fk_bazaar_items_owner` FOREIGN KEY (`owner_account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `bazaar_auctions` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  -- Nullable + SET NULL on purpose: withdrawing an item deletes its
+  -- `bazaar_items` row (freeing the UNIQUE item_uid so it can be listed
+  -- again), and the auction record must survive that. `item_uid` keeps the
+  -- provenance after the escrow row is gone.
+  `item_id` INT UNSIGNED DEFAULT NULL,
+  `item_uid` BIGINT UNSIGNED DEFAULT NULL,
+  `seller_account_id` INT NOT NULL,
+  `origin_world_id` SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+  `itemtype` SMALLINT UNSIGNED NOT NULL,
+  `tier` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `item_class` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `item_category` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `item_name` VARCHAR(255) NOT NULL DEFAULT '',
+  `item_description` TEXT DEFAULT NULL,
+  `start_price` INT UNSIGNED NOT NULL,
+  `buyout_price` INT UNSIGNED DEFAULT NULL,
+  `current_bid` INT UNSIGNED NOT NULL DEFAULT 0,
+  `current_bidder_account_id` INT DEFAULT NULL,
+  `bid_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `status` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  `promoted` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` INT UNSIGNED NOT NULL,
+  `starts_at` INT UNSIGNED NOT NULL,
+  `ends_at` INT UNSIGNED NOT NULL,
+  `settled_at` INT UNSIGNED DEFAULT NULL,
+  `final_price` INT UNSIGNED DEFAULT NULL,
+  `fee` INT UNSIGNED DEFAULT NULL,
+  `winner_account_id` INT DEFAULT NULL,
+  `settlement_reason` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `idx_bazaar_auctions_status_ends` (`status`, `ends_at`),
+  KEY `idx_bazaar_auctions_status_tier` (`status`, `tier`, `ends_at`),
+  KEY `status_category` (`status`, `item_category`),
+  KEY `idx_bazaar_auctions_status_itemtype` (`status`, `itemtype`, `ends_at`),
+  KEY `idx_bazaar_auctions_status_name` (`status`, `item_name`(64)),
+  KEY `idx_bazaar_auctions_status_bid` (`status`, `current_bid`),
+  KEY `idx_bazaar_auctions_status_buyout` (`status`, `buyout_price`),
+  KEY `idx_bazaar_auctions_seller` (`seller_account_id`, `status`),
+  KEY `idx_bazaar_auctions_bidder` (`current_bidder_account_id`, `status`),
+  KEY `idx_bazaar_auctions_winner` (`winner_account_id`),
+  KEY `idx_bazaar_auctions_item` (`item_id`),
+  KEY `idx_bazaar_auctions_item_uid` (`item_uid`),
+  CONSTRAINT `fk_bazaar_auctions_item` FOREIGN KEY (`item_id`) REFERENCES `bazaar_items` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_bazaar_auctions_seller` FOREIGN KEY (`seller_account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_bazaar_auctions_bidder` FOREIGN KEY (`current_bidder_account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_bazaar_auctions_winner` FOREIGN KEY (`winner_account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `bazaar_bids` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `auction_id` INT UNSIGNED NOT NULL,
+  `bidder_account_id` INT NOT NULL,
+  `amount` INT UNSIGNED NOT NULL,
+  `created_at` INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_bazaar_bids_auction` (`auction_id`, `created_at`),
+  KEY `idx_bazaar_bids_bidder` (`bidder_account_id`, `created_at`),
+  CONSTRAINT `fk_bazaar_bids_auction` FOREIGN KEY (`auction_id`) REFERENCES `bazaar_auctions` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_bazaar_bids_bidder` FOREIGN KEY (`bidder_account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `bazaar_ledger` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `account_id` INT DEFAULT NULL,
+  `auction_id` INT UNSIGNED DEFAULT NULL,
+  `bid_id` INT UNSIGNED DEFAULT NULL,
+  `type` TINYINT UNSIGNED NOT NULL,
+  `amount` BIGINT NOT NULL,
+  `operation_id` VARCHAR(80) NOT NULL,
+  `created_at` INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_bazaar_ledger_operation` (`operation_id`),
+  KEY `idx_bazaar_ledger_account` (`account_id`, `created_at`),
+  KEY `idx_bazaar_ledger_auction` (`auction_id`),
+  CONSTRAINT `fk_bazaar_ledger_account` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `bazaar_events` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `account_id` INT DEFAULT NULL,
+  `auction_id` INT UNSIGNED DEFAULT NULL,
+  `type` TINYINT UNSIGNED NOT NULL,
+  `payload` VARCHAR(512) NOT NULL DEFAULT '',
+  `created_at` INT UNSIGNED NOT NULL,
+  `delivered_at` INT UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_bazaar_events_pending` (`delivered_at`, `created_at`),
+  KEY `idx_bazaar_events_account` (`account_id`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `bazaar_commands` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `account_id` INT NOT NULL,
+  `action` VARCHAR(32) NOT NULL,
+  `params` VARCHAR(1024) NOT NULL DEFAULT '',
+  `idempotency_key` VARCHAR(80) NOT NULL,
+  `status` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `result_code` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `result_message` VARCHAR(512) NOT NULL DEFAULT '',
+  `created_at` INT UNSIGNED NOT NULL,
+  `claimed_at` INT UNSIGNED DEFAULT NULL,
+  `completed_at` INT UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_bazaar_commands_idem` (`idempotency_key`),
+  KEY `idx_bazaar_commands_pending` (`status`, `created_at`),
+  KEY `idx_bazaar_commands_account` (`account_id`, `created_at`),
+  CONSTRAINT `fk_bazaar_commands_account` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `bazaar_audit` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `auction_id` INT UNSIGNED DEFAULT NULL,
+  `item_id` INT UNSIGNED DEFAULT NULL,
+  `item_uid` BIGINT UNSIGNED DEFAULT NULL,
+  `action` VARCHAR(64) NOT NULL,
+  `account_id` INT DEFAULT NULL,
+  `player_id` INT DEFAULT NULL,
+  `amount` BIGINT NOT NULL DEFAULT 0,
+  `message` TEXT DEFAULT NULL,
+  `created_at` INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_bazaar_audit_auction` (`auction_id`, `created_at`),
+  KEY `idx_bazaar_audit_item` (`item_id`),
+  KEY `idx_bazaar_audit_uid` (`item_uid`),
+  KEY `idx_bazaar_audit_account` (`account_id`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `bazaar_hunt_snapshots` (
+  `taken_at` INT UNSIGNED NOT NULL,
+  `raceid` SMALLINT UNSIGNED NOT NULL,
+  `kills` INT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`taken_at`, `raceid`),
+  KEY `idx_bazaar_hunt_taken` (`taken_at`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `world_first_achievements` (
+  `achievement_id` SMALLINT UNSIGNED NOT NULL,
+  `achievement_name` VARCHAR(255) NOT NULL DEFAULT '',
+  `player_id` INT DEFAULT NULL,
+  `player_name` VARCHAR(255) NOT NULL,
+  `achieved_at` INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`achievement_id`),
+  KEY `idx_world_first_player` (`player_id`),
+  KEY `idx_world_first_time` (`achieved_at`),
+  CONSTRAINT `fk_world_first_player` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `integration_events` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `event_key` VARCHAR(128) NOT NULL,
+  `event_type` VARCHAR(64) NOT NULL,
+  `visibility` VARCHAR(16) NOT NULL DEFAULT 'public',
+  `payload` LONGTEXT NOT NULL,
+  `status` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `attempts` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `available_at` INT UNSIGNED NOT NULL,
+  `created_at` INT UNSIGNED NOT NULL,
+  `claimed_at` INT UNSIGNED DEFAULT NULL,
+  `delivered_at` INT UNSIGNED DEFAULT NULL,
+  `last_error` VARCHAR(512) NOT NULL DEFAULT '',
+  `discord_message_id` VARCHAR(32) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_integration_event_key` (`event_key`),
+  KEY `idx_integration_delivery` (`status`, `available_at`, `id`),
+  KEY `idx_integration_type_created` (`event_type`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `integration_workers` (
+  `worker_name` VARCHAR(64) NOT NULL,
+  `status` VARCHAR(24) NOT NULL DEFAULT 'unknown',
+  `version` VARCHAR(32) NOT NULL DEFAULT '',
+  `heartbeat_at` INT UNSIGNED NOT NULL DEFAULT 0,
+  `last_error` VARCHAR(512) NOT NULL DEFAULT '',
+  PRIMARY KEY (`worker_name`),
+  KEY `idx_integration_worker_heartbeat` (`heartbeat_at`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4;
+
+INSERT INTO server_config (config, value) VALUES ('db_version', '72'), ('motd_hash', ''), ('motd_num', '0'), ('players_record', '0');
 
 CREATE TABLE IF NOT EXISTS guild_transactions (
   id SERIAL PRIMARY KEY,

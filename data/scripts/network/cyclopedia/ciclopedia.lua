@@ -549,9 +549,16 @@ local function writeCharms(out, player, kills, charms)
 		local unlocked = tier > 0
 		local assignedRaceId = unlocked and state and state.raceId or 0
 
+		local displayBonus = charm.bonuses[tier > 0 and tier or 1] or 0
+		local description = charm.description
+		local formatOk, formatted = pcall(string.format, description, displayBonus)
+		if formatOk then
+			description = formatted
+		end
+
 		out:addByte(charm.id)
 		out:addString(charm.name)
-		out:addString(charm.description)
+		out:addString(description)
 		out:addByte(0)
 		out:addU16(clamp(getNextCharmPrice(charm, tier), 0, 0xFFFF))
 		out:addByte(tier)

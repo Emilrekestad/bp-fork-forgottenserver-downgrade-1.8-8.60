@@ -94,7 +94,8 @@ monster.loot = {
 	{ name = "raw watermelon tourmaline", chance = 9302, maxCount = 1 },
 -- { name = "vemiath's infused basalt", chance = 7914, maxCount = 1 },
 	{ name = "violet gem", chance = 7210, maxCount = 1 },
-	{ id = 43895, chance = 360 }, -- Bag you covet
+	{ id = 43895, chance = 1000 }, -- Bag you covet
+	{ id = 34109, chance = 1000 }, -- Bag you desire
 	{ name = "darklight geode", chance = 500 },
 }
 

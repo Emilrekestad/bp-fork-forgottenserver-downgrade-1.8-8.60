@@ -7,7 +7,7 @@ function onCreatureDisappear(cid)		npcHandler:onCreatureDisappear(cid)			end
 function onCreatureSay(cid, type, msg)		npcHandler:onCreatureSay(cid, type, msg)		end
 function onThink()		npcHandler:onThink()		end
 
-local voices = { {text = 'Passages to Carlin, Ab\'Dendriel, Edron, Venore, Port Hope, Liberty Bay, Yalahar, Roshamuul, Krailos, Oramond, Svargrond and Daram Island.'} }
+local voices = { {text = 'Passages to Carlin, Ab\'Dendriel, Edron, Venore, Port Hope, Liberty Bay, Roshamuul, Krailos, Oramond, Svargrond and Daram Island.'} }
 npcHandler:addModule(VoiceModule:new(voices))
  
 -- Travel
@@ -22,13 +22,61 @@ addTravelKeyword('ab\'dendriel', 130, Position(32734, 31668, 6))
 addTravelKeyword('edron', 160, Position(33175, 31764, 6))
 addTravelKeyword('venore', 170, Position(32954, 32022, 6))
 addTravelKeyword('port hope', 160, Position(32527, 32784, 6))
-addTravelKeyword('roshamuul', 210, Position(33494, 32567, 7))
 addTravelKeyword('svargrond', 180, Position(32341, 31108, 6))
-addTravelKeyword('liberty bay', 180, Position(32285, 32892, 6))
-addTravelKeyword('yalahar', 200, Position(32816, 31272, 6))
-addTravelKeyword('oramond', 180, Position(33479, 31985, 7))
 addTravelKeyword('krailos', 270, Position(33492, 31712, 6))
 addTravelKeyword('daram island', 210, Position(32777, 33026, 6))
+
+-- Liberty Bay, Oramond and Roshamuul -- all three World Missions
+-- destinations. Per owner's spec: Bluebear still OFFERS all three
+-- normally (quotes the price, same as any real route) -- he only backs
+-- out at the "yes" confirmation, with an in-character, per-destination
+-- safety excuse pointing the player at Bender Shun, rather than pretending
+-- the place doesn't exist. Once the mission is applied the gate is gone
+-- and it behaves exactly like every other addTravelKeyword() route.
+-- Checked again at "yes" specifically (not just relying on the prompt
+-- having already been shown) since a mission can apply mid-conversation
+-- (completion fires the instant its threshold is met, not on a delay).
+-- Reimplements the small prompt/confirm/pay/teleport flow rather than
+-- reusing addTravelKeyword's StdModule.travel machinery, which has no
+-- built-in hook for a runtime availability condition -- same gold-check-
+-- then-teleport shape already proven working in this exact codebase
+-- (data/npc/scripts/Captain Waverider.lua).
+local function addGatedTravelKeyword(keyword, cost, destination, missionId, notYetText)
+	local function promptCallback(cid, message, keywords, parameters, node)
+		npcHandler:say('Do you seek a passage to ' .. keyword:titleCase() .. ' for ' .. cost .. ' gold?', cid)
+		return true
+	end
+
+	local function yesCallback(cid, message, keywords, parameters, node)
+		if not WorldMissions.isApplied(missionId) then
+			npcHandler:say(notYetText, cid)
+			return true
+		end
+
+		local player = Player(cid)
+		if player:getMoney() < cost then
+			npcHandler:say("You don't have enough money.", cid)
+			return true
+		end
+
+		player:removeMoney(cost)
+		npcHandler:say('And there we go!', cid)
+		player:teleportTo(destination)
+		player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
+		return true
+	end
+
+	local promptNode = keywordHandler:addKeyword({keyword}, promptCallback, {})
+	promptNode:addChildKeyword({'yes'}, yesCallback, {})
+	promptNode:addChildKeyword({'no'}, StdModule.say, {npcHandler = npcHandler, text = 'We would like to serve you some time.', reset = true})
+end
+
+addGatedTravelKeyword('liberty bay', 180, Position(32285, 32892, 6), 'liberty_bay',
+	"That door hasn't opened in years, and I'm not sailing you to knock on it myself. Someone said four levers might do it -- Bender Shun would know more than I do.")
+addGatedTravelKeyword('oramond', 180, Position(33479, 31985, 7), 'oramond',
+	"The furnaces under Oramond aren't lit, and I won't sail you into cold machinery and worse. Check with Bender Shun before you go looking for smoke.")
+addGatedTravelKeyword('roshamuul', 210, Position(33494, 32567, 7), 'roshamuul',
+	"Roshamuul's still shifting rock -- and worse than rock, if the stories are true. Not a crossing I'll make until Bender Shun says it's settled.")
 
 -- Kick
 keywordHandler:addKeyword({'kick'}, StdModule.kick, {npcHandler = npcHandler, destination = {Position(32320, 32219, 6), Position(32321, 32210, 6)}})
@@ -43,13 +91,13 @@ keywordHandler:addKeyword({'company'}, StdModule.say, {npcHandler = npcHandler, 
 keywordHandler:addKeyword({'tibia'}, StdModule.say, {npcHandler = npcHandler, text = 'The Royal Tibia Line connects all seaside towns of Tibia.'})
 keywordHandler:addKeyword({'good'}, StdModule.say, {npcHandler = npcHandler, text = 'We can transport everything you want.'})
 keywordHandler:addKeyword({'passenger'}, StdModule.say, {npcHandler = npcHandler, text = 'We would like to welcome you on board.'})
-keywordHandler:addKeyword({'trip'}, StdModule.say, {npcHandler = npcHandler, text = 'Where do you want to go? To {Carlin}, {Ab\'Dendriel}, {Venore}, {Port Hope}, {Liberty Bay}, {Svargrond}, {Yalahar}, {Roshamuul}, {krailos}, {Oramond}, {Edron} or {Daram Island}?'})
-keywordHandler:addKeyword({'route'}, StdModule.say, {npcHandler = npcHandler, text = 'Where do you want to go? To {Carlin}, {Ab\'Dendriel}, {Venore}, {Port Hope}, {Liberty Bay}, {Svargrond}, {Yalahar}, {Roshamuul}, {krailos}, {Oramond}, {Edron} or {Daram Island}?'})
-keywordHandler:addKeyword({'passage'}, StdModule.say, {npcHandler = npcHandler, text = 'Where do you want to go? To {Carlin}, {Ab\'Dendriel}, {Venore}, {Port Hope}, {Liberty Bay}, {Svargrond}, {Yalahar}, {Roshamuul}, {krailos}, {Oramond}, {Edron} or {Daram Island}?'})
-keywordHandler:addKeyword({'town'}, StdModule.say, {npcHandler = npcHandler, text = 'Where do you want to go? To {Carlin}, {Ab\'Dendriel}, {Venore}, {Port Hope}, {Liberty Bay}, {Svargrond}, {Yalahar}, {Roshamuul}, {krailos}, {Oramond}, {Edron} or {Daram Island}?'})
-keywordHandler:addKeyword({'destination'}, StdModule.say, {npcHandler = npcHandler, text = 'Where do you want to go? To {Carlin}, {Ab\'Dendriel}, {Venore}, {Port Hope}, {Liberty Bay}, {Svargrond}, {Yalahar}, {Roshamuul}, {krailos}, {Oramond}, {Edron} or {Daram Island}?'})
-keywordHandler:addKeyword({'sail'}, StdModule.say, {npcHandler = npcHandler, text = 'Where do you want to go? To {Carlin}, {Ab\'Dendriel}, {Venore}, {Port Hope}, {Liberty Bay}, {Svargrond}, {Yalahar}, {Roshamuul}, {krailos}, {Oramond}, {Edron} or {Daram Island}?'})
-keywordHandler:addKeyword({'go'}, StdModule.say, {npcHandler = npcHandler, text = 'Where do you want to go? To {Carlin}, {Ab\'Dendriel}, {Venore}, {Port Hope}, {Liberty Bay}, {Svargrond}, {Yalahar}, {Roshamuul}, {krailos}, {Oramond}, {Edron} or {Daram Island}?'})
+keywordHandler:addKeyword({'trip'}, StdModule.say, {npcHandler = npcHandler, text = 'Where do you want to go? To {Carlin}, {Ab\'Dendriel}, {Venore}, {Port Hope}, {Liberty Bay}, {Svargrond}, {Roshamuul}, {krailos}, {Oramond}, {Edron} or {Daram Island}?'})
+keywordHandler:addKeyword({'route'}, StdModule.say, {npcHandler = npcHandler, text = 'Where do you want to go? To {Carlin}, {Ab\'Dendriel}, {Venore}, {Port Hope}, {Liberty Bay}, {Svargrond}, {Roshamuul}, {krailos}, {Oramond}, {Edron} or {Daram Island}?'})
+keywordHandler:addKeyword({'passage'}, StdModule.say, {npcHandler = npcHandler, text = 'Where do you want to go? To {Carlin}, {Ab\'Dendriel}, {Venore}, {Port Hope}, {Liberty Bay}, {Svargrond}, {Roshamuul}, {krailos}, {Oramond}, {Edron} or {Daram Island}?'})
+keywordHandler:addKeyword({'town'}, StdModule.say, {npcHandler = npcHandler, text = 'Where do you want to go? To {Carlin}, {Ab\'Dendriel}, {Venore}, {Port Hope}, {Liberty Bay}, {Svargrond}, {Roshamuul}, {krailos}, {Oramond}, {Edron} or {Daram Island}?'})
+keywordHandler:addKeyword({'destination'}, StdModule.say, {npcHandler = npcHandler, text = 'Where do you want to go? To {Carlin}, {Ab\'Dendriel}, {Venore}, {Port Hope}, {Liberty Bay}, {Svargrond}, {Roshamuul}, {krailos}, {Oramond}, {Edron} or {Daram Island}?'})
+keywordHandler:addKeyword({'sail'}, StdModule.say, {npcHandler = npcHandler, text = 'Where do you want to go? To {Carlin}, {Ab\'Dendriel}, {Venore}, {Port Hope}, {Liberty Bay}, {Svargrond}, {Roshamuul}, {krailos}, {Oramond}, {Edron} or {Daram Island}?'})
+keywordHandler:addKeyword({'go'}, StdModule.say, {npcHandler = npcHandler, text = 'Where do you want to go? To {Carlin}, {Ab\'Dendriel}, {Venore}, {Port Hope}, {Liberty Bay}, {Svargrond}, {Roshamuul}, {krailos}, {Oramond}, {Edron} or {Daram Island}?'})
 keywordHandler:addKeyword({'ice'}, StdModule.say, {npcHandler = npcHandler, text = 'I\'m sorry, but we don\'t serve the routes to the Ice Islands.'})
 keywordHandler:addKeyword({'senja'}, StdModule.say, {npcHandler = npcHandler, text = 'I\'m sorry, but we don\'t serve the routes to the Ice Islands.'})
 keywordHandler:addKeyword({'folda'}, StdModule.say, {npcHandler = npcHandler, text = 'I\'m sorry, but we don\'t serve the routes to the Ice Islands.'})

@@ -15,7 +15,7 @@ monster.outfit = {
 }
 
 monster.bosstiary = {
-	bossRaceId = 1225,
+	bossRaceId = 1229,
 	bossRace = RARITY_ARCHFOE,
 }
 

@@ -74,10 +74,15 @@ function Item:getClassification()
 end
 
 function Item:getTier()
-	if not configManager.getBoolean(configKeys.FORGE_SYSTEM_ENABLED) then
-		return 0
-	end
-
+	-- No longer gated behind FORGE_SYSTEM_ENABLED (2026-08-30) -- matches
+	-- src/item.h's Item::getTier(), fixed the same way on 2026-08-25 when
+	-- the rarity system started repurposing this field to carry its own
+	-- tier (Scarce/Adept/Superior/Prime/Dormant) independent of Forge. This
+	-- Lua-side wrapper was missed at the time: every Lua call to
+	-- item:getTier() resolves here, not straight to the native binding, so
+	-- with Forge disabled it was silently returning 0 regardless of the
+	-- real stored value -- rarity's own tier reads (rollRarity,
+	-- RarityIdentify.reveal, /roll) were all hitting this gate.
 	if self:hasAttribute(ITEM_ATTRIBUTE_TIER) then
 		return self:getAttribute(ITEM_ATTRIBUTE_TIER) --[[@as integer]]
 	end

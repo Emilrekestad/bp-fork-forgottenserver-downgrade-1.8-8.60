@@ -756,21 +756,12 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result, bool deferWorl
 
 				int32_t pid = it->second.second;
 				if (pid >= 0 && pid < 100) {
-					DepotLocker* depotLocker = player->getDepotLocker(pid);
-					if (!depotLocker) {
-						continue;
-					}
-
-					Item* inbox = nullptr;
-					for (const auto& depotItem : depotLocker->getItemList()) {
-						if (depotItem->getID() == ITEM_INBOX) {
-							inbox = depotItem.get();
-							break;
-						}
-					}
-
-					Container* inboxContainer = inbox ? inbox->getContainer() : nullptr;
-					transferLoadedItem(inboxContainer, item);
+					// Top-level inbox item. The inbox is one global container
+					// per player now, so pid is no longer a locker selector --
+					// legacy rows written with pid = <town id> land here too and
+					// are silently merged into the single inbox, which is the
+					// intended one-way migration.
+					transferLoadedItem(player->getInbox(), item);
 					continue;
 				}
 
@@ -1331,19 +1322,30 @@ bool IOLoginData::savePlayerQueries(Player* player, const Player::BestiaryDirtyS
 		    "INSERT INTO `player_inboxitems` (`player_id`, `pid`, `sid`, `itemtype`, `count`, `attributes`) VALUES ");
 		ItemBlockList itemList;
 
-		int inboxItemsCount = 0;
-		for (const auto& it : player->depotLockerMap) {
-			for (const auto& item : it.second->getItemList()) {
-				if (item->getID() == ITEM_INBOX) {
-					if (Container* container = item->getContainer()) {
-						for (const auto& subItem : container->getItemList()) {
-							if (++inboxItemsCount > 100) {
-								continue;
-							}
-							itemList.emplace_back(it.first, subItem.get());
-						}
-					}
+		// The Depot Inbox is a single global container per player (Player::inbox),
+		// shown inside every depot locker. It must therefore be walked ONCE
+		// here -- the old code iterated depotLockerMap and saved the inbox found
+		// in each locker, which now that the container is shared would write
+		// every item once per locker and duplicate the whole inbox on save.
+		//
+		// pid is a fixed 0: on load, inbox rows no longer select a locker, they
+		// all go into the one global inbox.
+		//
+		// (!) Anything past INBOX_SAVE_LIMIT is NOT written and is therefore
+		// destroyed at logout. Systems that deliver into the inbox must check
+		// occupancy against IOLoginData::INBOX_SAVE_LIMIT and refuse rather
+		// than hand over an item this loop will silently drop -- see
+		// ItemBazaar::withdrawItem, which does exactly that.
+		if (Inbox* playerInbox = player->getInbox()) {
+			uint32_t inboxItemsCount = 0;
+			for (const auto& subItem : playerInbox->getItemList()) {
+				if (++inboxItemsCount > INBOX_SAVE_LIMIT) {
+					LOG_WARN(fmt::format("[IOLoginData::savePlayer] Inbox of player {:d} exceeds {:d} items; "
+					                     "item {:d} was not saved.",
+					                     player->getGUID(), INBOX_SAVE_LIMIT, subItem->getID()));
+					continue;
 				}
+				itemList.emplace_back(0, subItem.get());
 			}
 		}
 

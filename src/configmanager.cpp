@@ -527,6 +527,27 @@ bool ConfigManager::load()
 	integers[Integer::CHARACTER_BAZAAR_MAX_DURATION_DAYS] =
 	    std::max<int64_t>(1, getGlobalInteger(L, "characterBazaarMaxDurationDays", 7));
 
+	// Item Bazaar (src/item_bazaar.cpp). Centralised here so no magic numbers
+	// live in the domain, the client, or the website.
+	booleans[Boolean::ITEM_BAZAAR_ENABLED] = getGlobalBoolean(L, "itemBazaarEnabled", false);
+	integers[Integer::ITEM_BAZAAR_MAX_ACTIVE_AUCTIONS] =
+	    std::max<int64_t>(1, getGlobalInteger(L, "itemBazaarMaxActiveAuctions", 40));
+	integers[Integer::ITEM_BAZAAR_MIN_HOURS] = std::max<int64_t>(1, getGlobalInteger(L, "itemBazaarMinHours", 1));
+	integers[Integer::ITEM_BAZAAR_MAX_HOURS] = std::max<int64_t>(1, getGlobalInteger(L, "itemBazaarMaxHours", 168));
+	integers[Integer::ITEM_BAZAAR_DEFAULT_HOURS] =
+	    std::max<int64_t>(1, getGlobalInteger(L, "itemBazaarDefaultHours", 24));
+	integers[Integer::ITEM_BAZAAR_SALE_FEE_PERCENT] =
+	    std::clamp<int64_t>(getGlobalInteger(L, "itemBazaarSaleFeePercent", 10), 0, 100);
+	integers[Integer::ITEM_BAZAAR_MIN_SALE_FEE] =
+	    std::max<int64_t>(0, getGlobalInteger(L, "itemBazaarMinSaleFee", 1));
+	integers[Integer::ITEM_BAZAAR_PROMOTION_FEE] =
+	    std::max<int64_t>(0, getGlobalInteger(L, "itemBazaarPromotionFee", 5));
+	integers[Integer::ITEM_BAZAAR_ANTI_SNIPE_THRESHOLD] =
+	    std::max<int64_t>(0, getGlobalInteger(L, "itemBazaarAntiSnipeThresholdSeconds", 60));
+	integers[Integer::ITEM_BAZAAR_ANTI_SNIPE_RESET] =
+	    std::max<int64_t>(1, getGlobalInteger(L, "itemBazaarAntiSnipeResetSeconds", 60));
+	integers[Integer::ITEM_BAZAAR_WORLD_ID] = std::max<int64_t>(1, getGlobalInteger(L, "itemBazaarWorldId", 1));
+
 	// Admin Config
 	booleans[Boolean::ADMIN_LOCALHOST_ONLY] = getGlobalBoolean(L, "adminLocalhostOnly", true);
 	booleans[Boolean::ADMIN_REQUIRE_LOGIN] = getGlobalBoolean(L, "adminRequireLogin", true);

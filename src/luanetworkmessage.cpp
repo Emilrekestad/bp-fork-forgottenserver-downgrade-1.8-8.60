@@ -46,6 +46,9 @@ bool isOtcOrAstraLuaOpcode(uint8_t opcode)
 		case 0x30: // custom imbuement activated
 		case 0x31: // custom special skill activated
 		case 0xEE: // resource balance
+		case 0xBA: // native hunting task base data
+		case 0xBB: // native hunting task slot data
+		case 0x4F: // custom Item Bazaar (see ItemBazaar::SERVER_PACKET)
 			return true;
 		default:
 			return false;
@@ -60,8 +63,6 @@ bool isAstraOnlyLuaOpcode(uint8_t opcode)
 		case 0x53: // task board data
 		case 0x9B: // blessing window
 		case 0x9C: // blessing status
-		case 0xBA: // native hunting task base data
-		case 0xBB: // native hunting task slot data
 		case 0xC0: // managed quick-loot containers
 		case 0xC6: // custom item values
 		case 0xC7: // custom item details

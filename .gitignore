@@ -228,3 +228,8 @@ compile_commands.json
 data/world/world.otbm
 data/world/world.otmm
 data/cache/
+
+# Dated/labelled backups of large binary assets (maps, items.otb, items.xml).
+# Kept on disk for rollback; far too large for git (world.otbm backups are 184MB).
+*.bak-*
+*.bak_*

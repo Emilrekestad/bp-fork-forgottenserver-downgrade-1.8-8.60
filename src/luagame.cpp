@@ -18,6 +18,7 @@
 #include "talkaction.h"
 #include "tools.h"
 #include "logger.h"
+#include "item_bazaar.h"
 #include "market.h"
 #include "stash.h"
 #include "zones.h"
@@ -1404,6 +1405,195 @@ int luaGameInsertMarketInboxItem(lua_State* L)
 	return 1;
 }
 
+// --- Item Bazaar ---------------------------------------------------------
+// Thin wrappers over src/item_bazaar.cpp. All validation, escrow and coin
+// movement stays in C++; Lua (GM tooling, and later the network handler) only
+// invokes these. Each returns `success, reasonOrId` so callers can surface the
+// server's own wording rather than inventing their own.
+
+int luaGameBazaarCreateAuction(lua_State* L)
+{
+	// Game.bazaarCreateAuction(player, itemUid, startPrice, buyoutPrice, hours, promote, itemClass)
+	Player* player = getUserdata<Player>(L, 1);
+	if (!player) {
+		pushBoolean(L, false);
+		pushString(L, "No player.");
+		return 2;
+	}
+
+	// The uid is a 63-bit snowflake; Lua numbers lose precision above 2^53, so
+	// it travels as a string exactly like Item::getItemUID() returns it.
+	uint64_t itemUid = 0;
+	try {
+		itemUid = std::stoull(getString(L, 2));
+	} catch (const std::exception&) {
+		pushBoolean(L, false);
+		pushString(L, "Invalid item uid.");
+		return 2;
+	}
+
+	std::string reason;
+	uint32_t auctionId = 0;
+	const bool success = ItemBazaar::createAuction(player, itemUid, getInteger<uint32_t>(L, 3),
+	                                               getInteger<uint32_t>(L, 4), getInteger<uint32_t>(L, 5),
+	                                               getBoolean(L, 6, false),
+	                                               getInteger<uint8_t>(L, 7, 0), reason, auctionId);
+	pushBoolean(L, success);
+	if (success) {
+		lua_pushinteger(L, auctionId);
+	} else {
+		pushString(L, reason);
+	}
+	return 2;
+}
+
+int luaGameBazaarPlaceBid(lua_State* L)
+{
+	// Game.bazaarPlaceBid(accountId, auctionId, amount, operationId)
+	std::string reason;
+	const bool success = ItemBazaar::placeBid(getInteger<uint32_t>(L, 1), getInteger<uint32_t>(L, 2),
+	                                          getInteger<uint32_t>(L, 3), getString(L, 4), reason);
+	pushBoolean(L, success);
+	pushString(L, reason);
+	return 2;
+}
+
+int luaGameBazaarBuyout(lua_State* L)
+{
+	// Game.bazaarBuyout(accountId, auctionId, operationId)
+	std::string reason;
+	const bool success =
+	    ItemBazaar::buyout(getInteger<uint32_t>(L, 1), getInteger<uint32_t>(L, 2), getString(L, 3), reason);
+	pushBoolean(L, success);
+	pushString(L, reason);
+	return 2;
+}
+
+int luaGameBazaarCancelAuction(lua_State* L)
+{
+	// Game.bazaarCancelAuction(accountId, auctionId)
+	std::string reason;
+	const bool success = ItemBazaar::cancelAuction(getInteger<uint32_t>(L, 1), getInteger<uint32_t>(L, 2), reason);
+	pushBoolean(L, success);
+	pushString(L, reason);
+	return 2;
+}
+
+int luaGameBazaarRelistItem(lua_State* L)
+{
+	// Game.bazaarRelistItem(accountId, bazaarItemId, startPrice, buyoutPrice, hours, promote)
+	std::string reason;
+	uint32_t auctionId = 0;
+	const bool success = ItemBazaar::relistItem(getInteger<uint32_t>(L, 1), getInteger<uint32_t>(L, 2),
+	                                            getInteger<uint32_t>(L, 3), getInteger<uint32_t>(L, 4),
+	                                            getInteger<uint32_t>(L, 5), getBoolean(L, 6, false), reason,
+	                                            auctionId);
+	pushBoolean(L, success);
+	if (success) {
+		lua_pushinteger(L, auctionId);
+	} else {
+		pushString(L, reason);
+	}
+	return 2;
+}
+
+int luaGameBazaarWithdrawItem(lua_State* L)
+{
+	// Game.bazaarWithdrawItem(accountId, bazaarItemId, targetPlayerId)
+	std::string reason;
+	std::string townName;
+	const bool success = ItemBazaar::withdrawItem(getInteger<uint32_t>(L, 1), getInteger<uint32_t>(L, 2),
+	                                              getInteger<uint32_t>(L, 3), 0, reason, townName);
+	pushBoolean(L, success);
+	pushString(L, reason);
+	return 2;
+}
+
+int luaGameBazaarSettleAuction(lua_State* L)
+{
+	// Game.bazaarSettleAuction(auctionId) -- forced settlement, idempotent
+	pushBoolean(L, ItemBazaar::settleAuction(getInteger<uint32_t>(L, 1)));
+	return 1;
+}
+
+int luaGameBazaarReconcile(lua_State* L)
+{
+	// Game.bazaarReconcile()
+	ItemBazaar::reconcilePendingEscrow();
+	pushBoolean(L, true);
+	return 1;
+}
+
+int luaGameBazaarGetAuction(lua_State* L)
+{
+	// Game.bazaarGetAuction(auctionId)
+	const auto auction = ItemBazaar::getAuction(getInteger<uint32_t>(L, 1));
+	if (!auction) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	lua_createtable(L, 0, 15);
+	setField(L, "id", auction->id);
+	setField(L, "itemId", auction->itemId);
+	setField(L, "sellerAccountId", auction->sellerAccountId);
+	setField(L, "itemType", auction->itemType);
+	setField(L, "tier", auction->tier);
+	setField(L, "itemClass", auction->itemClass);
+	setField(L, "itemName", auction->itemName);
+	setField(L, "itemDescription", auction->itemDescription);
+	setField(L, "startPrice", auction->startPrice);
+	setField(L, "buyoutPrice", auction->buyoutPrice);
+	setField(L, "currentBid", auction->currentBid);
+	setField(L, "currentBidderAccountId", auction->currentBidderAccountId);
+	setField(L, "bidCount", auction->bidCount);
+	setField(L, "status", auction->status);
+	setField(L, "promoted", auction->promoted ? 1 : 0);
+	setField(L, "createdAt", auction->createdAt);
+	setField(L, "endsAt", auction->endsAt);
+	setField(L, "finalPrice", auction->finalPrice);
+	setField(L, "fee", auction->fee);
+	setField(L, "winnerAccountId", auction->winnerAccountId);
+	setField(L, "settlementReason", auction->settlementReason);
+	setField(L, "minimumNextBid", ItemBazaar::getMinimumNextBid(*auction));
+	return 1;
+}
+
+int luaGameBazaarGetItemCategory(lua_State* L)
+{
+	// Game.bazaarGetItemCategory(itemType) -- exposed so the backfill talkaction
+	// can repair rows listed before the category column existed, using the same
+	// derivation new listings go through rather than a second copy of it.
+	lua_pushinteger(L, ItemBazaar::getItemCategory(getInteger<uint16_t>(L, 1)));
+	return 1;
+}
+
+int luaGameBazaarGetConfig(lua_State* L)
+{
+	// Game.bazaarGetConfig() -- the single source of truth for every Bazaar
+	// number, so no frontend has to hard-code one.
+	lua_createtable(L, 0, 11);
+	setField(L, "enabled", ItemBazaar::isEnabled() ? 1 : 0);
+	setField(L, "maxActiveAuctions", ItemBazaar::getMaxActiveAuctions());
+	setField(L, "minHours", ItemBazaar::getMinAuctionHours());
+	setField(L, "maxHours", ItemBazaar::getMaxAuctionHours());
+	setField(L, "defaultHours", ItemBazaar::getDefaultAuctionHours());
+	setField(L, "saleFeePercent", ItemBazaar::getSaleFeePercent());
+	setField(L, "minSaleFee", ItemBazaar::getMinSaleFee());
+	setField(L, "promotionFee", ItemBazaar::getPromotionFee());
+	setField(L, "antiSnipeThreshold", ItemBazaar::getAntiSnipeThresholdSeconds());
+	setField(L, "antiSnipeReset", ItemBazaar::getAntiSnipeResetSeconds());
+	setField(L, "worldId", ItemBazaar::getWorldId());
+	return 1;
+}
+
+int luaGameBazaarCalculateFee(lua_State* L)
+{
+	// Game.bazaarCalculateFee(salePrice) -- authoritative; UIs display only.
+	lua_pushinteger(L, ItemBazaar::calculateSaleFee(getInteger<uint64_t>(L, 1)));
+	return 1;
+}
+
 int luaGameGetSupplyStashRows(lua_State* L)
 {
 	// Game.getSupplyStashRows(playerId)
@@ -1666,6 +1856,19 @@ void LuaScriptInterface::registerGame()
 	registerMethod("Game", "refreshMarketStatistics", luaGameRefreshMarketStatistics);
 	registerMethod("Game", "creditMarketBank", luaGameCreditMarketBank);
 	registerMethod("Game", "insertMarketInboxItem", luaGameInsertMarketInboxItem);
+
+	registerMethod("Game", "bazaarCreateAuction", luaGameBazaarCreateAuction);
+	registerMethod("Game", "bazaarPlaceBid", luaGameBazaarPlaceBid);
+	registerMethod("Game", "bazaarBuyout", luaGameBazaarBuyout);
+	registerMethod("Game", "bazaarCancelAuction", luaGameBazaarCancelAuction);
+	registerMethod("Game", "bazaarRelistItem", luaGameBazaarRelistItem);
+	registerMethod("Game", "bazaarWithdrawItem", luaGameBazaarWithdrawItem);
+	registerMethod("Game", "bazaarSettleAuction", luaGameBazaarSettleAuction);
+	registerMethod("Game", "bazaarReconcile", luaGameBazaarReconcile);
+	registerMethod("Game", "bazaarGetAuction", luaGameBazaarGetAuction);
+	registerMethod("Game", "bazaarGetConfig", luaGameBazaarGetConfig);
+	registerMethod("Game", "bazaarGetItemCategory", luaGameBazaarGetItemCategory);
+	registerMethod("Game", "bazaarCalculateFee", luaGameBazaarCalculateFee);
 	registerMethod("Game", "getSupplyStashRows", luaGameGetSupplyStashRows);
 	registerMethod("Game", "addSupplyStashAmount", luaGameAddSupplyStashAmount);
 	registerMethod("Game", "removeSupplyStashAmount", luaGameRemoveSupplyStashAmount);

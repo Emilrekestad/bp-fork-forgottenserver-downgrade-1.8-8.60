@@ -21,8 +21,14 @@ void refreshClientItemState(Item* item, itemAttrTypes attribute)
 	}
 
 	// Decay state controls server-side scheduling; charges and duration are the
-	// mutable item state serialized for the client.
-	if (attribute == ITEM_ATTRIBUTE_CHARGES || attribute == ITEM_ATTRIBUTE_DURATION) {
+	// mutable item state serialized for the client. Article/description also
+	// need this -- e.g. the Rarity system's Dormant -> identify transition
+	// (data/lib/rarity/rarity_identify.lua) changes both live on an item the
+	// client has already rendered, and without this the client kept showing
+	// the old (Dormant) name/description/sparkle until some unrelated action
+	// (moving the item) forced a resync (2026-08-30).
+	if (attribute == ITEM_ATTRIBUTE_CHARGES || attribute == ITEM_ATTRIBUTE_DURATION ||
+	    attribute == ITEM_ATTRIBUTE_ARTICLE || attribute == ITEM_ATTRIBUTE_DESCRIPTION) {
 		g_game.refreshItem(item);
 	}
 }
@@ -562,6 +568,7 @@ int luaItemSetAttribute(lua_State* L)
 		pushBoolean(L, true);
 	} else if (ItemAttributes::isStrAttrType(attribute)) {
 		item->setStrAttr(attribute, getString(L, 3));
+		refreshClientItemState(item, attribute);
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
@@ -1143,16 +1150,17 @@ int LuaScriptInterface::luaItemSetTier(lua_State *L)
 	// item:setTier(tier)
 	Item *item = getItemUserdata<Item>(L, 1);
 	if (item) {
-		if (!ConfigManager::getBoolean(ConfigManager::FORGE_SYSTEM_ENABLED)) {
-			pushBoolean(L, false);
-			return 1;
-		}
 		if (!lua_isnumber(L, 2)) {
 			pushBoolean(L, false);
 			return 1;
 		}
 
 		item->setTier(static_cast<uint8_t>(std::clamp<int32_t>(getInteger<int32_t>(L, 2), 0, 10)));
+		// Same reasoning as refreshClientItemState's article/description
+		// case above -- setTier() changes what the client renders (the
+		// Rarity system's corner marker/sparkle) on an item it may have
+		// already drawn, and needed an explicit push (2026-08-30).
+		g_game.refreshItem(item);
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);

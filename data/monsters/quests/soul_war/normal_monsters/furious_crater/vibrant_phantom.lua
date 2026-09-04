@@ -96,7 +96,8 @@ monster.loot = {
 	{ name = "violet crystal shard", chance = 1080 },
 	{ id = 23529, chance = 1080 }, -- ring of blue plasma
 	{ name = "green gem", chance = 1080 },
-	{ name = "bag you desire", chance = 15 },
+	{ name = "bag you desire", chance = 100 },
+	{ name = "bag you covet", chance = 100 },
 }
 
 monster.attacks = {

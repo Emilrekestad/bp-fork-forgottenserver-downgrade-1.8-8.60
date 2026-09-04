@@ -23,6 +23,16 @@ function login.onLogin(player)
         staminaMinutes = staminaMinutes + regainStaminaMinutes
     end
 
+    -- Bao's Ledger "Second Wind" scales what the rest was worth. Applied to
+    -- the GAIN rather than the total, so it cannot inflate stamina a player
+    -- already had, and clamped by the same bounds as before.
+    if BaoLedger then
+        local gained = staminaMinutes - player:getStamina()
+        if gained > 0 then
+            staminaMinutes = player:getStamina() + (gained * BaoLedger.staminaMultiplier(player))
+        end
+    end
+
     player:setStamina(math.floor(math.max(0, math.min(2520, staminaMinutes))))
     return true
 end

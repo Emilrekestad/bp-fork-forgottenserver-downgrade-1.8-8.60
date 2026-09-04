@@ -11,7 +11,7 @@ This folder is organized by NPC role. The NPC loader scans this folder recursive
 - `merchant_traveler.lua`
 
 ## quests
-- `The Oracle.lua`
+- `The Ancient Oracle.lua`
 - `Storyteller.lua`
 
 ## services

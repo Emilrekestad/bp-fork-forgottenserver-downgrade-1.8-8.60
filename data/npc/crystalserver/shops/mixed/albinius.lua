@@ -144,7 +144,12 @@ local function creatureSayCallback(npc, creature, type, message)
 	--- ##Astral Shaper Rune##
 	if MsgContains(message, "astral shaper rune") then
 		if player:getStorageValue(Storage.Quest.U11_02.ForgottenKnowledge.LastLoreKilled) >= 1 then
-			npcHandler:say("Do you wish to merge your rune parts into an astral shaper rune?", npc, creature)
+			-- Keyword left as "astral shaper rune" on purpose -- that is what
+			-- players and every guide already know to say. What he DOES with the
+			-- parts changed: he binds the stone rhino directly instead of
+			-- handing over a rune to be used for it. Wording updated to match,
+			-- or he would promise an item and give a mount.
+			npcHandler:say("Do you wish to merge your rune parts and bind the stone rhino to you?", npc, creature)
 			npcHandler:setTopic(playerId, 8)
 		else
 			npcHandler:say("I'm sorry but you lack the needed rune parts.", npc, creature)
@@ -159,8 +164,12 @@ local function creatureSayCallback(npc, creature, type, message)
 			end
 		end
 		if haveParts then
-			npcHandler:say("As you wish.", npc, creature)
-			player:addItem(24960, 1)
+			npcHandler:say("As you wish. The stone answers to you now.", npc, creature)
+			-- Was: player:addItem(24960, 1) -- the astral shaper rune, which the
+			-- player then used to tame the Stone Rhino. Item 24960 is Old Man
+			-- Bao's Dormancy Rune now, so this grants the mount directly rather
+			-- than handing over a middleman item. Same reward, one step shorter.
+			player:addMount(106)
 			npcHandler:removeInteraction(npc, creature)
 		end
 	elseif MsgContains(message, "no") and npcHandler:getTopic(playerId) == 8 then

@@ -8,6 +8,7 @@
 #include "actions.h"
 #include "bed.h"
 #include "character_bazaar.h"
+#include "item_bazaar.h"
 #include "configmanager.h"
 #include "creature.h"
 #include "creatureevent.h"
@@ -569,6 +570,11 @@ void Game::start(const std::shared_ptr<ServiceManager>& manager)
 	g_scheduler.addEvent(createSchedulerTask(1000, [this]() { checkSereneStatus(); }));
 	CharacterBazaar::finalizeExpiredAuctions();
 	CharacterBazaar::scheduleFinalization();
+	// Catch up on anything that expired while the server was down before the
+	// recurring jobs start, so a restart can never leave an auction stranded.
+	ItemBazaar::settleExpiredAuctions();
+	ItemBazaar::reconcilePendingEscrow();
+	ItemBazaar::scheduleTasks();
 }
 
 GameState_t Game::getGameState() const { return gameState.load(std::memory_order_acquire); }

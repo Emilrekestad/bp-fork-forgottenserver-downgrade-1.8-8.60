@@ -4,6 +4,20 @@
 local OPCODE_PARTY_ANALYZER = 0x2B
 local MSG_BLUE = MESSAGE_STATUS_CONSOLE_BLUE or MESSAGE_EVENT_ADVANCE or 19
 
+-- The client has NO handler for server opcode 0x2B (43): it is not in
+-- Proto::GameServerOpcodes (otclient-src/src/client/protocolcodes.h - there's
+-- a gap between 42 and 50) and nothing in game_huntanalyzer parses it. Every
+-- one of these packets therefore raises "unhandled opcode 43" in the client,
+-- and that parse exception discards the ENTIRE remainder of the batched
+-- network message - silently eating whatever legitimate packets happened to
+-- be bundled behind it. Since this fires every 5s (plus on loot/heal) for as
+-- long as anyone is in a party, party play was continuously dropping packets.
+--
+-- Sending is disabled until the client side is actually implemented. All the
+-- tracking below still runs, so the data is ready the moment a parser exists -
+-- flip this to true once otclient-src can decode the packet.
+local CLIENT_SUPPORTS_PARTY_ANALYZER = false
+
 local partySessions = {}
 local pendingPartyUpdates = {}
 
@@ -62,6 +76,7 @@ local function getOrCreateMemberData(session, playerId, playerName)
 end
 
 local function sendPartyAnalyzer(player)
+	if not CLIENT_SUPPORTS_PARTY_ANALYZER then return end
 	if not player or not isOTC(player) then return end
 	local leader = getPartyLeader(player)
 	if not leader then return end

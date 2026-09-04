@@ -63,6 +63,14 @@ local function getBestiaryKillCount(playerGuid, raceId)
 end
 
 local function addBestiaryKill(player, playerGuid, raceId, amount)
+	-- Bao's Ledger "Tracker's Instinct". Rounded UP so rank 1 on a single kill
+	-- is still worth something -- rounding down would make the first several
+	-- ranks invisible on the one-kill-at-a-time path this function is normally
+	-- called through.
+	if BaoLedger and player then
+		amount = math.max(amount, math.ceil(amount * BaoLedger.bestiaryMultiplier(player)))
+	end
+
 	if Game.addBestiaryKill then
 		return Game.addBestiaryKill(player, raceId, amount)
 	end

@@ -83,7 +83,8 @@ monster.attacks = {
 	{ name = "combat", interval = 2000, chance = 10, type = COMBAT_MANADRAIN, minDamage = -200, maxDamage = -1000, range = 7, target = false },
 	{ name = "combat", interval = 3000, chance = 44, type = COMBAT_PHYSICALDAMAGE, minDamage = -400, maxDamage = -2000, range = 7, shootEffect = CONST_ANI_WHIRLWINDSWORD, target = true },
 	{ name = "speed", interval = 2000, chance = 15, speedChange = -400, range = 7, shootEffect = CONST_ANI_THROWINGKNIFE, target = true, duration = 15000 },
-	{ name = "combat", interval = 2000, chance = 20, type = COMBAT_ICEDAMAGE, minDamage = 0, maxDamage = -800, range = 7, radius = 7, effect = CONST_ME_BIGPLANTS, target = false },
+	{ name = "combat", interval = 2000, chance = 20, type = COMBAT_ICEDAMAGE, minDamage = 0, maxDamage = -800, range = 7, radius = 7, effect = CONST_ME_ICEAREA, target = false },
+	{ name = "combat", interval = 2000, chance = 22, type = COMBAT_PHYSICALDAMAGE, minDamage = -700, maxDamage = -1600, radius = 4, effect = CONST_ME_GROUNDSHAKER, target = false },
 }
 
 monster.defenses = {

@@ -95,7 +95,8 @@ monster.loot = {
 	{ name = "raw watermelon tourmaline", chance = 1050, maxCount = 1 },
 -- { name = "the essence of chagorz", chance = 1050, maxCount = 1 },
 	{ name = "unicorn figurine", chance = 500 },
-	{ id = 43895, chance = 360 }, -- Bag you covet
+	{ id = 43895, chance = 1000 }, -- Bag you covet
+	{ id = 34109, chance = 1000 }, -- Bag you desire
 	{ name = "darklight geode", chance = 500 },
 }
 

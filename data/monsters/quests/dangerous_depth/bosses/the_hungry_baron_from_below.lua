@@ -14,11 +14,16 @@ monster.outfit = {
 	lookMount = 0,
 }
 
+monster.bosstiary = {
+	bossRaceId = 1521,
+	bossRace = RARITY_BANE,
+}
+
 monster.health = 350000
 monster.maxHealth = 350000
 monster.race = "blood"
 monster.corpse = 27633
-monster.speed = 0
+monster.speed = 120
 monster.manaCost = 0
 
 monster.changeTarget = {
@@ -64,7 +69,49 @@ monster.voices = {
 	{ text = "Krrrk!", yell = false },
 }
 
-monster.loot = {}
+monster.loot = {
+	{ name = "platinum coin", chance = 100000, maxCount = 58 },
+	{ name = "mastermind potion", chance = 100000 },
+	{ name = "stone skin amulet", chance = 100000 },
+	{ id = 27713, chance = 100000 }, -- heavy crystal fragment
+	{ name = "wand of inferno", chance = 72920 },
+	{ name = "violet crystal shard", chance = 64580 },
+	{ name = "ultimate health potion", chance = 62500, maxCount = 18 },
+	{ name = "fire sword", chance = 56250 },
+	{ name = "great spirit potion", chance = 54170, maxCount = 18 },
+	{ name = "magic sulphur", chance = 45830 },
+	{ name = "great mana potion", chance = 43750, maxCount = 18 },
+	{ name = "crystal mace", chance = 37500 },
+	{ name = "silver token", chance = 15220 },
+	{ name = "small emerald", chance = 20830 },
+	{ name = "huge chunk of crude iron", chance = 20830 },
+	{ name = "slightly rusted shield", chance = 18750 },
+	{ name = "slightly rusted helmet", chance = 16670 },
+	{ id = 3039, chance = 14580 }, -- red gem
+	{ name = "luminous orb", chance = 14580 },
+	{ name = "longing eyes", chance = 14580 },
+	{ name = "small diamond", chance = 12500 },
+	{ name = "small topaz", chance = 12500 },
+	{ name = "small ruby", chance = 12500 },
+	{ name = "violet gem", chance = 12500 },
+	{ id = 27622, chance = 12500 }, -- chitinous mouth (baron)
+	{ name = "calopteryx cape", chance = 10420 },
+	{ name = "blue gem", chance = 10420 },
+	{ name = "yellow gem", chance = 10420 },
+	{ name = "gold ingot", chance = 8330 },
+	{ name = "gold token", chance = 9780 },
+	{ name = "crystal coin", chance = 8330 },
+	{ name = "green gem", chance = 8330 },
+	{ name = "small amethyst", chance = 6250 },
+	{ name = "huge shell", chance = 4170 },
+	{ name = "magma coat", chance = 4170 },
+	{ name = "slimy leg", chance = 4170 },
+	{ name = "badger boots", chance = 4170 },
+	{ name = "spellbook of warding", chance = 2080 },
+	{ name = "gnome sword", chance = 4170 },
+	{ name = "gnome armor", chance = 3390 },
+	{ name = "gnomish footwraps", chance = 3390 },
+}
 
 monster.attacks = {
 	{ name = "melee", interval = 2000, chance = 100, minDamage = 0, maxDamage = -550 },

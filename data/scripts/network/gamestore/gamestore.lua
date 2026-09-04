@@ -70,6 +70,19 @@ local function isHirelingOfferType(oftype)
 	return oftype == "hireling" or oftype == "hireling_skill" or oftype == "hireling_outfit"
 end
 
+-- Retired: the lamp is a quest reward handed over by an NPC, and jobs arrive
+-- as contract items used on one specific hireling. Neither is sold any more.
+--
+-- This is enforced HERE rather than by deleting the rows from gamestore.xml,
+-- because that file is regenerated/synced by something outside this codebase
+-- -- an edit to it does not stay made. Filtering in Lua means a stale or
+-- restored catalogue cannot put these offers back in front of players.
+-- Dresses (hireling_outfit) are unaffected and still sold.
+local function isRetiredHirelingOfferType(oftype)
+	oftype = tostring(oftype or ""):lower()
+	return oftype == "hireling" or oftype == "hireling_skill"
+end
+
 local function isHirelingCategory(category)
 	local name = tostring(category and category.name or ""):lower()
 	return name == "hirelings" or name == "hireling dresses"
@@ -86,6 +99,13 @@ end
 local function isXpBoostOfferType(offerType)
 	offerType = tostring(offerType or ""):lower()
 	return offerType == "expboost" or offerType == "xpboost"
+end
+
+-- Server-wide boosts (lib/boosts/global_boosts.lua). The offer's `value` is
+-- the duration in seconds and its `boost` attribute names which one; see the
+-- "Server Boosts" category in data/store/gamestore.xml.
+local function isGlobalBoostOfferType(offerType)
+	return tostring(offerType or ""):lower() == "globalboost"
 end
 
 local function parseOfferItemList(value)
@@ -105,10 +125,20 @@ local function supportsBattlePassStore(player)
 		player and player.isUsingAstraClient and player:isUsingAstraClient()
 end
 
+-- The store half of the hireling system needs no custom protocol, so it must
+-- not be gated on the AstraClient handshake.
+--
+-- It used to be, and the handshake is never sent -- protocolgamesend.cpp
+-- withholds the marker on purpose, because isAstraClient also switches the
+-- item wire format this client cannot parse. The effect was that both hireling
+-- categories were filtered out of the catalogue for every player alive, and
+-- any purchase came back "The hireling system is not available".
+--
+-- Dresses are ordinary unlocks written to kv and applied through the
+-- hireling's own dialogue, so the system being enabled is the whole
+-- requirement.
 local function supportsHirelingStore(player)
-	return configManager.getBoolean(configKeys.HIRELING_SYSTEM_ENABLED) and
-		configManager.getBoolean(configKeys.ASTRA_HIRELING_PROTOCOL_ENABLED) and
-		player and player.isUsingAstraClient and player:isUsingAstraClient()
+	return configManager.getBoolean(configKeys.HIRELING_SYSTEM_ENABLED) and player ~= nil
 end
 
 local function playerOwnsMount(player, mountId)
@@ -416,7 +446,17 @@ local function loadStoreXML()
 						count = tonumber(offer:attribute("count")) or 1,
 						description = offer:attribute("description") or "",
 						oftype = offer:attribute("type") or "item",
+						boost = offer:attribute("boost") or "",
 						value = tonumber(offer:attribute("value")) or 0,
+						-- Charges to stamp on a delivered item (Loot Seller). 0 leaves
+						-- the item at whatever Game.createItem gives it.
+						charges = tonumber(offer:attribute("charges")) or 0,
+						-- "backpack" delivers into the player instead of the store
+						-- inbox, for items meant to be used the moment they are
+						-- bought. Server-side only -- it is deliberately NOT sent on
+						-- the wire, since the catalog packet layout is fixed by the
+						-- clients already in the wild.
+						delivery = offer:attribute("delivery") or "",
 						femalevalue = tonumber(offer:attribute("femalevalue")) or 0,
 						addon = tonumber(offer:attribute("addon")) or 0,
 					}
@@ -451,7 +491,8 @@ local function sendStoreCatalog(player)
 		for _, offer in ipairs(cat.offers) do
 			local taskBoardVisible = not isTaskBoardOfferType(offer.oftype) or
 				supportsTaskBoardStore(player, offer.oftype)
-			local hirelingVisible = not isHirelingOfferType(offer.oftype) or supportsHirelingStore(player)
+			local hirelingVisible = not isRetiredHirelingOfferType(offer.oftype) and
+				(not isHirelingOfferType(offer.oftype) or supportsHirelingStore(player))
 			local battlePassVisible = not isBattlePassOfferType(offer.oftype) or supportsBattlePassStore(player)
 			if taskBoardVisible and hirelingVisible and battlePassVisible then
 				visibleOffers[#visibleOffers + 1] = offer
@@ -569,6 +610,33 @@ local function deliverOffer(player, offer, extra)
 		end
 
 		return BattlePassSystem.purchasePremium(player, true)
+	end
+
+	-- Server-wide boost. Unlike every other offer here this delivers nothing
+	-- to the buyer specifically -- it extends a global timer that everyone
+	-- online benefits from, and announces who paid for it. GlobalBoosts.extend
+	-- refuses (and this returns its message) when the boost is already stacked
+	-- to the cap, which is the only way this purchase can fail; the caller
+	-- takes no coins when a delivery error comes back.
+	if isGlobalBoostOfferType(offer.oftype) then
+		if not GlobalBoosts then
+			return "Server boosts are not available."
+		end
+
+		local boost = GlobalBoosts.ByKey[tostring(offer.boost or ""):lower()]
+		if not boost then
+			logError("[GameStore] Offer " .. tostring(offer.id) ..
+				" is type globalboost but names no valid boost (boost=\"" .. tostring(offer.boost) .. "\").")
+			return "This boost is not available."
+		end
+
+		local duration = offer.value > 0 and offer.value or 1800
+		local ok, reason = GlobalBoosts.extend(boost.id, duration, player:getName())
+		if not ok then
+			return reason
+		end
+
+		return nil
 	end
 
 	if isXpBoostOfferType(offer.oftype) then
@@ -712,14 +780,40 @@ local function deliverOffer(player, offer, extra)
 	end
 
 	if offer.oftype == "item" and offer.itemid > 0 then
-		local inbox = player:getStoreInbox()
-		if not inbox then
-			return "Your store inbox is not available."
+		-- delivery="backpack" hands the item to the character instead of the
+		-- store inbox, so a consumable is usable the moment it is bought
+		-- rather than after a trip to a depot. The client already labels every
+		-- "item" offer as going to "Your backpack" (OFFER_KINDS in
+		-- modules/game_store/game_store.lua), so this is the one case where
+		-- that label is literally true.
+		local toBackpack = offer.delivery == "backpack"
+
+		local inbox = nil
+		if not toBackpack then
+			inbox = player:getStoreInbox()
+			if not inbox then
+				return "Your store inbox is not available."
+			end
 		end
 
-		local item = Game.createItem(offer.itemid, offer.count)
+		-- For an item whose ItemType carries charges, Item::setSubType reads
+		-- the create count AS the charge count (src/item.cpp), so a plain
+		-- count of 1 would hand over a one-charge item. offer.charges is the
+		-- explicit subtype for those; count stays the number of items, so the
+		-- purchase history still reads as one purchase.
+		local subType = offer.charges > 0 and offer.charges or offer.count
+		local item = Game.createItem(offer.itemid, subType)
 		if not item then
 			return "Failed to create item."
+		end
+
+		if toBackpack then
+			if player:addItemEx(item) ~= RETURNVALUE_NOERROR then
+				item:remove()
+				return "You have no room to carry this. Free some space and try again."
+			end
+			player:sendTextMessage(MESSAGE_STATUS_SMALL, "Your item was placed in your backpack.")
+			return nil
 		end
 
 		if inbox:addItemEx(item) ~= RETURNVALUE_NOERROR then
@@ -783,45 +877,18 @@ local function deliverOffer(player, offer, extra)
 		return nil
 	end
 
-	if offer.oftype == "hireling" then
-		if not supportsHirelingStore(player) then
-			return "Hireling purchases are only available on AstraClient."
-		end
-
-		if not player.addNewHireling then
-			return "Hireling system is not available."
-		end
-
-		local hireling, err = player:addNewHireling(extra and extra.name or "", extra and extra.sex or HIRELING_SEX.MALE)
-		if not hireling then
-			return err or "Failed to create hireling."
-		end
-
-		player:sendTextMessage(MESSAGE_STATUS_SMALL, "Your hireling lamp was sent to your Store Inbox.")
-		return nil
-	end
-
-	if offer.oftype == "hireling_skill" then
-		if not supportsHirelingStore(player) then
-			return "Hireling purchases are only available on AstraClient."
-		end
-
-		local skillName = GetHirelingSkillNameById(offer.value > 0 and offer.value or offer.eid)
-		if not skillName then
-			return "Invalid hireling skill."
-		end
-
-		if player:hasHirelingSkill(skillName) then
-			return "You already have this hireling skill."
-		end
-
-		player:enableHirelingSkill(skillName)
-		return nil
+	-- "hireling" (the lamp) and "hireling_skill" (the jobs) are deliberately
+	-- NOT sold here any more. The lamp is a quest reward handed over by an NPC,
+	-- and jobs arrive as contract items used on one specific hireling. Both
+	-- offer types are removed from gamestore.xml; these branches are gone so a
+	-- stale offer row cannot quietly resurrect a second source of truth.
+	if offer.oftype == "hireling" or offer.oftype == "hireling_skill" then
+		return "This is no longer sold in the store."
 	end
 
 	if offer.oftype == "hireling_outfit" then
 		if not supportsHirelingStore(player) then
-			return "Hireling purchases are only available on AstraClient."
+			return "The hireling system is not available."
 		end
 
 		local outfitName = GetHirelingOutfitNameById(offer.value > 0 and offer.value or offer.eid)
@@ -924,7 +991,7 @@ function buyHandler.onReceive(player, msg)
 
 	local coins = player:getTibiaCoins()
 	if coins < offer.price then
-		sendStoreError(player, "Not enough Tibia Coins.")
+		sendStoreError(player, "Not enough Bp Coins.")
 		return
 	end
 
@@ -939,7 +1006,18 @@ function buyHandler.onReceive(player, msg)
 	local historyCount = offer.oftype == "item" and offer.count or (offer.oftype == "house" and math.max(#(offer.items or {}), offer.count or 1) or (offer.oftype == "prey_wildcard" and offer.value or 1))
 	addStoreHistory(player:getAccountId(), player:getGuid(), offer.name, -offer.price, historyCount, nil)
 
-	if isXpBoostOfferType(offer.oftype) then
+	if isGlobalBoostOfferType(offer.oftype) then
+		-- The broadcast has already gone out from GlobalBoosts.extend; this
+		-- is the buyer's own confirmation, and it reports the new total rather
+		-- than what they just added, since the total is what the HUD shows.
+		local boost = GlobalBoosts and GlobalBoosts.ByKey[tostring(offer.boost or ""):lower()]
+		if boost then
+			sendStoreSuccess(player, offerId, string.format("%s is now running for %s.",
+				boost.name, GlobalBoosts.formatDuration(GlobalBoosts.remaining(boost.id))))
+		else
+			sendStoreSuccess(player, offerId, "Purchase complete: " .. offer.name)
+		end
+	elseif isXpBoostOfferType(offer.oftype) then
 		player:sendStats()
 		sendStoreSuccess(player, offerId, "Your XP Boost is now active.")
 	elseif offer.oftype == "changename" then
@@ -953,7 +1031,7 @@ end
 buyHandler:register()
 
 -- ============================================================
--- Handler: OTC transfers Tibia Coins to another player (opcode 0xF8)
+-- Handler: OTC transfers Bp Coins to another player (opcode 0xF8)
 -- Payload: String(targetName) + U32(amount)
 -- ============================================================
 local transferHandler = PacketHandler(OPCODE_STORE_TRANSFER)
@@ -1023,7 +1101,7 @@ function transferHandler.onReceive(player, msg)
 	local accountId = player:getAccountId()
 	local coins = player:getTibiaCoins()
 	if coins < amount then
-		sendStoreError(player, "Not enough Tibia Coins.")
+		sendStoreError(player, "Not enough Bp Coins.")
 		return
 	end
 
@@ -1043,7 +1121,7 @@ function transferHandler.onReceive(player, msg)
 	addStoreHistory(accountId, player:getGuid(), "Coin Transfer to " .. storedTargetName, -amount, 1, storedTargetName)
 	addStoreHistory(targetAccountId, targetGuid, "Coin Transfer from " .. player:getName(), amount, 1, player:getName())
 
-	sendStoreSuccess(player, 0, "You sent " .. amount .. " Tibia Coins to " .. storedTargetName .. ".")
+	sendStoreSuccess(player, 0, "You sent " .. amount .. " Bp Coins to " .. storedTargetName .. ".")
 	sendStoreHistory(player)
 
 	if targetPlayer and targetPlayer:isUsingOtcV8() then

@@ -89,6 +89,11 @@ monster.attacks = {
 	{ name = "combat", interval = 2000, chance = 100, type = COMBAT_FIREDAMAGE, minDamage = -820, maxDamage = -950, range = 7, effect = CONST_ME_ENERGYAREA, target = false },
 	{ name = "combat", interval = 2000, chance = 9, type = COMBAT_MANADRAIN, minDamage = -230, maxDamage = -500, length = 8, spread = 3, effect = CONST_ME_MAGIC_BLUE, target = false },
 	{ name = "combat", interval = 1000, chance = 12, type = COMBAT_ENERGYDAMAGE, minDamage = -350, maxDamage = -800, range = 3, effect = CONST_ME_PURPLEENERGY, target = true },
+	{ name = "gnomevil soulfire", interval = 2000, chance = 12, target = false },
+	{ name = "gnomevil electrify", interval = 2000, chance = 12, target = false },
+	{ name = "gnomevil drunk", interval = 2000, chance = 8, target = false },
+	{ name = "gnomevil skill reducer 1", interval = 3000, chance = 8, target = false },
+	{ name = "gnomevil skill reducer 2", interval = 3000, chance = 8, target = false },
 }
 
 monster.defenses = {

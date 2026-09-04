@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc name="Old Man Bao" script="Old Man Bao.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="1279" head="38" body="39" legs="57" feet="94" addons="3" />
+</npc>

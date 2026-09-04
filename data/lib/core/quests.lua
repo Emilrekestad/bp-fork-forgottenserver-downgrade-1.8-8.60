@@ -64,8 +64,12 @@ function Mission:getDescription(player)
 
 	local value = player:getStorageValue(self.storageId, 0)
 	if descriptionType == "string" then
+		-- NOTE: the second gsub used to read from self.description again, which
+		-- silently threw away the |STATE| substitution done on the line above --
+		-- every counter-style mission ("|STATE| / 5") rendered the literal text
+		-- "|STATE|" instead of the player's progress. Chain off `description`.
 		local description = self.description:gsub("|STATE|", value)
-		description = self.description:gsub("\\n", "\n")
+		description = description:gsub("\\n", "\n")
 		return description
 	end
 
@@ -152,6 +156,68 @@ function Player:getQuests()
 		if quest:isStarted(self) then playerQuests[#playerQuests + 1] = quest end
 	end
 	return playerQuests
+end
+
+-- Marks every registered quest + mission as completed for this player.
+--
+-- Ordering matters: some quests reuse their own first mission's storage key as
+-- the quest start key (e.g. "The Travelling Trader Quest" uses 101 for both the
+-- quest start and "Mission 1: Trophy"). Writing missions first and quest-starts
+-- second would knock those missions back out of the completed state, so all
+-- quest-start keys are written in one pass and every mission key after it --
+-- mission endValues are >= their quest's startstoragevalue, so the quest stays
+-- "started" while the mission reads "completed".
+--
+-- Idempotent: only writes keys whose value differs, so re-running it is cheap
+-- and newly added quests are picked up automatically on the next run.
+-- Returns changedCount, plus a list of any quests that still do not report
+-- isCompleted() afterwards (storage-key collisions between different quests
+-- would show up here rather than silently looking fine).
+function Player:completeAllQuests()
+	local quests = Game.getQuests()
+	local changed = 0
+
+	for _, quest in pairs(quests) do
+		if quest.storageId and quest.storageValue
+			and self:getStorageValue(quest.storageId, 0) < quest.storageValue then
+			self:setStorageValue(quest.storageId, quest.storageValue)
+			changed = changed + 1
+		end
+	end
+
+	-- Some quests are rank ladders: several missions share ONE storage key with
+	-- non-overlapping tiers (Paw and Fur key 2500 -> Member 0-10, Ranger 11-20,
+	-- ... Elite Hunter 71-100). Only one tier is ever in range at a time, so the
+	-- target for a shared key is the HIGHEST endValue = top rank reached.
+	-- Collapsing to a max first also makes this deterministic; writing them in
+	-- pairs() order would leave whichever tier happened to be last.
+	local targets = {}
+	for _, quest in pairs(quests) do
+		for _, mission in pairs(quest.missions) do
+			if mission.storageId and mission.endValue then
+				local current = targets[mission.storageId]
+				if not current or mission.endValue > current then
+					targets[mission.storageId] = mission.endValue
+				end
+			end
+		end
+	end
+
+	for storageId, endValue in pairs(targets) do
+		if self:getStorageValue(storageId, 0) ~= endValue then
+			self:setStorageValue(storageId, endValue)
+			changed = changed + 1
+		end
+	end
+
+	local incomplete = {}
+	for _, quest in pairs(quests) do
+		if not (quest:isStarted(self) and quest:isCompleted(self)) then
+			incomplete[#incomplete + 1] = quest.name
+		end
+	end
+
+	return changed, incomplete
 end
 
 function Player:sendQuestLog()

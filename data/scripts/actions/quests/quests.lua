@@ -165,6 +165,11 @@ function action.onUse(player, item, fromPosition, target, toPosition, isHotkey)
 	return true
 end
 
-action:id(2472, 2480, 2481, 2482)
+-- Full chest/box/trunk/coffin/treasure-chest item family (2471-2486 in
+-- items.xml), not just the 4 originally wired up. A map-data scan (2026-08-25)
+-- found 22 quest containers across the map already correctly tagged with a
+-- reward unique id but silently inert because their item id (mostly 2473
+-- "box", a couple 2478 "treasure chest") was never registered here.
+action:id(2471, 2472, 2473, 2474, 2475, 2476, 2477, 2478, 2480, 2481, 2482, 2483, 2484, 2485, 2486)
 action:aid(2000, 2016, 10544, 12374, 12513, 26300, 27300, 28300)
 action:register()

@@ -417,9 +417,25 @@ local function isWheelPromoted(player)
 	return ok and promoted == true
 end
 
+-- Old Man Bao sells access to the Wheel (BaoConfig.ShopItems.wheel_access,
+-- data/lib/bao/bao_shop.lua), writing this storage key. Gating here rather
+-- than at the packet handlers covers every entry point at once -- open, save
+-- and gem actions all funnel through canOpenWheel.
+--
+-- Fails OPEN if Bao is not loaded at all, so a server running without the Bao
+-- system does not silently lose the Wheel along with it.
+local BAO_WHEEL_ACCESS_KEY = 990601
+
+local function hasBaoWheelAccess(player)
+	if not BaoConfig then
+		return true
+	end
+	return player:getStorageValue(BAO_WHEEL_ACCESS_KEY) == 1
+end
+
 local function canOpenWheel(player)
 	return getWheelVocation(player) > 0 and player:getLevel() >= WHEEL_MIN_LEVEL and hasWheelPremium(player) and
-	       isWheelPromoted(player)
+	       isWheelPromoted(player) and hasBaoWheelAccess(player)
 end
 
 local function emptyPoints()

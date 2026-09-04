@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<npc name="Beector" script="Beector.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="1776" head="0" body="78" legs="21" feet="0" addons="3" />
+</npc>

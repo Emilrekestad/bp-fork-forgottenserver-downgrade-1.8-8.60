@@ -1,3 +1,16 @@
+-- targetName arrives straight off the network packet (src/protocolgame.cpp)
+-- with no server-side validation before this event fires — it is used
+-- directly to build a filesystem path below, so a crafted report packet
+-- could otherwise write to an arbitrary path via "../" or "/" in the name.
+-- Real Tibia player names are letters/spaces (occasionally an apostrophe or
+-- hyphen for legacy imports); reject anything that doesn't match rather
+-- than trying to strip it, since a silently-modified name could still
+-- collide with another report's file.
+local function isSafeReportName(name)
+	return type(name) == "string" and #name > 0 and #name <= 32
+		and name:match("^[%a][%a%s'%-]*$") ~= nil
+end
+
 local function hasPendingReport(name, targetName, reportType)
 	local f = io.open(string.format("data/reports/players/%s-%s-%d.txt", name,
 	                                targetName, reportType), "r")
@@ -52,6 +65,11 @@ local event = Event()
 event.onReportRuleViolation = function(self, targetName, reportType,
                                        reportReason, comment, translation)
 	local name = self:getName()
+	if not isSafeReportName(targetName) then
+		self:sendTextMessage(MESSAGE_EVENT_ADVANCE, "That player name is not valid.")
+		return
+	end
+
 	if hasPendingReport(name, targetName, reportType) then
 		self:sendTextMessage(MESSAGE_EVENT_ADVANCE, "Your report is being processed.")
 		return

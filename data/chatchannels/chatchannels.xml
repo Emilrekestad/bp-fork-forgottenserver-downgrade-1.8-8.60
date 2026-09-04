@@ -9,4 +9,5 @@
 	<channel id="8" name="Gamemaster" script="gamemaster.lua" />
 	<channel id="7" name="Lua" public="1" script="execute.lua" />
 	<channel id="10" name="Loot" public="1" script="loot.lua" />
+	<channel id="11" name="Item Bazaar" public="1" script="item_bazaar.lua" />
 </channels>

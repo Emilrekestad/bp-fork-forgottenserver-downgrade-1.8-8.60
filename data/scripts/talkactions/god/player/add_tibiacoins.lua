@@ -84,31 +84,31 @@ local function updatePlayerCoins(admin, action, targetName, amountText)
 
 	if action == "add" then
 		if currentCoins >= MAX_TIBIA_COINS then
-			admin:sendCancelMessage(storedName .. " already has the maximum Tibia Coins.")
+			admin:sendCancelMessage(storedName .. " already has the maximum Bp Coins.")
 			return false
 		end
 
 		newBalance = math.min(currentCoins + amount, MAX_TIBIA_COINS)
 		changedAmount = newBalance - currentCoins
-		title = "God Add Tibia Coins"
-		targetMessage = "You received " .. changedAmount .. " Tibia Coins."
+		title = "God Add Bp Coins"
+		targetMessage = "You received " .. changedAmount .. " Bp Coins."
 	elseif action == "remove" then
 		if currentCoins < amount then
-			admin:sendCancelMessage(storedName .. " only has " .. currentCoins .. " Tibia Coins.")
+			admin:sendCancelMessage(storedName .. " only has " .. currentCoins .. " Bp Coins.")
 			return false
 		end
 
 		newBalance = currentCoins - amount
 		changedAmount = amount
-		title = "God Remove Tibia Coins"
-		targetMessage = changedAmount .. " Tibia Coins were removed from your account."
+		title = "God Remove Bp Coins"
+		targetMessage = changedAmount .. " Bp Coins were removed from your account."
 	end
 
 	local target = Player(storedName)
 	if target then
 		target:setTibiaCoins(newBalance)
 	elseif not db.query("UPDATE `accounts` SET `tibia_coins` = " .. newBalance .. " WHERE `id` = " .. accountId) then
-		admin:sendCancelMessage("Could not update Tibia Coins.")
+		admin:sendCancelMessage("Could not update Bp Coins.")
 		return false
 	end
 
@@ -116,7 +116,7 @@ local function updatePlayerCoins(admin, action, targetName, amountText)
 
 	local verb = action == "add" and "Added" or "Removed"
 	local preposition = action == "add" and "to" or "from"
-	admin:sendTextMessage(MESSAGE_STATUS_CONSOLE_BLUE, verb .. " " .. changedAmount .. " Tibia Coins " .. preposition .. " " .. storedName .. ". New balance: " .. newBalance .. ".")
+	admin:sendTextMessage(MESSAGE_STATUS_CONSOLE_BLUE, verb .. " " .. changedAmount .. " Bp Coins " .. preposition .. " " .. storedName .. ". New balance: " .. newBalance .. ".")
 
 	if target then
 		target:sendTextMessage(MESSAGE_STATUS_CONSOLE_BLUE, targetMessage)

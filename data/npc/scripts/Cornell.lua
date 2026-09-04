@@ -7,7 +7,7 @@ function onCreatureDisappear(cid)		npcHandler:onCreatureDisappear(cid)			end
 function onCreatureSay(cid, type, msg)		npcHandler:onCreatureSay(cid, type, msg)		end
 function onThink()		npcHandler:onThink()		end
  
-local voices = { {text = 'Passage to Grimvale and Edron.'} }
+local voices = { {text = 'Passage to Edron.'} }
 npcHandler:addModule(VoiceModule:new(voices))
 
 -- Travel
@@ -17,14 +17,17 @@ local function addTravelKeyword(keyword, cost, destination, action)
 		travelKeyword:addChildKeyword({'no'}, StdModule.say, {npcHandler = npcHandler, text = 'We would like to serve you some time.', reset = true})
 end
 
-addTravelKeyword('grimvale', 100, Position(33341, 31691, 7))
+-- Grimvale is closed off - see data/npc/crystalserver/services/cornell.lua,
+-- the RevScript version that actually takes precedence for this NPC. Kept in
+-- sync here so the island stays unreachable whichever loader wins.
 addTravelKeyword('edron', 100, Position(33304, 31719, 7))
 
 -- Kick
 
 -- Basic
-keywordHandler:addKeyword({'sail'}, StdModule.say, {npcHandler = npcHandler, text = 'I can travel you to {Grimvale} or {Edron}.'})
-npcHandler:setMessage(MESSAGE_GREET, 'Welcome on board, |PLAYERNAME|. Where can I {sail} you today, to {Grimvale} or {Edron}?')
+keywordHandler:addKeyword({'sail'}, StdModule.say, {npcHandler = npcHandler, text = 'I can travel you to {Edron}.'})
+keywordHandler:addKeyword({'grimvale'}, StdModule.say, {npcHandler = npcHandler, text = 'No. Nobody sails to Grimvale any more, and I\'ll not be the first to break that. Ask me about {Edron} instead.'})
+npcHandler:setMessage(MESSAGE_GREET, 'Welcome on board, |PLAYERNAME|. Can I {sail} you to {Edron}?')
 npcHandler:setMessage(MESSAGE_FAREWELL, 'Good bye. Recommend us if you were satisfied with our service.')
 npcHandler:setMessage(MESSAGE_WALKAWAY, 'Good bye then.')
 

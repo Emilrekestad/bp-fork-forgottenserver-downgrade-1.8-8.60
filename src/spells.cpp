@@ -764,7 +764,9 @@ void Spell::postCastSpell(Player* player, bool finishedCast /*= true*/, bool pay
             }
 
             Item* helmet = player->getInventoryItem(CONST_SLOT_HEAD);
-            if (helmet && helmet->getTier() > 0) {
+            // getTier() is no longer implicitly Forge-only as of 2026-08-25
+            // (see combat.cpp's rollFatalHit) -- gated explicitly here.
+            if (helmet && helmet->getTier() > 0 && ConfigManager::getBoolean(ConfigManager::FORGE_SYSTEM_ENABLED)) {
                 double momentumChance = helmet->getMomentumChance();
 
                 Item* boots = player->getInventoryItem(CONST_SLOT_FEET);

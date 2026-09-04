@@ -832,23 +832,22 @@ public:
 	int32_t getPerfectShotDamage() const;
 	uint8_t getPerfectShotRange() const;
 
+	// No longer gated behind FORGE_SYSTEM_ENABLED as of 2026-08-25 -- this
+	// field is repurposed to also carry the custom item rarity tier (for
+	// the client-side corner marker), independent of Forge. The real Forge
+	// combat procs that used to rely on "tier > 0" alone as their only gate
+	// (rollFatalHit in combat.cpp, the Dodge/Transcendence blocks in
+	// combat.cpp, the Momentum block in spells.cpp) now check
+	// FORGE_SYSTEM_ENABLED explicitly themselves, so this no longer needs
+	// to gate at the field level.
 	uint8_t getTier() const
 	{
-		if (!ConfigManager::getBoolean(ConfigManager::FORGE_SYSTEM_ENABLED)) {
-			return 0;
-		}
 		if (!hasAttribute(ITEM_ATTRIBUTE_TIER)) {
 			return 0;
 		}
 		return static_cast<uint8_t>(getIntAttr(ITEM_ATTRIBUTE_TIER));
 	}
-	void setTier(uint8_t tier)
-	{
-		if (!ConfigManager::getBoolean(ConfigManager::FORGE_SYSTEM_ENABLED)) {
-			return;
-		}
-		setIntAttr(ITEM_ATTRIBUTE_TIER, std::min<uint8_t>(tier, 10));
-	}
+	void setTier(uint8_t tier) { setIntAttr(ITEM_ATTRIBUTE_TIER, std::min<uint8_t>(tier, 10)); }
 	uint8_t getClassification() const
 	{
 		if (!ConfigManager::getBoolean(ConfigManager::FORGE_SYSTEM_ENABLED)) {

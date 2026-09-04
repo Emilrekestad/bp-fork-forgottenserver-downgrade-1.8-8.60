@@ -434,7 +434,7 @@ if NpcHandler == nil then
                 if self:isFocused(cid) then
                     local player = Player(cid)
                     if player then
-                        self:unGreet(cid)
+                        self:onWalkAway(cid)
                     else
                         self:resetNpc(cid)
                         self:releaseFocus(cid)

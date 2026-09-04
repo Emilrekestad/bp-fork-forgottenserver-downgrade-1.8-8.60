@@ -18,6 +18,7 @@ local OPCODE_CATALOG = 0x5A
 local OPCODE_EXPERIENCE = 0x5C
 local OPCODE_INFO = 0xC4
 local OPCODE_INFO_BATCH = 0x5B
+local OPCODE_ACCESS_STATUS = 146
 
 local ACTION_ITEM_INFO = 0
 local ACTION_LIST_INFO = 1
@@ -741,12 +742,36 @@ end
 
 local requestHandler = PacketHandler(OPCODE_REQUEST)
 
+-- Old Man Bao sells access to Weapon Proficiency
+-- (BaoConfig.ShopItems.weapon_proficiency, data/lib/bao/bao_shop.lua), writing
+-- this storage key. Fails OPEN if Bao is not loaded, so a server without the
+-- Bao system keeps Proficiency working as it always did.
+local BAO_PROFICIENCY_KEY = 990600
+
+local function hasBaoProficiencyAccess(player)
+	if not BaoConfig then
+		return true
+	end
+	return player:getStorageValue(BAO_PROFICIENCY_KEY) == 1
+end
+
 function requestHandler.onReceive(player, msg)
 	if not supportsCustomNetwork(player) or msg:len() - msg:tell() < 1 then
 		return
 	end
 
 	local action = msg:getByte()
+	if not hasBaoProficiencyAccess(player) then
+		if action == ACTION_LIST_INFO and player.sendExtendedOpcode then
+			player:sendExtendedOpcode(OPCODE_ACCESS_STATUS, "bao_locked")
+		end
+		if action == ACTION_LIST_INFO then
+			player:sendTextMessage(MESSAGE_STATUS_SMALL,
+				"Old Man Bao has not taught you to read a weapon yet.")
+		end
+		return
+	end
+
 	if action == ACTION_LIST_INFO then
 		local profile = loadProfile(player)
 		local now = os.mtime()

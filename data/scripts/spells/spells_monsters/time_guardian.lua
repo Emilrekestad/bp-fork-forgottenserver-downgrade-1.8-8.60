@@ -1,53 +1,35 @@
-local monsters = {
-	[1] = { pos = Position(32980, 31664, 13) },
-	[2] = { pos = Position(32975, 31664, 13) },
-}
+local forms = { "The Blazing Time Guardian", "The Freezing Time Guardian" }
 
-local function functionBack(position, oldpos)
-	local guardian = Tile(position):getTopCreature()
-	local bool, diference, health = false, 0, 0
-	local spectators, spectator = Game.getSpectators(Position(32977, 31662, 14), false, false, 15, 15, 15, 15)
-	for v = 1, #spectators do
-		spectator = spectators[v]
-		if spectator:getName():lower() == "the freezing time guardian" or spectator:getName():lower() == "the blazing time guardian" then
-			oldpos = spectator:getPosition()
-			bool = true
-		end
+local function revertToBaseForm(monsterId)
+	local form = Creature(monsterId)
+	if not form then
+		return
 	end
-	if not bool then
-		guardian:remove()
-		return true
+
+	local pos = form:getPosition()
+	local health = form:getHealth()
+	form:remove()
+
+	local base = Game.createMonster("The Time Guardian", pos, false, true, CONST_ME_MAGIC_BLUE)
+	if base then
+		base:addHealth(health - base:getHealth())
 	end
-	local specs, spec = Game.getSpectators(Position(32977, 31662, 14), false, false, 15, 15, 15, 15)
-	for i = 1, #specs do
-		spec = specs[i]
-		if spec:isMonster() and spec:getName():lower() == "the freezing time guardian" or spec:getName():lower() == "the blazing time guardian" then
-			spec:teleportTo(position)
-			health = spec:getHealth()
-			diference = guardian:getHealth() - health
-		end
-	end
-	guardian:addHealth(-diference)
-	guardian:teleportTo(oldpos)
 end
 
 local spell = Spell("instant")
 
 function spell.onCastSpell(creature, var)
-	local index = math.random(1, 2)
-	local monsterPos = creature:getPosition()
-	if monsterPos.z ~= 14 then
+	local pos = creature:getPosition()
+	local health = creature:getHealth()
+
+	local form = Game.createMonster(forms[math.random(1, 2)], pos, false, true, CONST_ME_MAGIC_RED)
+	if not form then
 		return true
 	end
-	local position = monsters[index].pos
-	local form = Tile(position):getTopCreature()
-	creature:teleportTo(position)
-	local diference, health = 0, 0
-	health = creature:getHealth()
-	diference = form:getHealth() - health
-	form:addHealth(-diference)
-	form:teleportTo(monsterPos)
-	addEvent(functionBack, 30 * 1000, position, monsterPos)
+	form:addHealth(health - form:getHealth())
+	creature:remove()
+
+	addEvent(revertToBaseForm, 30 * 1000, form:getId())
 	return true
 end
 

@@ -16,7 +16,7 @@ local function addCoinHistory(player, amount)
 	db.query("INSERT INTO `shop_history` (`account`, `player`, `date`, `title`, `price`, `costSecond`, `count`, `target`) VALUES (" ..
 		player:getAccountId() .. ", " ..
 		player:getGuid() .. ", NOW(), " ..
-		db.escapeString("Tibia Coins Item") .. ", " ..
+		db.escapeString("Bp Coins Item") .. ", " ..
 		amount .. ", 0, 1, " ..
 		db.escapeString("Item " .. TIBIA_COINS_ITEM_ID) .. ")")
 end
@@ -26,13 +26,13 @@ local tibiaCoins = Action()
 function tibiaCoins.onUse(player, item, fromPosition, target, toPosition, isHotkey)
 	local currentCoins = player:getTibiaCoins()
 	if currentCoins >= MAX_TIBIA_COINS then
-		player:sendCancelMessage("You already have the maximum Tibia Coins.")
+		player:sendCancelMessage("You already have the maximum Bp Coins.")
 		return true
 	end
 
 	local amount = math.min(item:getCount(), MAX_TIBIA_COINS - currentCoins)
 	if amount <= 0 then
-		player:sendCancelMessage("Could not redeem Tibia Coins.")
+		player:sendCancelMessage("Could not redeem Bp Coins.")
 		return true
 	end
 
@@ -41,7 +41,7 @@ function tibiaCoins.onUse(player, item, fromPosition, target, toPosition, isHotk
 	item:remove(amount)
 	addCoinHistory(player, amount)
 
-	player:sendTextMessage(MESSAGE_STATUS_CONSOLE_BLUE, "You redeemed " .. amount .. " Tibia Coins. New balance: " .. newBalance .. ".")
+	player:sendTextMessage(MESSAGE_STATUS_CONSOLE_BLUE, "You redeemed " .. amount .. " Bp Coins. New balance: " .. newBalance .. ".")
 	player:getPosition():sendMagicEffect(CONST_ME_MAGIC_BLUE)
 	return true
 end

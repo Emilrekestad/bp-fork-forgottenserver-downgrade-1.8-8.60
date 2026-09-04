@@ -4,8 +4,9 @@ function spell.onCastSpell(creature, var)
 	local summoncount = creature:getSummons()
 	local maxsummons = 4
 	if #summoncount < 4 then
+		local pos = creature:getPosition()
 		for i = 1, maxsummons - #summoncount do
-			local mid = Game.createMonster("Disgusting Ooze", Position(math.random(33163, 33180), math.random(31497, 31506), 13), true, true)
+			local mid = Game.createMonster("Disgusting Ooze", Position(pos.x + math.random(-4, 4), pos.y + math.random(-4, 4), pos.z), true, true)
 			if not mid then
 				return
 			end

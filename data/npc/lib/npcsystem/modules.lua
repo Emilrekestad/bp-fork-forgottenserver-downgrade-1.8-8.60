@@ -1448,7 +1448,15 @@ if Modules == nil then
         if self.lastVoice < os.time() then
             self.lastVoice = os.time() + self.timeout
             if math.random(100) <= self.chance then
-                local voice = self.voices[math.random(self.voiceCount)]
+                local index = math.random(self.voiceCount)
+                if self.voiceCount > 1 then
+                    while index == self.lastVoiceIndex do
+                        index = math.random(self.voiceCount)
+                    end
+                end
+                self.lastVoiceIndex = index
+
+                local voice = self.voices[index]
                 Npc():say(voice.text, voice.talktype)
             end
         end

@@ -14,8 +14,7 @@ local function addTravelKeyword(keyword, text, cost, destination)
 	travelKeyword:addChildKeyword({'no'}, StdModule.say, {npcHandler = npcHandler, text = 'Alright then!', reset = true})
 end
 
-addTravelKeyword('yalahar', 'back to Yalahar', 100, Position(32649, 31292, 6))
-addTravelKeyword('fenrock', 'to the Fenrock', 100, Position(32563, 31313, 7))
+addTravelKeyword('cormaya', 'back to Cormaya', 100, Position(33288, 31956, 6))
 
 -- Kick
 keywordHandler:addKeyword({'kick'}, StdModule.kick, {npcHandler = npcHandler, destination = {Position(32634, 31437, 7), Position(32634, 31438, 7)}})
@@ -27,8 +26,8 @@ keywordHandler:addKeyword({'mistrock'}, StdModule.say, {npcHandler = npcHandler,
 		"I'd search on Fenrock if I were you. Even though there's snow on the surface, it's still warm underground. There are often caves under fresh lava streams."
 	}}, nil, function(player) if player:getStorageValue(Storage.hiddenCityOfBeregar.WayToBeregar) ~= 1 then player:setStorageValue(Storage.hiddenCityOfBeregar.WayToBeregar, 1) end end
 )
-keywordHandler:addKeyword({'offer'}, StdModule.say, {npcHandler = npcHandler, text = 'I can take you to {Yalahar} or {Fenrock}!'})
-keywordHandler:addKeyword({'passage'}, StdModule.say, {npcHandler = npcHandler, text = 'I can take you to {Yalahar} or {Fenrock}!'})
+keywordHandler:addKeyword({'offer'}, StdModule.say, {npcHandler = npcHandler, text = 'I can take you back to {Cormaya}!'})
+keywordHandler:addKeyword({'passage'}, StdModule.say, {npcHandler = npcHandler, text = 'I can take you back to {Cormaya}!'})
 keywordHandler:addKeyword({'job'}, StdModule.say, {npcHandler = npcHandler, text = 'I am Maris, Captain of this ship.'})
 keywordHandler:addKeyword({'captain'}, StdModule.say, {npcHandler = npcHandler, text = 'I am Maris, Captain of this ship.'})
 

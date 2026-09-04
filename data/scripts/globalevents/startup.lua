@@ -1,64 +1,47 @@
 local serverstartup = GlobalEvent("serverstartup")
 function serverstartup.onStartup()
-	logInfo(">> Loading map attributes")
+	-- NOTE (2026-08-25): this whole block called loadLuaMapAction/loadLuaMapUnique/
+	-- CreateMapItem against tables (ChestAction, ChestUnique, CorpseAction, ...) that
+	-- are never defined anywhere in this datapack, AND this event was never given
+	-- `:type("startup")` below - so it silently never ran at all (not even the DB
+	-- maintenance queries further down this function). Guarded defensively so this
+	-- becomes live again the moment someone implements the loader/tables, without
+	-- reintroducing the crash that a real fix would otherwise hit right away.
+	if type(loadLuaMapAction) == 'function' or type(loadLuaMapUnique) == 'function' then
+		logInfo(">> Loading map attributes")
 
-	-- Sign table
-	-- loadLuaMapSign(SignTable)
-	-- logInfo("Loaded " .. (#SignTable) .. " signs in the map")
+		local function tryLoadAction(fn, tbl, label)
+			if type(fn) == 'function' and tbl then fn(tbl) else logInfo(">> Skipping " .. label .. " (loader or table not implemented)") end
+		end
 
-	-- Action and unique tables
-	-- Chest table
-	loadLuaMapAction(ChestAction)
-	loadLuaMapUnique(ChestUnique)
-	-- -- Corpse table
-	loadLuaMapAction(CorpseAction)
-	loadLuaMapUnique(CorpseUnique)
+		tryLoadAction(loadLuaMapAction, ChestAction, "ChestAction")
+		tryLoadAction(loadLuaMapUnique, ChestUnique, "ChestUnique")
+		tryLoadAction(loadLuaMapAction, CorpseAction, "CorpseAction")
+		tryLoadAction(loadLuaMapUnique, CorpseUnique, "CorpseUnique")
+		tryLoadAction(loadLuaMapAction, KeyDoorAction, "KeyDoorAction")
+		tryLoadAction(loadLuaMapAction, LevelDoorAction, "LevelDoorAction")
+		tryLoadAction(loadLuaMapAction, QuestDoorAction, "QuestDoorAction")
+		tryLoadAction(loadLuaMapUnique, QuestDoorUnique, "QuestDoorUnique")
+		tryLoadAction(loadLuaMapAction, ItemAction, "ItemAction")
+		tryLoadAction(loadLuaMapUnique, ItemUnique, "ItemUnique")
+		tryLoadAction(loadLuaMapAction, ItemUnmoveableAction, "ItemUnmoveableAction")
+		tryLoadAction(loadLuaMapAction, LeverAction, "LeverAction")
+		tryLoadAction(loadLuaMapUnique, LeverUnique, "LeverUnique")
+		tryLoadAction(loadLuaMapAction, TeleportAction, "TeleportAction")
+		tryLoadAction(loadLuaMapUnique, TeleportUnique, "TeleportUnique")
+		tryLoadAction(loadLuaMapAction, TeleportItemAction, "TeleportItemAction")
+		tryLoadAction(loadLuaMapUnique, TeleportItemUnique, "TeleportItemUnique")
+		tryLoadAction(loadLuaMapAction, TileAction, "TileAction")
+		tryLoadAction(loadLuaMapUnique, TileUnique, "TileUnique")
+		tryLoadAction(loadLuaMapAction, TilePickAction, "TilePickAction")
 
-	-- -- Doors key table
-	loadLuaMapAction(KeyDoorAction)
+		if type(CreateMapItem) == 'function' and CreateItemOnMap then
+			CreateMapItem(CreateItemOnMap)
+		end
 
-	-- -- Doors level table
-	loadLuaMapAction(LevelDoorAction)
-
-	-- -- Doors quest table
-	loadLuaMapAction(QuestDoorAction)
-	loadLuaMapUnique(QuestDoorUnique)
-	-- -- Item table
-	loadLuaMapAction(ItemAction)
-	loadLuaMapUnique(ItemUnique)
-
-	-- -- Item daily reward table
-	-- This is temporary disabled > loadLuaMapAction(DailyRewardAction)
-
-	-- -- Item unmoveable table
-	loadLuaMapAction(ItemUnmoveableAction)
-	-- -- Lever table
-	loadLuaMapAction(LeverAction)
-	loadLuaMapUnique(LeverUnique)
-
-	-- -- Teleport (magic forcefields) table
-	loadLuaMapAction(TeleportAction)
-	loadLuaMapUnique(TeleportUnique)
-
-	-- -- Teleport item table
-	loadLuaMapAction(TeleportItemAction)
-	loadLuaMapUnique(TeleportItemUnique)
-
-	-- -- Tile table
-	loadLuaMapAction(TileAction)
-	loadLuaMapUnique(TileUnique)
-
-	-- -- Tile pick table
-	loadLuaMapAction(TilePickAction)
-
-	-- -- Create new item on map
-	CreateMapItem(CreateItemOnMap)
-
-	-- -- Update old quest storage keys
-	-- updateKeysStorage(QuestKeysUpdate)
-
-	logInfo(">> Loaded all actions in the map")
-	logInfo(">> Loaded all uniques in the map")
+		logInfo(">> Loaded all actions in the map")
+		logInfo(">> Loaded all uniques in the map")
+	end
 
 	-- load map trainers
 	--Game.loadMap("data/world/trainers/trainers-custom.otbm")
@@ -138,4 +121,8 @@ function serverstartup.onStartup()
 		end
 	end
 end
+-- Without this, eventType stays GLOBALEVENT_NONE and onStartup() never fires
+-- (confirmed: none of this function's logInfo lines, including the very first
+-- one, ever appeared in server_run.log before this fix, 2026-08-25).
+serverstartup:type("startup")
 serverstartup:register()

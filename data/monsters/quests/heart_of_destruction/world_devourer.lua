@@ -3,7 +3,7 @@ local monster = {}
 
 monster.name = "World Devourer"
 monster.description = "World Devourer"
-monster.experience = 77700
+monster.experience = 3000000
 monster.outfit = {
 	lookType = 875,
 	lookHead = 82,
@@ -19,10 +19,10 @@ monster.bosstiary = {
 	bossRace = RARITY_NEMESIS,
 }
 
-monster.health = 25000
-monster.maxHealth = 25000
+monster.health = 1000000
+monster.maxHealth = 1000000
 monster.race = "venom"
-monster.corpse = 0
+monster.corpse = 23564
 monster.speed = 225
 monster.manaCost = 0
 
@@ -93,7 +93,9 @@ monster.loot = {
 	{ id = 23474, chance = 6000, unique = true }, -- tiara of power
 	{ id = 23477, chance = 6000, unique = true }, -- void boots
 	{ id = 23686, chance = 4000, unique = true }, -- devourer core
-	{ id = 23684, chance = 2000, unique = true }, -- crackling egg
+	{ id = 23684, chance = 2000, unique = true }, -- crackling egg (Neon Sparkid mount)
+	{ id = 23538, chance = 2000, unique = true }, -- vibrant egg (Sparkion mount)
+	{ id = 23685, chance = 2000, unique = true }, -- menacing egg (Vortexion mount)
 }
 
 monster.attacks = {
@@ -103,13 +105,16 @@ monster.attacks = {
 	{ name = "combat", interval = 2000, chance = 20, type = COMBAT_ENERGYDAMAGE, minDamage = -400, maxDamage = -800, radius = 4, shootEffect = CONST_ANI_ENERGY, effect = CONST_ME_YELLOWENERGY, target = true },
 	{ name = "combat", interval = 2000, chance = 20, type = COMBAT_ENERGYDAMAGE, minDamage = -600, maxDamage = -1200, length = 10, spread = 0, effect = CONST_ME_LOSEENERGY, target = false },
 	{ name = "combat", interval = 2000, chance = 20, type = COMBAT_LIFEDRAIN, radius = 8, effect = CONST_ME_MAGIC_RED, target = false },
+	{ name = "combat", interval = 2000, chance = 18, type = COMBAT_EARTHDAMAGE, minDamage = -700, maxDamage = -1400, radius = 9, effect = CONST_ME_STONES, target = false },
+	{ name = "combat", interval = 2000, chance = 15, type = COMBAT_PHYSICALDAMAGE, minDamage = -800, maxDamage = -1600, length = 10, spread = 0, effect = CONST_ME_EXPLOSIONHIT, target = false },
 	{ name = "anomaly break", interval = 2000, chance = 40, target = false },
 	{ name = "devourer summon", interval = 2000, chance = 25, target = false },
 }
 
 monster.defenses = {
-	defense = 150,
-	armor = 150,
+	defense = 180,
+	armor = 180,
+	{ name = "combat", interval = 2000, chance = 20, type = COMBAT_HEALING, minDamage = 3000, maxDamage = 6000, effect = CONST_ME_MAGIC_GREEN, target = false },
 }
 
 monster.elements = {

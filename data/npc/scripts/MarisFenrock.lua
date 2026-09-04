@@ -14,15 +14,14 @@ local function addTravelKeyword(keyword, text, cost, destination)
 		travelKeyword:addChildKeyword({'no'}, StdModule.say, {npcHandler = npcHandler, text = 'Alright then!', reset = true})
 end
 
-addTravelKeyword('yalahar', 'back to Yalahar', 100, Position(32649, 31292, 6))
-addTravelKeyword('mistrock', 'to the Mistrock', 50, Position(32640, 31439, 7))
+addTravelKeyword('mistrock', 'to Mistrock', 50, Position(32640, 31439, 7))
 
 -- Kick
-keywordHandler:addKeyword({'kick'}, StdModule.kick, {npcHandler = npcHandler, destination = Position(32561, 31312, 7)})
+keywordHandler:addKeyword({'kick'}, StdModule.kick, {npcHandler = npcHandler, destination = Position(33288, 31957, 6)})
 
 -- Basic
-keywordHandler:addKeyword({'offer'}, StdModule.say, {npcHandler = npcHandler, text = 'I can take you to {Yalahar} or {Mistrock}!'})
-keywordHandler:addKeyword({'passage'}, StdModule.say, {npcHandler = npcHandler, text = 'I can take you to {Yalahar} or {Mistrock}!'})
+keywordHandler:addKeyword({'offer'}, StdModule.say, {npcHandler = npcHandler, text = 'I can take you to {Mistrock}!'})
+keywordHandler:addKeyword({'passage'}, StdModule.say, {npcHandler = npcHandler, text = 'I can take you to {Mistrock}!'})
 keywordHandler:addKeyword({'job'}, StdModule.say, {npcHandler = npcHandler, text = 'I am Maris, Captain of this ship.'})
 keywordHandler:addKeyword({'captain'}, StdModule.say, {npcHandler = npcHandler, text = 'I am Maris, Captain of this ship.'})
 

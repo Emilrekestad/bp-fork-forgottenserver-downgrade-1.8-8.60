@@ -298,9 +298,11 @@
   <npc centerx="32097" centery="32219" centerz="5" radius="3">
     <npc name="Asralius" x="-1" y="0" z="5" spawntime="60" direction="2" />
   </npc>
-  <npc centerx="33617" centery="32371" centerz="5" radius="3">
+  <!-- Eruaran relocated off the mountain -- Gaz'Haragoth now spawns on this
+       tile (world-spawn.xml). Pending: Roshamuul depot coordinates to re-place him. -->
+  <!-- <npc centerx="33617" centery="32371" centerz="5" radius="3">
     <npc name="Eruaran" x="1" y="1" z="5" spawntime="60" direction="2" />
-  </npc>
+  </npc> -->
   <npc centerx="33536" centery="32504" centerz="5" radius="3">
     <npc name="Mortis" x="0" y="-1" z="5" spawntime="60" direction="2" />
   </npc>
@@ -373,9 +375,13 @@
   <npc centerx="32157" centery="31290" centerz="6" radius="1">
     <npc name="Messenger of Heaven" x="0" y="0" z="6" spawntime="60" direction="2" />
   </npc>
-  <npc centerx="32647" centery="31291" centerz="6" radius="2">
+  <!-- Yalahar Maris (Fenrock/Mistrock ferry) disabled -- Mistrock is now
+       reached only via MarisFenrock, relocated to Cormaya (see below), and
+       Fenrock is disabled entirely, so this ferryman has nowhere left to
+       sail. -->
+  <!-- <npc centerx="32647" centery="31291" centerz="6" radius="2">
     <npc name="Maris" x="1" y="1" z="6" spawntime="60" direction="2" />
-  </npc>
+  </npc> -->
   <npc centerx="33458" centery="31302" centerz="6" radius="1">
     <npc name="Rock In A Hard Place" x="0" y="0" z="6" spawntime="60" direction="2" />
   </npc>
@@ -502,6 +508,8 @@
   <npc centerx="33287" centery="31956" centerz="6" radius="2">
     <npc name="Pemaret" x="-1" y="-1" z="6" spawntime="60" direction="2" />
   </npc>
+  <!-- Mistrock is now reached via Pemaret (already stood right here),
+       whose "eremo" leg was repointed to "mistrock" -- see Pemaret.lua. -->
   <npc centerx="32189" centery="31957" centerz="6" radius="1">
     <npc name="Captain Jack" x="1" y="0" z="6" spawntime="60" direction="2" />
   </npc>
@@ -984,9 +992,8 @@
   <npc centerx="33449" centery="31309" centerz="7" radius="1">
     <npc name="Orockle" x="-1" y="0" z="7" spawntime="60" direction="2" />
   </npc>
-  <npc centerx="32564" centery="31313" centerz="7" radius="1">
-    <npc name="MarisFenrock" x="0" y="0" z="7" spawntime="60" direction="2" />
-  </npc>
+  <!-- Fenrock disabled per owner request. MarisFenrock is unused now --
+       Mistrock is reached via Pemaret on Cormaya instead. -->
   <npc centerx="33457" centery="31321" centerz="7" radius="1">
     <npc name="Old Rock Boy" x="0" y="0" z="7" spawntime="60" direction="2" />
   </npc>
@@ -1501,6 +1508,9 @@
   </npc>
   <npc centerx="32369" centery="32237" centerz="7" radius="3">
     <npc name="Quentin" x="0" y="1" z="7" spawntime="60" direction="2" />
+  </npc>
+  <npc centerx="32369" centery="32237" centerz="7" radius="3">
+    <npc name="Rashid" x="-1" y="0" z="7" spawntime="60" direction="2" />
   </npc>
   <npc centerx="32391" centery="32238" centerz="7" radius="3">
     <npc name="Sherry McRonald" x="0" y="-1" z="7" spawntime="60" direction="2" />

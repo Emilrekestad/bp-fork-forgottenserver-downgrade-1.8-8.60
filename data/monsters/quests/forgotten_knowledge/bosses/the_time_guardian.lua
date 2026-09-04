@@ -125,7 +125,6 @@ monster.defenses = {
 	defense = 70,
 	armor = 70,
 	{ name = "time guardian", interval = 2000, chance = 10, target = false },
-	{ name = "time guardiann", interval = 2000, chance = 10, target = false },
 }
 
 monster.elements = {

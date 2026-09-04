@@ -95,7 +95,12 @@ bool rollFatalHit(const Player* player, const CombatDamage& damage)
 	}
 
 	const Item* weapon = player->getWeapon();
-	if (!weapon || weapon->getTier() == 0) {
+	// getTier() is no longer gated behind FORGE_SYSTEM_ENABLED as of
+	// 2026-08-25 (it's repurposed to also carry the custom item rarity tier
+	// for the client-side corner marker, unrelated to Forge) -- gated
+	// explicitly here instead, so a rarity-tier item never grants a real
+	// Forge combat proc while Forge itself is disabled.
+	if (!weapon || weapon->getTier() == 0 || !ConfigManager::getBoolean(ConfigManager::FORGE_SYSTEM_ENABLED)) {
 		return false;
 	}
 
@@ -1196,7 +1201,9 @@ void Combat::doTargetCombat(Creature* caster, Creature* target, CombatDamage& da
 				damage.origin != ORIGIN_CONDITION) {
 			Player *targetPlayer = target->getPlayer();
 			Item *armor = targetPlayer->getInventoryItem(CONST_SLOT_ARMOR);
-			if (armor && armor->getTier() > 0) {
+			// See rollFatalHit's comment above -- getTier() is no longer
+			// implicitly Forge-only, so this proc is gated explicitly here.
+			if (armor && armor->getTier() > 0 && ConfigManager::getBoolean(ConfigManager::FORGE_SYSTEM_ENABLED)) {
 				double dodgeChance = armor->getDodgeChance();
 				Item *boots = targetPlayer->getInventoryItem(CONST_SLOT_FEET);
 				if (boots && boots->getTier() > 0) {
@@ -1341,7 +1348,9 @@ void Combat::doTargetCombat(Creature* caster, Creature* target, CombatDamage& da
 			Player *targetPlayer = target->getPlayer();
 			if (!targetPlayer->isAvatarActive()) {
 				Item *legs = targetPlayer->getInventoryItem(CONST_SLOT_LEGS);
-				if (legs && legs->getTier() > 0) {
+				// See rollFatalHit's comment above -- getTier() is no longer
+				// implicitly Forge-only, so this proc is gated explicitly here.
+				if (legs && legs->getTier() > 0 && ConfigManager::getBoolean(ConfigManager::FORGE_SYSTEM_ENABLED)) {
 					double transChance = legs->getTranscendenceChance();
 					Item *boots = targetPlayer->getInventoryItem(CONST_SLOT_FEET);
 					if (boots && boots->getTier() > 0) {

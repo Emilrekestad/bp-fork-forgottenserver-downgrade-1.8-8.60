@@ -1287,12 +1287,12 @@ local function unlockPermanentPreySlot(player, slot)
 	end
 	if player:getTibiaCoins() < PREY_PERMANENT_SLOT_COST then
 		return sendError(player, string.format(
-			"You need %d Tibia Coins to unlock this Prey slot permanently.",
+			"You need %d Bp Coins to unlock this Prey slot permanently.",
 			PREY_PERMANENT_SLOT_COST
 		))
 	end
 	if not player:removeTibiaCoins(PREY_PERMANENT_SLOT_COST) then
-		return sendError(player, "Failed to remove Tibia Coins.")
+		return sendError(player, "Failed to remove Bp Coins.")
 	end
 
 	local saved = db.query(string.format(
@@ -1303,7 +1303,7 @@ local function unlockPermanentPreySlot(player, slot)
 	))
 	if not saved then
 		player:addTibiaCoins(PREY_PERMANENT_SLOT_COST)
-		return sendError(player, "The Prey slot could not be unlocked. Your Tibia Coins were refunded.")
+		return sendError(player, "The Prey slot could not be unlocked. Your Bp Coins were refunded.")
 	end
 
 	player:setStorageValue(PREY_STORAGE_PERMANENT_SLOT, 1)

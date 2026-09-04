@@ -93,7 +93,8 @@ monster.loot = {
 	{ name = "crystalline armor", chance = 710 },
 	{ name = "rubber cap", chance = 710 },
 	{ name = "stone skin amulet", chance = 470 },
-	{ name = "bag you desire", chance = 15 },
+	{ name = "bag you desire", chance = 100 },
+	{ name = "bag you covet", chance = 100 },
 }
 
 monster.attacks = {

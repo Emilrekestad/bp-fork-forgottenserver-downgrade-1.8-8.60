@@ -1,7 +1,20 @@
 local CHANNEL_LOOT = 10
 
-local function sendLootMessage(player, text)
-	player:sendChannelMessage("", text, TALKTYPE_CHANNEL_O, CHANNEL_LOOT)
+-- TALKTYPE_CHANNEL_W (native value 8, const.h) is never registered as a Lua
+-- enum global in this engine (only _Y/_O/_R1 are, see luascript.cpp) -- the
+-- underlying protocol value is fixed either way, so it's defined locally
+-- here instead of requiring a C++ rebuild just to expose one more enum name.
+local TALKTYPE_CHANNEL_W = 8
+
+-- Always white -- per-item rarity coloring (Rare=blue, Epic=purple,
+-- Legendary=orange) is handled inline within the message text itself now
+-- (data/lib/core/container.lua's Container:getContentDescription, via the
+-- client's native [color=NAME]...[/color] BBCode support), not by escalating
+-- this whole line's talktype. Per owner spec 2026-08-25: only the specific
+-- rarity item's name should be colored, everything else in the line
+-- (currency, plain items) stays standard white.
+local function sendLootMessage(player, text, talktype)
+	player:sendChannelMessage("", text, talktype or TALKTYPE_CHANNEL_W, CHANNEL_LOOT)
 end
 
 local function formatHundredthsPercent(value)
@@ -28,7 +41,7 @@ local function getLootRecipients(player)
 	return recipients
 end
 
-local function sendUngroupedLootMessage(player, corpse, monsterName, preyLootText, bountyLootText, useColorized)
+local function sendUngroupedLootMessage(player, corpse, monsterName, preyLootText, bountyLootText, useColorized, talktype)
 	local recipients = getLootRecipients(player)
 	if #recipients == 0 then
 		return
@@ -56,10 +69,10 @@ local function sendUngroupedLootMessage(player, corpse, monsterName, preyLootTex
 		local wantsColorized = needColorized and recipient.isUsingAstraClient and recipient:isUsingAstraClient()
 		if wantsColorized then
 			colorizedText = colorizedText or buildText(true)
-			sendLootMessage(recipient, colorizedText)
+			sendLootMessage(recipient, colorizedText, talktype)
 		else
 			plainText = plainText or buildText(false)
-			sendLootMessage(recipient, plainText)
+			sendLootMessage(recipient, plainText, talktype)
 		end
 	end
 end
@@ -182,7 +195,24 @@ event.onDropLoot = function(self, corpse)
 				local bountyLootText = bountyLootBonus > 0 and
 					(" (Bounty More Loot +%s%%)"):format(formatHundredthsPercent(bountyLootBonus)) or ""
 				local useColorized = configManager.getBoolean(configKeys.COLORIZED_LOOT_VALUE)
-				sendUngroupedLootMessage(player, corpse, mType:getNameDescription(), preyLootText, bountyLootText, useColorized)
+				local monsterName = mType:getNameDescription()
+				local playerId = player:getId()
+				-- Rarity (data/scripts/creaturescripts/rarity/rarity_loot_drop.lua)
+				-- is a SEPARATE Event on the same Monster:onDropLoot hook at
+				-- trigger index 50, running strictly after this whole index-0
+				-- handler returns -- so sending the message inline here would
+				-- build corpse:getContentDescription() (and its per-item
+				-- rarity coloring) before any item's actually been rolled. A
+				-- short addEvent delay pushes this to the next tick, by which
+				-- time every onDropLoot handler for this corpse has already
+				-- finished synchronously.
+				addEvent(function()
+					local recipient = Player(playerId)
+					if not recipient then
+						return
+					end
+					sendUngroupedLootMessage(recipient, corpse, monsterName, preyLootText, bountyLootText, useColorized)
+				end, 50)
 			end
 		end
 	else

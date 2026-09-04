@@ -41,7 +41,14 @@ defaultHealthDisplay = "real"
 -- Loot Grouping
 -- When enabled, loot from multiple kills of the same monster type within 500ms
 -- is grouped into a single message: Loot of a (3x) rat: 5 gold coins, 2 cheese.
-lootGroupingEnabled = true
+-- Disabled 2026-08-25 per owner: batching made the loot channel harder to
+-- scan at a glance during fast hunting, which is the whole point of the
+-- channel -- one line per kill instead. Also routes loot messages back to
+-- the Lua handler (data/scripts/eventcallbacks/monster/default_onDropLoot.lua)
+-- instead of the native grouped one (Player::addPendingLoot/flushPendingLoot,
+-- src/player.cpp), which is the one that's actually rarity-aware (white by
+-- default, yellow when a rarity item is in that kill's drop).
+lootGroupingEnabled = false
 -- Raid spawn file generation
 -- When a raid in data/raids/raids.xml has spawnFile="file.xml", successful
 -- singlespawn/areaspawn monsters are exported to data/raids/file.xml.

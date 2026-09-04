@@ -95,7 +95,8 @@ monster.loot = {
 	{ name = "blue gem", chance = 1490 },
 	{ name = "brooch of embracement", chance = 1490 },
 	{ name = "wand of defiance", chance = 990 },
-	{ name = "bag you desire", chance = 15 },
+	{ name = "bag you desire", chance = 100 },
+	{ name = "bag you covet", chance = 100 },
 }
 
 monster.attacks = {

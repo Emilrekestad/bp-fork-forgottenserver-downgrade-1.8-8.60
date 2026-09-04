@@ -63,9 +63,23 @@ local function isSupplyStashCylinder(cylinder)
 	return false
 end
 
+-- Fixed decorative item near Old Man Bao / the boosted-creature statue —
+-- anchored to its exact tile rather than a specific item id, since there
+-- are three different "Demon Trophy" item variants in this datapack and
+-- position is what actually identifies "this specific one" regardless of
+-- which variant ended up placed there.
+local PROTECTED_ITEM_POSITION = Position(32351, 32218, 7)
+
 local event = Event()
 event.onMoveItem = function(self, item, count, fromPosition, toPosition,
                             fromCylinder, toCylinder)
+	if fromPosition and fromPosition.x == PROTECTED_ITEM_POSITION.x
+			and fromPosition.y == PROTECTED_ITEM_POSITION.y
+			and fromPosition.z == PROTECTED_ITEM_POSITION.z then
+		self:sendCancelMessage("You cannot move this.")
+		return RETURNVALUE_NOTPOSSIBLE
+	end
+
 	if isSupplyStashCylinder(toCylinder) then
 		self:sendCancelMessage("Put items inside Depot Locker boxes 1 to 15, then use Stow All.")
 		return RETURNVALUE_NOTPOSSIBLE

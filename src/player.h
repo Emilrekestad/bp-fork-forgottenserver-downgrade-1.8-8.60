@@ -18,6 +18,7 @@
 #include "protocolgame.h"
 #include "protocolspectator.h"
 #include "rewardchest.h"
+#include "inbox.h"
 #include "storeinbox.h"
 #include "town.h"
 #include "vocation.h"
@@ -1586,6 +1587,36 @@ public:
 	uint32_t totalReduceSkillLoss = 0;
 	int32_t totalDropBonus = 0;
 
+	// Old Man Bao's Ledger. Each is a PERCENT REDUCTION (or bonus) applied to
+	// the final figure, not percentage points bolted onto an intermediate sum
+	// -- that is what the Ledger's own wording promises ("-1% experience lost
+	// on death") and it keeps them independent of blessings and equipment.
+	//
+	// Deliberately NOT persisted here: the ranks that produce these live in the
+	// player's kv store, and data/scripts/creaturescripts/bao/bao_ledger_apply.lua
+	// pushes them down on login and after every purchase. One source of truth.
+	//
+	// Clamped in the setters so a mis-typed config can never zero out the death
+	// penalty entirely.
+	uint32_t baoExperienceLossReduction = 0;
+	uint32_t baoEquipmentLossReduction = 0;
+	uint32_t baoOfflineTrainingBonus = 0;
+
+	static constexpr uint32_t BAO_LEDGER_MAX_PERCENT = 90;
+
+	void setBaoExperienceLossReduction(uint32_t percent)
+	{
+		baoExperienceLossReduction = percent > BAO_LEDGER_MAX_PERCENT ? BAO_LEDGER_MAX_PERCENT : percent;
+	}
+	void setBaoEquipmentLossReduction(uint32_t percent)
+	{
+		baoEquipmentLossReduction = percent > BAO_LEDGER_MAX_PERCENT ? BAO_LEDGER_MAX_PERCENT : percent;
+	}
+	void setBaoOfflineTrainingBonus(uint32_t percent)
+	{
+		baoOfflineTrainingBonus = percent > BAO_LEDGER_MAX_PERCENT ? BAO_LEDGER_MAX_PERCENT : percent;
+	}
+
 private:
 	mutable std::shared_ptr<KV> cachedPlayerSettings_;
 
@@ -1731,6 +1762,10 @@ private:
 	std::shared_ptr<Vocation> vocation;
 	std::shared_ptr<RewardChest> rewardChest = nullptr;
 	std::shared_ptr<StoreInbox> storeInbox = nullptr;
+	// The single, global Depot Inbox. Every depot locker displays this same
+	// container (see getDepotLocker), so parcels and Bazaar withdrawals are
+	// reachable from any town's depot.
+	std::shared_ptr<Inbox> inbox = nullptr;
 
 	uint32_t attackSpeed = 0;
 	uint32_t inventoryWeight = 0;
@@ -1873,6 +1908,16 @@ private:
 		std::string monsterName;
 		uint32_t killCount = 0;
 		std::unordered_map<uint16_t, uint32_t> items;
+		// Rarity-rolled items (ITEM_ATTRIBUTE_ARTICLE set to "a/an rare|epic|
+		// legendary") are tracked separately from `items` instead of being
+		// merged into the plain per-itemId count: they carry a per-instance
+		// name via getNameDescription() (the rolled article, e.g. "an epic
+		// morning star") that the static ItemType table used to build `items`
+		// text has no room for, and folding them into the same count as a
+		// plain drop of the same base item would make a rare/epic/legendary
+		// roll invisible in the message entirely. Listed individually rather
+		// than grouped, since each is a distinct rolled instance.
+		std::vector<std::pair<uint16_t, std::string>> rarityItems;
 		uint32_t flushEventId = 0;
 	};
 	std::unordered_map<std::string, std::shared_ptr<LootGroup>> m_pendingLootGroups;

@@ -1,4 +1,4 @@
-local BOOSTED_DISPLAY_POS = Position(998, 992, 7)
+local BOOSTED_DISPLAY_POS = Position(32354, 32223, 7)
 local BOOSTED_DISPLAY_ID = 0
 
 local function removeBoostedDisplay()
