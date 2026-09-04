@@ -33,8 +33,11 @@ void scheduleFinalization();
 bool addHistory(uint32_t auctionId, const std::string& action, uint32_t accountId, uint32_t playerId,
                 uint64_t amount, const std::string& message);
 uint64_t getTransferableCoins(uint32_t accountId);
-bool debitTransferableCoins(uint32_t accountId, uint64_t amount);
-bool creditTransferableCoins(uint32_t accountId, uint64_t amount);
+// `kind` is a coin_ledger kind from data/lib/core/coins.lua. `auctionId` may be
+// 0 when the auction row does not exist yet, which is the case for the listing
+// fee: it is charged before the INSERT so a failed listing cannot take it.
+bool debitTransferableCoins(uint32_t accountId, uint64_t amount, std::string kind, uint32_t auctionId = 0);
+bool creditTransferableCoins(uint32_t accountId, uint64_t amount, std::string kind, uint32_t auctionId = 0);
 
 } // namespace CharacterBazaar
 

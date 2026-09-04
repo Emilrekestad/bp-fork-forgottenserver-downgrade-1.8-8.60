@@ -1291,7 +1291,7 @@ local function unlockPermanentPreySlot(player, slot)
 			PREY_PERMANENT_SLOT_COST
 		))
 	end
-	if not player:removeTibiaCoins(PREY_PERMANENT_SLOT_COST) then
+	if not Coins.spend(player, PREY_PERMANENT_SLOT_COST, "spend.prey_slot", nil, {slot = slot}) then
 		return sendError(player, "Failed to remove Bp Coins.")
 	end
 
@@ -1302,7 +1302,7 @@ local function unlockPermanentPreySlot(player, slot)
 		PREY_STORAGE_PERMANENT_SLOT
 	))
 	if not saved then
-		player:addTibiaCoins(PREY_PERMANENT_SLOT_COST)
+		Coins.grant(player, PREY_PERMANENT_SLOT_COST, "spend.prey_slot", nil, {slot = slot, reversal = true})
 		return sendError(player, "The Prey slot could not be unlocked. Your Bp Coins were refunded.")
 	end
 

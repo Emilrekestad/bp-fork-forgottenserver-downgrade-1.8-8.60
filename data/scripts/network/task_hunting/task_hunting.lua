@@ -776,7 +776,7 @@ local function handleUnlockSlot(player, slot, wantsTemporary)
 	if player:getTibiaCoins() < THIRD_SLOT_COST then
 		return sendFailure(player, string.format("You need %d Bp Coins to unlock this slot.", THIRD_SLOT_COST))
 	end
-	if not player:removeTibiaCoins(THIRD_SLOT_COST) then
+	if not Coins.spend(player, THIRD_SLOT_COST, "spend.task_slot", nil, {slot = 3}) then
 		return sendFailure(player, "Failed to remove Bp Coins.")
 	end
 

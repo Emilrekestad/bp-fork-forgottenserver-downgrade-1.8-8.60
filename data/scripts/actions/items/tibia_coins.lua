@@ -36,8 +36,18 @@ function tibiaCoins.onUse(player, item, fromPosition, target, toPosition, isHotk
 		return true
 	end
 
-	local newBalance = currentCoins + amount
-	player:setTibiaCoins(newBalance)
+	-- Credit first. The old order wrote the balance and then removed the item,
+	-- so a failed write left the player with neither. Now a failure leaves the
+	-- item in the backpack, which is the recoverable side.
+	local credited, newBalance = Coins.grant(player, amount, "redeem.item", nil, {
+		item_id = TIBIA_COINS_ITEM_ID,
+		amount_on_item = amount,
+	})
+	if not credited then
+		player:sendCancelMessage("Could not redeem Bp Coins.")
+		return true
+	end
+
 	item:remove(amount)
 	addCoinHistory(player, amount)
 

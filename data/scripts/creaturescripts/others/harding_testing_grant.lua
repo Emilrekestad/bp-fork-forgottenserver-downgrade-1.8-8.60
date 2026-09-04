@@ -15,7 +15,7 @@ function hardingGrant.onLogin(player)
 		return true
 	end
 
-	player:addTibiaCoins(5000)
+	Coins.grant(player, 5000, "grant.admin", nil, {actor = "harding_testing_grant", reason = "test character setup"})
 	player:setPreyWildcards(player:getPreyWildcards() + 300)
 	player:setBankBalance(player:getBankBalance() + 30000000)
 	player:teleportTo(Position(32369, 32241, 7))

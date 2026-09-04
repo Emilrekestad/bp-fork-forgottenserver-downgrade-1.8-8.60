@@ -18,6 +18,16 @@ function loginMessage.onLogin(player)
 
     logger.info("%s%s has logged in.%s [Lvl: %d] [Voc: %s] [IP: %s]", prevColor, player:getName(), resetColor, level, vocation, ipStr)
 
+    -- Admin console: open a session row and record the login. The session row
+    -- is what playtime, retention and rhythm are all computed from; the event
+    -- is what the timeline and "who was on today" answer from.
+    Sessions.open(player)
+    GameEvents.emitForPlayer("session.login", player, {
+        level = level,
+        vocation = vocation,
+        town = player:getTown() and player:getTown():getName() or nil,
+    })
+
     local rewardChest = player:getRewardChest()
     local rewardContainerCount = 0
     for _, item in ipairs(rewardChest:getItems()) do
@@ -85,6 +95,13 @@ function logoutMessage.onLogout(player)
     local level = player:getLevel()
 
     logger.info("%s%s has logged out.%s [Lvl: %d] [Voc: %s] [IP: %s]", prevColor, player:getName(), resetColor, level, vocation, ipStr)
+
+    Sessions.close(player, "logout")
+    GameEvents.emitForPlayer("session.logout", player, {
+        level = level,
+        vocation = vocation,
+    })
+
     local playerId = player:getId()
     nextUseStaminaTime[playerId] = nil
     if Game.getStorageValue(GlobalStorageKeys.workbenchOwner) == playerId then

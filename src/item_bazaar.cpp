@@ -214,6 +214,17 @@ bool lockAuction(uint32_t auctionId, AuctionRecord& out)
 // replays safe: a retried transaction (DBTransaction retries up to 3x on
 // deadlock) or a resubmitted web command hits the constraint and the whole
 // transaction fails rather than paying twice.
+// Describes a coin movement for `coin_ledger`. The operation id is carried in
+// the metadata so a row here can be joined to its `bazaar_ledger` twin: the
+// two ledgers answer different questions -- this one "where did the coins in
+// the economy go", that one "what happened to this auction".
+Coins::Movement bazaarMovement(std::string kind, uint32_t auctionId, const std::string& operationId)
+{
+	return Coins::Movement{std::move(kind), "bazaar_auction",
+	                       auctionId ? std::to_string(auctionId) : std::string{},
+	                       fmt::format(R"({{"operation_id":"{:s}"}})", operationId), 0};
+}
+
 bool addLedger(uint32_t accountId, uint32_t auctionId, uint32_t bidId, uint8_t type, int64_t amount,
                const std::string& operationId)
 {
@@ -243,7 +254,9 @@ bool releaseCurrentBid(const AuctionRecord& auction, const std::string& operatio
 	if (auction.currentBidderAccountId == 0 || auction.currentBid == 0) {
 		return true;
 	}
-	if (!Coins::credit(auction.currentBidderAccountId, auction.currentBid)) {
+	if (!Coins::credit(auction.currentBidderAccountId, auction.currentBid,
+	                   bazaarMovement("bazaar.release", auction.id,
+	                                  fmt::format("{:s}:release:{:d}", operationPrefix, auction.id)))) {
 		return false;
 	}
 	return addLedger(auction.currentBidderAccountId, auction.id, 0, LEDGER_BID_RELEASE,
@@ -296,7 +309,9 @@ bool insertAuctionRow(uint32_t bazaarItemId, uint64_t itemUid, uint32_t sellerAc
 	if (promote) {
 		const uint32_t fee = getPromotionFee();
 		if (fee > 0) {
-			if (!Coins::debit(sellerAccountId, fee)) {
+			if (!Coins::debit(sellerAccountId, fee,
+			                  bazaarMovement("bazaar.promotion", outAuctionId,
+			                                 fmt::format("promo:{:d}", outAuctionId)))) {
 				reason = "You do not have enough Bp Coins for the promotion fee.";
 				return false;
 			}
@@ -806,7 +821,7 @@ bool placeBid(uint32_t accountId, uint32_t auctionId, uint32_t amount, const std
 			reason = "The previous bid could not be released.";
 			return false;
 		}
-		if (!Coins::debit(accountId, amount)) {
+		if (!Coins::debit(accountId, amount, bazaarMovement("bazaar.escrow", auctionId, operationId))) {
 			reason = "You do not have enough available Bp Coins for this bid.";
 			return false;
 		}
@@ -900,7 +915,8 @@ bool buyout(uint32_t accountId, uint32_t auctionId, const std::string& operation
 			reason = "The previous bid could not be released.";
 			return false;
 		}
-		if (!Coins::debit(accountId, auction.buyoutPrice)) {
+		if (!Coins::debit(accountId, auction.buyoutPrice,
+		                  bazaarMovement("bazaar.escrow", auctionId, operationId))) {
 			reason = "You do not have enough available Bp Coins for this buyout.";
 			return false;
 		}
@@ -913,7 +929,9 @@ bool buyout(uint32_t accountId, uint32_t auctionId, const std::string& operation
 		const uint64_t fee = calculateSaleFee(auction.buyoutPrice);
 		const uint64_t payout = auction.buyoutPrice - fee;
 
-		if (!Coins::credit(auction.sellerAccountId, payout) ||
+		if (!Coins::credit(auction.sellerAccountId, payout,
+		                   bazaarMovement("bazaar.payout", auctionId,
+		                                  fmt::format("payout:{:d}", auctionId))) ||
 		    !addLedger(auction.sellerAccountId, auctionId, 0, LEDGER_SELLER_PAYOUT, static_cast<int64_t>(payout),
 		               fmt::format("payout:{:d}", auctionId)) ||
 		    !addLedger(0, auctionId, 0, LEDGER_SALE_FEE, static_cast<int64_t>(fee),
@@ -1168,7 +1186,9 @@ bool settleAuction(uint32_t auctionId)
 		const uint64_t fee = calculateSaleFee(auction.currentBid);
 		const uint64_t payout = auction.currentBid - fee;
 
-		if (!Coins::credit(auction.sellerAccountId, payout) ||
+		if (!Coins::credit(auction.sellerAccountId, payout,
+		                   bazaarMovement("bazaar.payout", auctionId,
+		                                  fmt::format("payout:{:d}", auctionId))) ||
 		    !addLedger(auction.sellerAccountId, auctionId, 0, LEDGER_SELLER_PAYOUT, static_cast<int64_t>(payout),
 		               fmt::format("payout:{:d}", auctionId)) ||
 		    !addLedger(0, auctionId, 0, LEDGER_SALE_FEE, static_cast<int64_t>(fee),

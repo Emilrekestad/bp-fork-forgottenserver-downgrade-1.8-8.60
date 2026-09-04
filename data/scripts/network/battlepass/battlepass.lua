@@ -1378,7 +1378,8 @@ function BattlePassSystem.purchasePremium(player, skipCoinCharge)
 		return "You already have the Deluxe Battle Pass for this season."
 	end
 
-	if not skipCoinCharge and not player:removeTibiaCoins(config.deluxe.price) then
+	if not skipCoinCharge and not Coins.spend(player, config.deluxe.price, "spend.battlepass", nil,
+		{tier = "deluxe", season = season and season.id or nil}) then
 		return "Not enough Bp Coins."
 	end
 

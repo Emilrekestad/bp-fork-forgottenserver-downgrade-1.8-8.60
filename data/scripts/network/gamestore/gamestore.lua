@@ -989,19 +989,34 @@ function buyHandler.onReceive(player, msg)
 		end
 	end
 
-	local coins = player:getTibiaCoins()
-	if coins < offer.price then
-		sendStoreError(player, "Not enough Bp Coins.")
+	-- Charge first, then deliver. The old order delivered and only then wrote
+	-- the balance, so a failed write handed out a free purchase. Charging
+	-- first means the worst case is a reversal, which the ledger shows as two
+	-- rows rather than as a purchase that never happened.
+	local ledgerMeta = {
+		offer_id = offerId,
+		offer_name = offer.name,
+		category = offer.category,
+		oftype = offer.oftype,
+		channel = "game",
+	}
+
+	local charged, chargeError = Coins.spend(player, offer.price, "spend.store", nil, ledgerMeta)
+	if not charged then
+		sendStoreError(player, chargeError == "insufficient coins"
+			and "Not enough Bp Coins."
+			or "Could not complete the purchase.")
 		return
 	end
 
 	local deliveryError = deliverOffer(player, offer, extra)
 	if deliveryError then
+		ledgerMeta.reversal = true
+		ledgerMeta.reason = deliveryError
+		Coins.grant(player, offer.price, "spend.store", nil, ledgerMeta)
 		sendStoreError(player, deliveryError)
 		return
 	end
-
-	player:setTibiaCoins(coins - offer.price)
 
 	local historyCount = offer.oftype == "item" and offer.count or (offer.oftype == "house" and math.max(#(offer.items or {}), offer.count or 1) or (offer.oftype == "prey_wildcard" and offer.value or 1))
 	addStoreHistory(player:getAccountId(), player:getGuid(), offer.name, -offer.price, historyCount, nil)
@@ -1099,23 +1114,25 @@ function transferHandler.onReceive(player, msg)
 	end
 
 	local accountId = player:getAccountId()
-	local coins = player:getTibiaCoins()
-	if coins < amount then
-		sendStoreError(player, "Not enough Bp Coins.")
-		return
-	end
-
 	local targetPlayer = Player(storedTargetName)
-	player:setTibiaCoins(coins - amount)
-	if targetPlayer then
-		targetPlayer:setTibiaCoins(targetCoins + amount)
-	else
-		local creditOk = db.query("UPDATE `accounts` SET `tibia_coins` = " .. (targetCoins + amount) .. " WHERE `id` = " .. targetAccountId)
-		if not creditOk then
-			player:setTibiaCoins(coins)
-			sendStoreError(player, "Transfer failed, please try again.")
-			return
-		end
+
+	-- One transaction for both legs. This used to be two absolute SETs built
+	-- from balances read further up, which two simultaneous transfers could
+	-- clobber, and which left the sender debited if the credit failed. There
+	-- is no in-memory coin cache in the engine, so writing the accounts rows
+	-- is immediately visible to an online recipient with no extra sync.
+	local transferred, transferError = Coins.transfer(accountId, targetAccountId, amount, {
+		from_name = player:getName(),
+		to_name = storedTargetName,
+		to_account = targetAccountId,
+		channel = "game",
+	}, player:getGuid())
+
+	if not transferred then
+		sendStoreError(player, transferError == "insufficient coins"
+			and "Not enough Bp Coins."
+			or "Transfer failed, please try again.")
+		return
 	end
 
 	addStoreHistory(accountId, player:getGuid(), "Coin Transfer to " .. storedTargetName, -amount, 1, storedTargetName)

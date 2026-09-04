@@ -105,12 +105,25 @@ local function updatePlayerCoins(admin, action, targetName, amountText)
 	end
 
 	local target = Player(storedName)
-	if target then
-		target:setTibiaCoins(newBalance)
-	elseif not db.query("UPDATE `accounts` SET `tibia_coins` = " .. newBalance .. " WHERE `id` = " .. accountId) then
-		admin:sendCancelMessage("Could not update Bp Coins.")
+
+	-- One path for online and offline targets. The ledger move works on the
+	-- accounts row directly, and the engine keeps no in-memory coin cache, so
+	-- an online character sees the new balance without a separate write. This
+	-- also puts admin grants in the ledger, which is the last untracked way
+	-- coins entered the economy.
+	local moved, moveResult = Coins.move(
+		accountId,
+		action == "add" and changedAmount or -changedAmount,
+		"grant.admin",
+		nil,
+		{actor = admin:getName(), action = action, target_name = storedName},
+		targetGuid
+	)
+	if not moved then
+		admin:sendCancelMessage("Could not update Bp Coins: " .. tostring(moveResult) .. ".")
 		return false
 	end
+	newBalance = moveResult
 
 	addCoinHistory(accountId, targetGuid, title, action == "add" and changedAmount or -changedAmount, admin:getName())
 

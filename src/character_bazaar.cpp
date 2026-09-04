@@ -148,7 +148,7 @@ bool finalizeAuction(uint32_t auctionId)
 		if (!db.executeQuery(fmt::format(
 		        "UPDATE `players` SET `account_id` = {:d} WHERE `id` = {:d} AND `account_id` = {:d}", bidderAccountId,
 		        playerId, sellerAccountId)) ||
-		    db.getAffectedRows() != 1 || !CharacterBazaar::creditTransferableCoins(sellerAccountId, sellerPayout)) {
+		    db.getAffectedRows() != 1 || !CharacterBazaar::creditTransferableCoins(sellerAccountId, sellerPayout, "charbazaar.payout", auctionId)) {
 			return false;
 		}
 
@@ -183,9 +183,29 @@ bool isPlayerOnActiveAuction(uint32_t playerId)
 // shares one copy rather than re-deriving the same atomicity trick.
 uint64_t getTransferableCoins(uint32_t accountId) { return Coins::getBalance(accountId); }
 
-bool debitTransferableCoins(uint32_t accountId, uint64_t amount) { return Coins::debit(accountId, amount); }
+namespace {
 
-bool creditTransferableCoins(uint32_t accountId, uint64_t amount) { return Coins::credit(accountId, amount); }
+Coins::Movement charAuctionMovement(std::string kind, uint32_t auctionId)
+{
+	return Coins::Movement{std::move(kind), "char_auction",
+	                       auctionId ? std::to_string(auctionId) : std::string{}, {}, 0};
+}
+
+} // namespace
+
+// The commission is deliberately not a movement of its own: the bidder's
+// escrow leaves circulation and only `bid - commission` is paid back out, so
+// the difference between charbazaar.escrow and charbazaar.payout *is* the
+// commission. Inventing a third row for it would double-count the burn.
+bool debitTransferableCoins(uint32_t accountId, uint64_t amount, std::string kind, uint32_t auctionId)
+{
+	return Coins::debit(accountId, amount, charAuctionMovement(std::move(kind), auctionId));
+}
+
+bool creditTransferableCoins(uint32_t accountId, uint64_t amount, std::string kind, uint32_t auctionId)
+{
+	return Coins::credit(accountId, amount, charAuctionMovement(std::move(kind), auctionId));
+}
 
 bool addHistory(uint32_t auctionId, const std::string& action, uint32_t accountId, uint32_t playerId, uint64_t amount,
 	            const std::string& message)
@@ -289,7 +309,7 @@ bool createAuction(Player* player, uint32_t startPrice, uint32_t durationSeconds
 			reason = "This account already has an active character auction.";
 			return false;
 		}
-		if (!debitTransferableCoins(accountId, getAuctionFee())) {
+		if (!debitTransferableCoins(accountId, getAuctionFee(), "charbazaar.fee")) {
 			reason = "You do not have enough transferable Bp Coins for the auction fee.";
 			return false;
 		}

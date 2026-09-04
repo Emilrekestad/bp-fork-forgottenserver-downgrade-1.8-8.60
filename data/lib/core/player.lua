@@ -440,14 +440,40 @@ function Player.getAccountStorageValue(self, key)
 	return Game.getAccountStorageValue(self:getAccountId(), key)
 end
 
+-- Deprecated coin wrappers.
+--
+-- These used to read a balance and write back an absolute value, which two
+-- concurrent callers can clobber. They now route through Coins.move, so they
+-- are safe, but they record the movement as `legacy.unknown` -- a kind no
+-- chart breaks down usefully. Every remaining caller should be converted to
+-- Coins.spend / Coins.grant with a real kind; the traceback below is how they
+-- are found. See data/lib/core/coins.lua and docs/admin-console/02-coin-reroute.md.
+-- Warn once per call site per boot. The point is to find the remaining
+-- callers, not to count them, and one of them (the Hunting Task reward) fires
+-- often enough that logging every call would bury everything else.
+local legacyCoinCallsSeen = {}
+
+local function warnLegacyCoinCall(name)
+	local site = debug.getinfo(3, "Sl")
+	local key = site and string.format("%s:%d", site.short_src, site.currentline) or name
+	if legacyCoinCallsSeen[key] then
+		return
+	end
+	legacyCoinCallsSeen[key] = true
+	logger.warn("[Coins] %s at %s is still on the deprecated wrapper; give it a real ledger kind (see data/lib/core/coins.lua).",
+		name, key)
+end
+
 function Player.addTibiaCoins(self, tibiaCoins)
-	return self:setTibiaCoins(self:getTibiaCoins() + tibiaCoins)
+	warnLegacyCoinCall("Player:addTibiaCoins")
+	local ok = Coins.grant(self, tibiaCoins, "legacy.unknown", nil, {via = "addTibiaCoins"})
+	return ok
 end
 
 function Player.removeTibiaCoins(self, removeCoins)
-	local tibiaCoins = self:getTibiaCoins()
-	if tibiaCoins < removeCoins then return false end
-	return self:setTibiaCoins(tibiaCoins - removeCoins)
+	warnLegacyCoinCall("Player:removeTibiaCoins")
+	local ok = Coins.spend(self, removeCoins, "legacy.unknown", nil, {via = "removeTibiaCoins"})
+	return ok
 end
 
 function Player.setExhaustion(self, key, milliseconds)
