@@ -58,7 +58,14 @@ GameEvents.VERSIONS = {
 --- Records that something happened.
 -- @param eventType string a key of GameEvents.VERSIONS
 -- @param fields table optional: accountId, playerId, subjectType, subjectId,
---        position (a Position or {x,y,z}), payload (table)
+--        position (a Position or {x,y,z}), payload (table), sync (boolean)
+--
+-- `sync` writes the row before returning instead of queueing it. Use it only
+-- on the shutdown path: an async query is handed to a worker thread that the
+-- process does not wait for, so a `server.stop` emitted that way is lost every
+-- time, and every clean restart then looks like a crash to the console.
+-- Everywhere else async is correct -- a dropped event is a gap in a chart,
+-- while a blocked dispatcher is a stutter every player feels.
 function GameEvents.emit(eventType, fields)
 	local version = GameEvents.VERSIONS[eventType]
 	if not version then
@@ -76,7 +83,7 @@ function GameEvents.emit(eventType, fields)
 		x, y, z = pos.x, pos.y, pos.z
 	end
 
-	return db.asyncQuery(string.format(
+	local query = string.format(
 		"INSERT INTO `game_events` " ..
 		"(`ts`, `type`, `version`, `account_id`, `player_id`, `subject_type`, `subject_id`, " ..
 		"`pos_x`, `pos_y`, `pos_z`, `payload`) " ..
@@ -90,7 +97,12 @@ function GameEvents.emit(eventType, fields)
 		fields.subjectId and escaped(fields.subjectId) or "NULL",
 		numberOrNull(x), numberOrNull(y), numberOrNull(z),
 		fields.payload and escaped(json.encode(fields.payload)) or "NULL"
-	))
+	)
+
+	if fields.sync then
+		return db.query(query)
+	end
+	return db.asyncQuery(query)
 end
 
 --- Convenience: emit for a player, filling in account, guid and position.
@@ -152,7 +164,10 @@ function Sessions.open(player)
 	end
 end
 
-function Sessions.close(player, reason)
+--- Closes an open session row.
+-- `sync` is for the shutdown path, where a queued query would never be flushed
+-- and every session would be left open for the next boot to recover.
+function Sessions.close(player, reason, sync)
 	if not player then
 		return
 	end
@@ -163,10 +178,17 @@ function Sessions.close(player, reason)
 		return
 	end
 
-	db.asyncQuery(string.format(
+	local now = os.time()
+	local query = string.format(
 		"UPDATE `player_sessions` SET `logout_at` = %d, `duration` = %d - `login_at`, " ..
 		"`close_reason` = %s, `level_out` = %d WHERE `id` = %d AND `logout_at` IS NULL",
-		os.time(), os.time(), escaped(reason or "logout"), player:getLevel(), sessionId))
+		now, now, escaped(reason or "logout"), player:getLevel(), sessionId)
+
+	if sync then
+		db.query(query)
+	else
+		db.asyncQuery(query)
+	end
 end
 
 --- Counts a chat message against the current session.

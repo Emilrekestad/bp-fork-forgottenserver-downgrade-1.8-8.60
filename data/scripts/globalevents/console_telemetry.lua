@@ -36,10 +36,16 @@ function consoleShutdown.onShutdown()
 	-- A clean stop is what tells the console's crash detector that the next
 	-- start was intentional. Sessions are closed as 'server_stop' rather than
 	-- 'logout' so a restart does not look like everyone quitting at once.
-	for _, player in ipairs(Game.getPlayers()) do
-		Sessions.close(player, "server_stop")
+	--
+	-- Everything here is written synchronously. An async query is handed to a
+	-- worker thread the process does not wait for, so on shutdown it is simply
+	-- lost -- which meant every clean restart was recorded as a crash and woke
+	-- the ops channel.
+	local players = Game.getPlayers()
+	for _, player in ipairs(players) do
+		Sessions.close(player, "server_stop", true)
 	end
-	GameEvents.emit("server.stop", {payload = {players_online = #Game.getPlayers()}})
+	GameEvents.emit("server.stop", {sync = true, payload = {players_online = #players}})
 	return true
 end
 
