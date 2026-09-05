@@ -57,7 +57,13 @@ monsterDeath:register()
 local killFlush = GlobalEvent("ConsoleKillFlush")
 
 function killFlush.onThink(interval)
-	Kills.flush()
+	local written = Kills.flush()
+	-- Only when something was actually written. This is the one observable
+	-- proof that the timer is running at all: with no metric and no rows, a
+	-- flush that never fires and a server where nothing died look identical.
+	if written > 0 then
+		Metrics.write("kills.flushed", written)
+	end
 	return true
 end
 
