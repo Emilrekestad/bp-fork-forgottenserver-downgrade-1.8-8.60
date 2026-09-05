@@ -23,6 +23,7 @@ Sessions = Sessions or {}
 Metrics = Metrics or {}
 Kills = Kills or {}
 Bosses = Bosses or {}
+Loot = Loot or {}
 
 local function escaped(value)
 	return db.escapeString(tostring(value))
@@ -409,4 +410,140 @@ end
 --- Forgets an encounter without recording a kill, for a boss that despawned.
 function Bosses.forget(monsterId)
 	openEncounters[monsterId] = nil
+end
+
+-- ------------------------------------------------------------------- loot
+
+-- What the server actually put in each corpse.
+--
+-- Buffered exactly like Kills, and flushed in the same pass, which is what
+-- makes a drop rate trustworthy: drops and the corpses they came from are
+-- written together, so a flush lost to a crash loses both and leaves the
+-- ratio unbiased rather than inflating it.
+--
+-- The distinction this module exists to preserve is `plain` versus everything
+-- else. The loot generator gives extra roll passes whenever a modifier is
+-- active, so a corpse rolled under a boost cannot be compared against the
+-- configured chance. Only plain corpses go in the comparable denominator.
+
+Loot = Loot or {}
+
+-- monster name -> {corpses, plain, boosted, blocked, empty, items = {[id] = {...}}}
+local lootPending = {}
+local lootPendingCount = 0
+
+local function monsterBucket(name)
+	local bucket = lootPending[name]
+	if not bucket then
+		bucket = {corpses = 0, plain = 0, boosted = 0, blocked = 0, empty = 0, items = {}}
+		lootPending[name] = bucket
+		lootPendingCount = lootPendingCount + 1
+	end
+	return bucket
+end
+
+--- Records one corpse and everything in it.
+-- @param name string monster name
+-- @param items table array of {id, count, rare}
+-- @param state string "plain" | "boosted" | "blocked"
+function Loot.record(name, items, state)
+	name = tostring(name or "")
+	if name == "" then
+		return
+	end
+
+	local bucket = monsterBucket(name)
+	bucket.corpses = bucket.corpses + 1
+	bucket[state] = (bucket[state] or 0) + 1
+
+	if #items == 0 then
+		bucket.empty = bucket.empty + 1
+		return
+	end
+
+	-- A stack of 97 gold is ONE drop of quantity 97. Collapsing the two would
+	-- make gold read as a guaranteed drop of a single coin.
+	local seen = {}
+	for _, entry in ipairs(items) do
+		local row = bucket.items[entry.id]
+		if not row then
+			row = {drops = 0, quantity = 0, plain = 0, rare = 0}
+			bucket.items[entry.id] = row
+		end
+		row.quantity = row.quantity + (entry.count or 1)
+		if entry.rare then
+			row.rare = row.rare + 1
+		end
+		if not seen[entry.id] then
+			seen[entry.id] = true
+			row.drops = row.drops + 1
+			if state == "plain" then
+				row.plain = row.plain + 1
+			end
+		end
+	end
+end
+
+--- Writes everything buffered. `sync` is for the shutdown path only.
+function Loot.flush(sync)
+	if lootPendingCount == 0 then
+		return 0
+	end
+
+	local buffered = lootPending
+	local count = lootPendingCount
+	lootPending = {}
+	lootPendingCount = 0
+
+	local day = db.escapeString(os.date("%Y-%m-%d", os.time()))
+	local write = sync and db.query or db.asyncQuery
+
+	local corpseValues, lootValues = {}, {}
+	for name, bucket in pairs(buffered) do
+		local escapedName = db.escapeString(name)
+		corpseValues[#corpseValues + 1] = string.format("(%s, %s, %d, %d, %d, %d, %d)",
+			day, escapedName, bucket.corpses, bucket.plain, bucket.boosted, bucket.blocked, bucket.empty)
+
+		for itemId, row in pairs(bucket.items) do
+			lootValues[#lootValues + 1] = string.format("(%s, %s, %d, %d, %d, %d, %d)",
+				day, escapedName, itemId, row.drops, row.quantity, row.plain, row.rare)
+		end
+	end
+
+	write(
+		"INSERT INTO `monster_corpses_daily` " ..
+		"(`day`, `monster_name`, `corpses`, `corpses_plain`, `corpses_boosted`, `corpses_blocked`, `empty_corpses`) " ..
+		"VALUES " .. table.concat(corpseValues, ", ") ..
+		" ON DUPLICATE KEY UPDATE `corpses` = `corpses` + VALUES(`corpses`), " ..
+		"`corpses_plain` = `corpses_plain` + VALUES(`corpses_plain`), " ..
+		"`corpses_boosted` = `corpses_boosted` + VALUES(`corpses_boosted`), " ..
+		"`corpses_blocked` = `corpses_blocked` + VALUES(`corpses_blocked`), " ..
+		"`empty_corpses` = `empty_corpses` + VALUES(`empty_corpses`)")
+
+	if #lootValues > 0 then
+		-- Chunked: a heavily hunted hour can touch a few thousand
+		-- (monster, item) pairs, and one statement that long is a packet
+		-- problem rather than a query problem.
+		local CHUNK = 400
+		for start = 1, #lootValues, CHUNK do
+			local slice = {}
+			for i = start, math.min(start + CHUNK - 1, #lootValues) do
+				slice[#slice + 1] = lootValues[i]
+			end
+			write(
+				"INSERT INTO `monster_loot_daily` " ..
+				"(`day`, `monster_name`, `item_id`, `drops`, `quantity`, `plain_drops`, `rare_drops`) " ..
+				"VALUES " .. table.concat(slice, ", ") ..
+				" ON DUPLICATE KEY UPDATE `drops` = `drops` + VALUES(`drops`), " ..
+				"`quantity` = `quantity` + VALUES(`quantity`), " ..
+				"`plain_drops` = `plain_drops` + VALUES(`plain_drops`), " ..
+				"`rare_drops` = `rare_drops` + VALUES(`rare_drops`)")
+		end
+	end
+
+	return count
+end
+
+function Loot.pending()
+	return lootPendingCount
 end

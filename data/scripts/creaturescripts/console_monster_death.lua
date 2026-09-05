@@ -58,11 +58,22 @@ local killFlush = GlobalEvent("ConsoleKillFlush")
 
 function killFlush.onThink(interval)
 	local written = Kills.flush()
+	-- Flushed in the same pass as the kills, deliberately: drops and the
+	-- corpses they came from must be written together or a lost flush would
+	-- bias every drop rate upward.
+	local looted = Loot.flush()
 	-- Only when something was actually written. This is the one observable
 	-- proof that the timer is running at all: with no metric and no rows, a
 	-- flush that never fires and a server where nothing died look identical.
 	if written > 0 then
 		Metrics.write("kills.flushed", written)
+	end
+	-- Separate from kills.flushed on purpose: the loot tracker hangs off a
+	-- different hook at a different point in the death path, and if it ever
+	-- stops firing while kills keep counting, two metrics say so where one
+	-- would not.
+	if looted > 0 then
+		Metrics.write("loot.flushed", looted)
 	end
 	return true
 end
@@ -78,6 +89,7 @@ local killShutdown = GlobalEvent("ConsoleKillShutdown")
 
 function killShutdown.onShutdown()
 	Kills.flush(true)
+	Loot.flush(true)
 	return true
 end
 
