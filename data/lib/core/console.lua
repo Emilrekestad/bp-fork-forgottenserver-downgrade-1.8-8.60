@@ -204,6 +204,13 @@ function Sessions.countChat(player, isPrivate)
 	if not player then
 		return
 	end
+	-- Counted for the fingerprint whether or not a session row exists. A
+	-- player who talks is the single cheapest evidence that somebody is at
+	-- the keyboard, so it must not be lost to a missing session row.
+	if Activity then
+		Activity.recordChat(player)
+	end
+
 	local sessionId = openSessions[player:getGuid()]
 	if not sessionId then
 		return
@@ -546,4 +553,160 @@ end
 
 function Loot.pending()
 	return lootPendingCount
+end
+
+-- ------------------------------------------------------------- activity
+
+-- The botting fingerprint: four numbers per player-hour.
+--
+-- A bot is not any one of these being unusual. A dedicated player has a high
+-- kill rate; a fisherman stands still; a quiet person does not chat; anyone
+-- can play for six hours. What almost nobody does is all four at once, for
+-- hours, without a break -- and the 15-minute idle kick means an unbroken
+-- session required continuous input the whole time.
+--
+-- This records; it never judges. The detector in the console reads these rows
+-- and opens a case for a person to look at, and the numbers here are an
+-- indicator rather than proof. That distinction is the whole reason the
+-- fingerprint is four cheap counters instead of a clever score: a number
+-- somebody has to interpret invites interpretation, and a score invites
+-- trusting it.
+
+Activity = Activity or {}
+
+-- player id -> {kills, exp, chat, level, tiles = {key -> true}, tileCount,
+--               lastExp, hour}
+local activityPending = {}
+local activityPendingCount = 0
+
+local function activityEntry(playerId, hour)
+	local entry = activityPending[playerId]
+	-- A new hour is a new row, so the buffer is reset rather than carried
+	-- over. Otherwise the distinct-tile set would span hours and a player who
+	-- moved once an hour would look like one who never stopped moving.
+	if not entry or entry.hour ~= hour then
+		if not entry then
+			activityPendingCount = activityPendingCount + 1
+		end
+		entry = {
+			hour = hour, kills = 0, exp = 0, chat = 0, level = 0,
+			tiles = {}, tileCount = 0, samples = 0, lastExp = nil,
+		}
+		activityPending[playerId] = entry
+	end
+	return entry
+end
+
+local function currentHour()
+	return math.floor(os.time() / 3600) * 3600
+end
+
+--- One kill, credited to the player who earned it.
+function Activity.recordKill(player)
+	if not player then
+		return
+	end
+	local entry = activityEntry(player:getGuid(), currentHour())
+	entry.kills = entry.kills + 1
+end
+
+--- One line of chat. Called from Sessions.countChat, which already runs on
+--- every message and already knows whether it was public or private.
+function Activity.recordChat(player)
+	if not player then
+		return
+	end
+	local entry = activityEntry(player:getGuid(), currentHour())
+	entry.chat = entry.chat + 1
+end
+
+--- The once-a-minute sample: where they are standing, and how much experience
+--- they have gained since the last look.
+--
+-- Position is reduced to a tile key rather than stored as a trail. "Stood on
+-- eight distinct tiles in an hour" is the fact that matters and is one
+-- number; a trail would be a movement log of a named person, which is a far
+-- heavier thing to keep and answers no question this needs to ask.
+function Activity.sample(player)
+	if not player then
+		return
+	end
+
+	local entry = activityEntry(player:getGuid(), currentHour())
+	entry.samples = entry.samples + 1
+	entry.level = player:getLevel()
+
+	local position = player:getPosition()
+	local key = position.x * 100000 + position.y * 16 + position.z
+	if not entry.tiles[key] then
+		entry.tiles[key] = true
+		entry.tileCount = entry.tileCount + 1
+	end
+
+	local experience = player:getExperience()
+	if entry.lastExp and experience > entry.lastExp then
+		entry.exp = entry.exp + (experience - entry.lastExp)
+	end
+	entry.lastExp = experience
+end
+
+--- Writes the buffer. Kept separate from Kills.flush only in name: it is
+--- called from the same timer, so a lost flush loses both together and the
+--- kill rate stays consistent with the hours it was earned in.
+function Activity.flush(sync)
+	if activityPendingCount == 0 then
+		return 0
+	end
+
+	local values = {}
+	local written = 0
+	local hour = currentHour()
+
+	for playerId, entry in pairs(activityPending) do
+		if entry.kills > 0 or entry.exp > 0 or entry.chat > 0 or entry.samples > 0 then
+			values[#values + 1] = string.format("(%d, %d, %d, %d, %d, %d, %d, %d)",
+				entry.hour, playerId, entry.kills, entry.exp, entry.tileCount,
+				entry.samples, entry.chat, entry.level)
+			written = written + 1
+		end
+
+		-- Counters reset, the tile set does not: it belongs to the hour, and
+		-- the column is written with GREATEST so a later flush in the same
+		-- hour carries the superset rather than double-counting.
+		entry.kills, entry.exp, entry.chat, entry.samples = 0, 0, 0, 0
+		if entry.hour ~= hour then
+			activityPending[playerId] = nil
+			activityPendingCount = activityPendingCount - 1
+		end
+	end
+
+	if written == 0 then
+		return 0
+	end
+
+	local write = sync and db.query or db.asyncQuery
+	write(
+		"INSERT INTO `player_activity_hourly` (`hour`, `player_id`, `kills`, `exp_gained`, " ..
+		"`tiles_distinct`, `samples`, `chat`, `level`) VALUES " .. table.concat(values, ", ") ..
+		" ON DUPLICATE KEY UPDATE `kills` = `kills` + VALUES(`kills`), " ..
+		"`exp_gained` = `exp_gained` + VALUES(`exp_gained`), " ..
+		"`tiles_distinct` = GREATEST(`tiles_distinct`, VALUES(`tiles_distinct`)), " ..
+		"`samples` = `samples` + VALUES(`samples`), " ..
+		"`chat` = `chat` + VALUES(`chat`), `level` = VALUES(`level`)")
+
+	return written
+end
+
+--- Forgets a player who has logged out. Their final counts are flushed first
+--- by the caller; keeping the entry would hold a tile set for somebody who is
+--- no longer generating one.
+function Activity.forget(playerId)
+	if activityPending[playerId] then
+		activityPending[playerId] = nil
+		activityPendingCount = activityPendingCount - 1
+	end
+end
+
+function Activity.pending()
+	return activityPendingCount
 end

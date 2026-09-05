@@ -40,8 +40,19 @@ function monsterDeath.onDeath(monster, corpse, killer, mostDamageKiller)
 
 	Kills.record(monster:getName(), isBoss)
 
+	-- The same resolution the boss branch uses, so a summon's kill is credited
+	-- to the mage standing behind it rather than to the fire elemental. Done
+	-- for every death, not just bosses, because the fingerprint needs a kill
+	-- rate per player and that is the only place it can come from.
+	local name, byPlayer = killerName(killer or mostDamageKiller)
+	if byPlayer and Activity then
+		local earner = Player(name)
+		if earner then
+			Activity.recordKill(earner)
+		end
+	end
+
 	if isBoss then
-		local name, byPlayer = killerName(killer or mostDamageKiller)
 		Bosses.killed(monster, name, byPlayer)
 	end
 
@@ -62,6 +73,10 @@ function killFlush.onThink(interval)
 	-- corpses they came from must be written together or a lost flush would
 	-- bias every drop rate upward.
 	local looted = Loot.flush()
+	-- Same reasoning again. A lost flush must lose a player's kills and the
+	-- hour they were earned in together, or their kill rate is overstated
+	-- for exactly the window a detector would be looking at.
+	local sampled = Activity.flush()
 	-- Only when something was actually written. This is the one observable
 	-- proof that the timer is running at all: with no metric and no rows, a
 	-- flush that never fires and a server where nothing died look identical.
@@ -75,8 +90,29 @@ function killFlush.onThink(interval)
 	if looted > 0 then
 		Metrics.write("loot.flushed", looted)
 	end
+	if sampled > 0 then
+		Metrics.write("activity.flushed", sampled)
+	end
 	return true
 end
+
+-- Once a minute, walk everybody online: where they are standing and what
+-- experience they have gained since the last look.
+--
+-- One pass over Game.getPlayers() with a handful of getters each. At a
+-- hundred concurrent players that is a hundred cheap lookups a minute, which
+-- is less work than a single monster's pathfinding tick.
+local activitySampler = GlobalEvent("ConsoleActivitySampler")
+
+function activitySampler.onThink(interval)
+	for _, player in ipairs(Game.getPlayers()) do
+		Activity.sample(player)
+	end
+	return true
+end
+
+activitySampler:interval(60 * 1000)
+activitySampler:register()
 
 killFlush:interval(FLUSH_INTERVAL_MS)
 killFlush:register()
@@ -90,6 +126,7 @@ local killShutdown = GlobalEvent("ConsoleKillShutdown")
 function killShutdown.onShutdown()
 	Kills.flush(true)
 	Loot.flush(true)
+	Activity.flush(true)
 	return true
 end
 
