@@ -1081,7 +1081,15 @@ GlobalStorageKeys = {
 
 	NaginataStone = 50058,
 	SwordOfFury = 5635,
-	CobraBastionFlask = 50059
+	CobraBastionFlask = 50059,
+
+	-- Console: rate limit for player reports, one key per reported name.
+	-- Reserves 970000-970999; the report handler hashes the target's name
+	-- into that block, so a collision costs one delayed report rather than a
+	-- lost one. Nothing else in this file reaches 97xxxx (the highest is the
+	-- bestiary at 400000), and the duplicate check below would refuse to boot
+	-- if that ever stopped being true.
+	consoleReportCooldown = 970000
 }
 
 AccountStorageKeys = {}
