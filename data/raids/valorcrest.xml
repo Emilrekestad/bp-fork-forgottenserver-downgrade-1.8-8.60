@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Sir Valorcrest -- six times a day on average.
+
+	Placed in ground already held by Vampire spawns, so the tiles are known
+	to exist. map.probe reported 26.3% of the tiles in this box usable by
+	AreaSpawnEvent (exists, not blocking, not a protection zone, unoccupied).
+	Nearest town: Ankrahmun, 131 tiles.
+
+	The boss lands before its escort, on the one tile that was probed directly.
+	Re-probe before moving any coordinate in this file.
+-->
+<raid>
+	<announce delay="1000" type="event" message="Sir Valorcrest has been sighted in the crypts south of Ankrahmun!" />
+
+	<singlespawn delay="4000" name="Sir Valorcrest" x="33140" y="32972" z="14" />
+
+	<areaspawn delay="6000" radius="10" centerx="33141" centery="32973" centerz="14">
+		<monster name="Vampire" amount="6" />
+	</areaspawn>
+</raid>

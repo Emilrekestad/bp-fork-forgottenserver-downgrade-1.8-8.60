@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Ferumbras -- once a week on average.
+
+	Placed in ground already held by Demon spawns, so the tiles are known
+	to exist. map.probe reported 37.6% of the tiles in this box usable by
+	AreaSpawnEvent (exists, not blocking, not a protection zone, unoccupied).
+	Nearest town: Candia, 121 tiles.
+
+	The boss lands before its escort, on the one tile that was probed directly.
+	Re-probe before moving any coordinate in this file.
+-->
+<raid>
+	<announce delay="1000" type="event" message="Ferumbras has been sighted in the demon halls near Candia!" />
+
+	<singlespawn delay="4000" name="Ferumbras" x="33452" y="32090" z="10" />
+
+	<areaspawn delay="6000" radius="10" centerx="33455" centery="32093" centerz="10">
+		<monster name="Demon" amount="6" />
+	</areaspawn>
+</raid>

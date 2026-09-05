@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Grorlam -- twice a day on average.
+
+	Placed in ground already held by Stone Golem spawns, so the tiles are known
+	to exist. map.probe reported 66.2% of the tiles in this box usable by
+	AreaSpawnEvent (exists, not blocking, not a protection zone, unoccupied).
+	Nearest town: Port Hope, 286 tiles.
+
+	The boss lands before its escort, on the one tile that was probed directly.
+	Re-probe before moving any coordinate in this file.
+-->
+<raid>
+	<announce delay="1000" type="event" message="Grorlam has been sighted among the stone golems of the southern mines!" />
+
+	<singlespawn delay="4000" name="Grorlam" x="32866" y="32833" z="8" />
+
+	<areaspawn delay="6000" radius="10" centerx="32866" centery="32833" centerz="8">
+		<monster name="Stone Golem" amount="6" />
+	</areaspawn>
+</raid>

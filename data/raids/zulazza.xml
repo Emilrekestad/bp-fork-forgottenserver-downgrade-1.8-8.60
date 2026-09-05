@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Zulazza the Corruptor -- once every two days on average.
+
+	Placed in ground already held by Draken Warmaster spawns, so the tiles are known
+	to exist. map.probe reported 74.6% of the tiles in this box usable by
+	AreaSpawnEvent (exists, not blocking, not a protection zone, unoccupied).
+	Nearest town: Yalahar, 358 tiles.
+
+	The boss lands before its escort, on the one tile that was probed directly.
+	Re-probe before moving any coordinate in this file.
+-->
+<raid>
+	<announce delay="1000" type="event" message="Zulazza the Corruptor has been sighted in the draken fortress of the far north!" />
+
+	<singlespawn delay="4000" name="Zulazza the Corruptor" x="33098" y="31099" z="8" />
+
+	<areaspawn delay="6000" radius="10" centerx="33098" centery="31099" centerz="8">
+		<monster name="Draken Warmaster" amount="6" />
+	</areaspawn>
+</raid>

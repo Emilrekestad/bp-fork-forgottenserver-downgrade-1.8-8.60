@@ -6,11 +6,13 @@
 #include "raids.h"
 
 #include "configmanager.h"
+#include "events.h"
 #include "game.h"
 #include "gameevents.h"
 #include "monster.h"
 #include "pugicast.h"
 #include "scheduler.h"
+#include "scriptmanager.h"
 #include "logger.h"
 #include <fmt/color.h>
 #include <fmt/format.h>
@@ -568,6 +570,11 @@ bool SingleSpawnEvent::executeEvent()
 		return false;
 	}
 
+	// See AreaSpawnEvent::executeEvent: raid spawns are the one path that never
+	// told Lua a monster had appeared. A raid boss is the single most
+	// interesting monster on the server, and it was the one nothing could see.
+	g_events->eventMonsterOnSpawn(monster.get(), position, false, true);
+
 	if (Raid* raid = getRaid()) {
 		raid->recordSpawn(monsterName, position);
 	}
@@ -716,6 +723,19 @@ bool AreaSpawnEvent::executeEvent()
 				if (tile && !tile->isMoveableBlocking() && !tile->hasFlag(TILESTATE_PROTECTIONZONE) &&
 				    tile->getTopCreature() == nullptr &&
 				    g_game.placeCreature(monster.get(), tile->getPosition(), false, true)) {
+					// Monster:onSpawn was, until now, only fired by
+					// Spawn::spawnMonster, so nothing in Lua could see a raid
+					// monster appear: raid monsters carried no death handler and
+					// raid bosses were invisible to every script that tracks
+					// them. `artificial` exists for exactly this case and was
+					// never once passed as true.
+					//
+					// Fired after placement rather than before it, unlike
+					// spawn.cpp. Here the tile is chosen inside a retry loop, so
+					// firing first would announce up to ten monsters that never
+					// arrive. The "block this spawn" return is given up in
+					// exchange -- the raid file already decides what spawns.
+					g_events->eventMonsterOnSpawn(monster.get(), tile->getPosition(), false, true);
 					if (Raid* raid = getRaid()) {
 						raid->recordSpawn(spawn.name, tile->getPosition());
 					}

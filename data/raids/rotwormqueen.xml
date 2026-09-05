@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Rotworm Queen -- six times a day on average.
+
+	Placed in ground already held by Rotworm spawns, so the tiles are known
+	to exist. map.probe reported 33.8% of the tiles in this box usable by
+	AreaSpawnEvent (exists, not blocking, not a protection zone, unoccupied).
+	Nearest town: Thais, 98 tiles.
+
+	The boss lands before its escort, on the one tile that was probed directly.
+	Re-probe before moving any coordinate in this file.
+-->
+<raid>
+	<announce delay="1000" type="event" message="Rotworm Queen has been sighted in the rotworm tunnels north of Thais!" />
+
+	<singlespawn delay="4000" name="Rotworm Queen" x="32378" y="32145" z="10" />
+
+	<areaspawn delay="6000" radius="10" centerx="32379" centery="32144" centerz="10">
+		<monster name="Rotworm" amount="12" />
+	</areaspawn>
+</raid>

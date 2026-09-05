@@ -1,6 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+	interval2 is in MINUTES: the engine multiplies it by 60 and rolls 60/interval
+	on each 60-second check. margin is a cooldown measured from the end of the
+	LAST RAID OF ANY KIND, not from this raid's own last run.
+
+	Order is load-bearing. Raids::checkRaids (src/raids.cpp) selects with
+	std::find_if, so the first raid whose roll succeeds wins the minute and the
+	rest do not roll again until the next check. Rarest at the top.
+
+	spawnFile is deliberately absent everywhere. It is optional, and naming a
+	file that does not exist makes the raid skip silently at load -- which is
+	why the old commented-out testraid entry would never have run.
+-->
 <raids>
-		<!-- <raid name="testraid" file="testraid.xml" interval2="30" margin="0" spawnFile="testraidSpawn.xml" /> -->
-		<raid name="dragon" file="dragonsMountain.xml" interval2="30" margin="0" spawnFile="dragonsMountainSpawn.xml" />
-		
+
+	<!-- LEGENDARY: once a week on average -->
+	<raid name="ferumbras" file="ferumbras.xml" interval2="10080" margin="180" />
+	<raid name="ghazbaran" file="ghazbaran.xml" interval2="10080" margin="180" />
+	<raid name="morgaroth" file="morgaroth.xml" interval2="10080" margin="180" />
+
+	<!-- TOP: once every two days on average -->
+	<raid name="orshabaal" file="orshabaal.xml" interval2="2880" margin="120" />
+	<raid name="palecount" file="palecount.xml" interval2="2880" margin="120" />
+	<raid name="zulazza" file="zulazza.xml" interval2="2880" margin="120" />
+
+	<!-- MID: twice a day on average -->
+	<raid name="chizzoron" file="chizzoron.xml" interval2="720" margin="60" />
+	<raid name="dragon" file="dragonsMountain.xml" interval2="720" margin="60" />
+	<raid name="foulscale" file="foulscale.xml" interval2="720" margin="60" />
+	<raid name="furyosa" file="furyosa.xml" interval2="720" margin="60" />
+	<raid name="grorlam" file="grorlam.xml" interval2="720" margin="60" />
+	<raid name="hornedfox" file="hornedfox.xml" interval2="720" margin="60" />
+	<raid name="voiceofruin" file="voiceofruin.xml" interval2="720" margin="60" />
+	<raid name="yakchal" file="yakchal.xml" interval2="720" margin="60" />
+	<raid name="zunzu" file="zunzu.xml" interval2="720" margin="60" />
+
+	<!-- COMMON: six times a day on average -->
+	<raid name="hirintror" file="hirintror.xml" interval2="240" margin="30" />
+	<raid name="manincave" file="manincave.xml" interval2="240" margin="30" />
+	<raid name="necropharus" file="necropharus.xml" interval2="240" margin="30" />
+	<raid name="ocyakao" file="ocyakao.xml" interval2="240" margin="30" />
+	<raid name="rotwormqueen" file="rotwormqueen.xml" interval2="240" margin="30" />
+	<raid name="valorcrest" file="valorcrest.xml" interval2="240" margin="30" />
 </raids>

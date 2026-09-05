@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Chizzoron the Distorter -- twice a day on average.
+
+	Placed in ground already held by Draken Spellweaver spawns, so the tiles are known
+	to exist. map.probe reported 55.8% of the tiles in this box usable by
+	AreaSpawnEvent (exists, not blocking, not a protection zone, unoccupied).
+	Nearest town: Yalahar, 341 tiles.
+
+	The boss lands before its escort, on the one tile that was probed directly.
+	Re-probe before moving any coordinate in this file.
+-->
+<raid>
+	<announce delay="1000" type="event" message="Chizzoron the Distorter has been sighted in the upper halls of the draken fortress!" />
+
+	<singlespawn delay="4000" name="Chizzoron the Distorter" x="33085" y="31112" z="3" />
+
+	<areaspawn delay="6000" radius="10" centerx="33086" centery="31113" centerz="3">
+		<monster name="Draken Spellweaver" amount="6" />
+	</areaspawn>
+</raid>

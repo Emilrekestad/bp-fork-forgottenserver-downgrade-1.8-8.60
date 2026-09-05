@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Ocyakao -- six times a day on average.
+
+	Placed in ground already held by Chakoya Toolshaper spawns, so the tiles are known
+	to exist. map.probe reported 26.1% of the tiles in this box usable by
+	AreaSpawnEvent (exists, not blocking, not a protection zone, unoccupied).
+	Nearest town: Svargrond, 247 tiles.
+
+	The boss lands before its escort, on the one tile that was probed directly.
+	Re-probe before moving any coordinate in this file.
+-->
+<raid>
+	<announce delay="1000" type="event" message="Ocyakao has been sighted in the chakoya caves of the northern ice!" />
+
+	<singlespawn delay="4000" name="Ocyakao" x="32454" y="31093" z="10" />
+
+	<areaspawn delay="6000" radius="10" centerx="32456" centery="31095" centerz="10">
+		<monster name="Chakoya Toolshaper" amount="10" />
+	</areaspawn>
+</raid>

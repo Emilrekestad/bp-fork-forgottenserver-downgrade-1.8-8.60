@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	The Horned Fox -- twice a day on average.
+
+	Placed in ground already held by Minotaur spawns, so the tiles are known
+	to exist. map.probe reported 73.9% of the tiles in this box usable by
+	AreaSpawnEvent (exists, not blocking, not a protection zone, unoccupied).
+	Nearest town: Yalahar, 74 tiles.
+
+	The boss lands before its escort, on the one tile that was probed directly.
+	Re-probe before moving any coordinate in this file.
+-->
+<raid>
+	<announce delay="1000" type="event" message="The Horned Fox has been sighted in the minotaur camps near Yalahar!" />
+
+	<singlespawn delay="4000" name="The Horned Fox" x="32736" y="31330" z="7" />
+
+	<areaspawn delay="6000" radius="10" centerx="32737" centery="31331" centerz="7">
+		<monster name="Minotaur" amount="10" />
+	</areaspawn>
+</raid>

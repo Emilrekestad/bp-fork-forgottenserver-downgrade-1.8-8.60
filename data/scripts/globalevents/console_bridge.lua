@@ -122,6 +122,135 @@ queryHandlers["server.uptime"] = function()
 	}
 end
 
+-- Answers "would a raid actually put a monster here?" using the exact test the
+-- raid engine uses, on the same map, in the same process.
+--
+-- AreaSpawnEvent::executeEvent (src/raids.cpp) accepts a tile when it exists,
+-- is not moveable-blocking, is not a protection zone, and carries no creature.
+-- It draws a random tile from the box and gives up after 10 tries per monster,
+-- so a single valid tile is not the question -- the DENSITY of valid tiles in
+-- the box is what decides whether a raid spawns or announces into an empty
+-- mountain. That is what killed the dragon raid, and `pct` below is the number
+-- that would have caught it.
+--
+-- SingleSpawnEvent is far more forgiving: it calls placeCreature with
+-- forced = true, which succeeds on any tile that exists at all. `exists` is
+-- therefore the whole test for a boss position -- but a forced placement onto
+-- a blocking tile leaves the boss shoved into a wall, so `valid` is still what
+-- we should aim a boss at.
+local PROBE_TILE_BUDGET = 24000
+
+local function tileReport(x, y, z)
+	local tile = Tile(x, y, z)
+	if not tile then
+		return {exists = false}
+	end
+	local blocking = tile:getGround() == nil or tile:hasFlag(TILESTATE_BLOCKSOLID)
+	local pz = tile:hasFlag(TILESTATE_PROTECTIONZONE)
+	local creature = tile:getTopCreature() ~= nil
+	return {
+		exists = true,
+		blocking = blocking,
+		pz = pz,
+		creature = creature,
+		house = tile:getHouse() ~= nil,
+		valid = not blocking and not pz and not creature,
+	}
+end
+
+queryHandlers["map.probe"] = function(params)
+	local budget = PROBE_TILE_BUDGET
+	local result = {points = {}, areas = {}, budget = PROBE_TILE_BUDGET}
+
+	for _, point in ipairs(params.points or {}) do
+		local x, y, z = tonumber(point.x), tonumber(point.y), tonumber(point.z)
+		local entry = {x = x, y = y, z = z}
+		if not (x and y and z) then
+			entry.error = "x, y and z are required"
+		else
+			for key, value in pairs(tileReport(x, y, z)) do
+				entry[key] = value
+			end
+			-- When the asked-for tile is not usable, name the closest one that
+			-- is, so a bad coordinate comes back with its own correction
+			-- instead of just a "no".
+			if not entry.valid then
+				local search = math.min(tonumber(point.search) or 4, 10)
+				local best
+				for dx = -search, search do
+					for dy = -search, search do
+						local distance = math.max(math.abs(dx), math.abs(dy))
+						if distance > 0 and (not best or distance < best.distance) and budget > 0 then
+							budget = budget - 1
+							local probe = tileReport(x + dx, y + dy, z)
+							if probe.valid then
+								best = {x = x + dx, y = y + dy, z = z, distance = distance}
+							end
+						end
+					end
+				end
+				entry.nearest = best
+			end
+		end
+		result.points[#result.points + 1] = entry
+	end
+
+	for _, area in ipairs(params.areas or {}) do
+		local x, y, z = tonumber(area.x), tonumber(area.y), tonumber(area.z)
+		local radius = math.min(tonumber(area.radius) or 10, 30)
+		local entry = {x = x, y = y, z = z, radius = radius}
+		if not (x and y and z) then
+			entry.error = "x, y and z are required"
+		else
+			local side = radius * 2 + 1
+			if side * side > budget then
+				entry.error = string.format("probe budget exhausted (%d tiles needed, %d left)", side * side, budget)
+			else
+				budget = budget - side * side
+				local total, exists, valid, pz, blocking, occupied = 0, 0, 0, 0, 0, 0
+				-- The centre of mass of the valid tiles: a better raid centre
+				-- than the one asked about, because it sits inside the usable
+				-- part of the box rather than at the geometric middle.
+				local sumX, sumY = 0, 0
+				for px = x - radius, x + radius do
+					for py = y - radius, y + radius do
+						total = total + 1
+						local probe = tileReport(px, py, z)
+						if probe.exists then
+							exists = exists + 1
+							if probe.blocking then blocking = blocking + 1 end
+							if probe.pz then pz = pz + 1 end
+							if probe.creature then occupied = occupied + 1 end
+							if probe.valid then
+								valid = valid + 1
+								sumX, sumY = sumX + px, sumY + py
+							end
+						end
+					end
+				end
+				entry.total = total
+				entry.exists = exists
+				entry.valid = valid
+				entry.blocking = blocking
+				entry.pz = pz
+				entry.occupied = occupied
+				entry.pct = total > 0 and math.floor(valid / total * 1000 + 0.5) / 10 or 0
+				if valid > 0 then
+					entry.suggested = {x = math.floor(sumX / valid + 0.5), y = math.floor(sumY / valid + 0.5), z = z}
+				end
+				-- 10 tries per monster on a uniformly random tile: the chance
+				-- that one monster fails to place is (1 - pct)^10. Anything
+				-- under about 20% starts dropping monsters visibly.
+				entry.verdict = entry.pct >= 25 and "good" or entry.pct >= 10 and "thin" or entry.pct > 0 and "poor" or "dead"
+			end
+		end
+		result.areas[#result.areas + 1] = entry
+	end
+
+	result.remaining = budget
+	return result
+end
+
 -- ---------------------------------------------------------------- commands
 
 local commandHandlers = {}

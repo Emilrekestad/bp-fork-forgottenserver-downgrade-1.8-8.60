@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Orshabaal -- once every two days on average.
+
+	Placed in ground already held by Demon spawns, so the tiles are known
+	to exist. map.probe reported 60.1% of the tiles in this box usable by
+	AreaSpawnEvent (exists, not blocking, not a protection zone, unoccupied).
+	Nearest town: Candia, 131 tiles.
+
+	The boss lands before its escort, on the one tile that was probed directly.
+	Re-probe before moving any coordinate in this file.
+-->
+<raid>
+	<announce delay="1000" type="event" message="Orshabaal has been sighted in the demon halls near Candia!" />
+
+	<singlespawn delay="4000" name="Orshabaal" x="33451" y="32059" z="10" />
+
+	<areaspawn delay="6000" radius="10" centerx="33451" centery="32059" centerz="10">
+		<monster name="Demon" amount="5" />
+	</areaspawn>
+</raid>
