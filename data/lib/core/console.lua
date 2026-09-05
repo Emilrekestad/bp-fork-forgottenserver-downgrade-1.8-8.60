@@ -21,6 +21,8 @@ Console = Console or {}
 GameEvents = GameEvents or {}
 Sessions = Sessions or {}
 Metrics = Metrics or {}
+Kills = Kills or {}
+Bosses = Bosses or {}
 
 local function escaped(value)
 	return db.escapeString(tostring(value))
@@ -254,4 +256,157 @@ function Metrics.write(metric, value, tags)
 		tonumber(value) or 0,
 		tagsJson and escaped(tagsJson) or "NULL"
 	))
+end
+
+-- ------------------------------------------------------------------ kills
+
+-- Kill counters, buffered.
+--
+-- A busy hour is thousands of monster deaths. One row per kill would be
+-- millions of rows a month for something nobody reads individually, and one
+-- query per kill would put a database round trip inside the death handler.
+-- Instead kills accumulate in this table and are flushed as aggregated
+-- UPSERTs, so a hunted spawn costs one row per hour no matter how hard it is
+-- hunted.
+--
+-- What is lost on a crash is at most one flush interval of counts. That is the
+-- right trade for a metric: an approximate kill count is useful, a stutter in
+-- combat is not.
+
+Kills = Kills or {}
+
+local pending = {}       -- monster name -> {kills = n, boss = bool}
+local pendingCount = 0
+
+--- Counts one kill. Cheap by design: two table lookups and an add.
+function Kills.record(name, isBoss)
+	name = tostring(name or "")
+	if name == "" then
+		return
+	end
+
+	local entry = pending[name]
+	if entry then
+		entry.kills = entry.kills + 1
+	else
+		pending[name] = {kills = 1, boss = isBoss and true or false}
+		pendingCount = pendingCount + 1
+	end
+end
+
+--- Writes everything buffered and empties the buffer.
+-- Both grains are written from the same buffer in one pass, so the hourly and
+-- daily tables can never disagree about a kill.
+--
+-- `sync` is for the shutdown path only. An async query is handed to a worker
+-- thread the process does not wait for, so anything still buffered when the
+-- server stops would simply be lost.
+function Kills.flush(sync)
+	if pendingCount == 0 then
+		return 0
+	end
+
+	local buffered = pending
+	local count = pendingCount
+	pending = {}
+	pendingCount = 0
+
+	local now = os.time()
+	local hour = math.floor(now / 3600) * 3600
+	local day = os.date("%Y-%m-%d", now)
+
+	-- Batched into multi-row INSERTs: 300 distinct monsters in an hour would
+	-- otherwise be 600 statements every flush.
+	local hourlyValues, dailyValues = {}, {}
+	for name, entry in pairs(buffered) do
+		local escapedName = db.escapeString(name)
+		local boss = entry.boss and 1 or 0
+		hourlyValues[#hourlyValues + 1] =
+			string.format("(%d, %s, %d, %d)", hour, escapedName, entry.kills, boss)
+		dailyValues[#dailyValues + 1] =
+			string.format("(%s, %s, %d, %d)", db.escapeString(day), escapedName, entry.kills, boss)
+	end
+
+	local write = sync and db.query or db.asyncQuery
+
+	write(
+		"INSERT INTO `monster_kills_hourly` (`hour_ts`, `monster_name`, `kills`, `boss`) VALUES " ..
+		table.concat(hourlyValues, ", ") ..
+		" ON DUPLICATE KEY UPDATE `kills` = `kills` + VALUES(`kills`), `boss` = VALUES(`boss`)")
+
+	write(
+		"INSERT INTO `monster_kills_daily` (`day`, `monster_name`, `kills`, `boss`) VALUES " ..
+		table.concat(dailyValues, ", ") ..
+		" ON DUPLICATE KEY UPDATE `kills` = `kills` + VALUES(`kills`), `boss` = VALUES(`boss`)")
+
+	return count
+end
+
+--- How many distinct monsters are waiting to be written. For the console's
+--- own health tile, and for deciding whether a shutdown flush is worth it.
+function Kills.pending()
+	return pendingCount
+end
+
+-- --------------------------------------------------------- boss encounters
+
+Bosses = Bosses or {}
+
+-- monster id -> encounter row id, so the death handler can close the row its
+-- spawn opened without a lookup. Lost on restart, which is correct: an
+-- encounter the server no longer remembers is one nobody can still be fighting.
+local openEncounters = {}
+
+--- Opens an encounter row when a boss appears.
+-- Synchronous because the row id is needed to close it later, and a boss
+-- spawning is rare enough that one INSERT costs nothing.
+function Bosses.opened(monster, source, position)
+	if not monster then
+		return
+	end
+
+	local ok = db.query(string.format(
+		"INSERT INTO `boss_encounters` " ..
+		"(`monster_name`, `spawned_at`, `source`, `pos_x`, `pos_y`, `pos_z`) " ..
+		"VALUES (%s, %d, %s, %s, %s, %s)",
+		db.escapeString(monster:getName()),
+		os.time(),
+		db.escapeString(source or "spawn"),
+		position and tostring(math.floor(position.x)) or "NULL",
+		position and tostring(math.floor(position.y)) or "NULL",
+		position and tostring(math.floor(position.z)) or "NULL"))
+
+	if ok then
+		openEncounters[monster:getId()] = db.lastInsertId()
+	end
+end
+
+--- Closes the encounter this boss opened.
+-- Guarded on `killed_at IS NULL` so a replay can never overwrite a kill, and
+-- silently does nothing for a boss whose spawn this run did not see -- which
+-- is every boss already standing when the server booted.
+function Bosses.killed(monster, killerName, byPlayer)
+	if not monster then
+		return
+	end
+	local monsterId = monster:getId()
+	local encounterId = openEncounters[monsterId]
+	openEncounters[monsterId] = nil
+	if not encounterId then
+		return
+	end
+
+	local now = os.time()
+	db.asyncQuery(string.format(
+		"UPDATE `boss_encounters` SET `killed_at` = %d, `seconds_alive` = %d - `spawned_at`, " ..
+		"`killer_name` = %s, `by_player` = %d WHERE `id` = %d AND `killed_at` IS NULL",
+		now, now,
+		killerName and db.escapeString(killerName) or "NULL",
+		byPlayer and 1 or 0,
+		encounterId))
+end
+
+--- Forgets an encounter without recording a kill, for a boss that despawned.
+function Bosses.forget(monsterId)
+	openEncounters[monsterId] = nil
 end
