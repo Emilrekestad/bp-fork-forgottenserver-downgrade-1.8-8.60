@@ -149,9 +149,17 @@ commandHandlers["kick"] = function(params)
 	if not player then
 		return false, "player is not online"
 	end
+
+	-- The same guard /kick has had all along. Without it the console is a way
+	-- to disconnect a gamemaster who is in the middle of dealing with
+	-- something, which is the one moment it must not be possible.
+	if player:getGroup():getAccess() then
+		return false, string.format("%s is staff and cannot be kicked from the console", player:getName())
+	end
+
 	Sessions.close(player, "kick")
 	player:remove()
-	return true, "kicked"
+	return true, string.format("kicked %s", player:getName())
 end
 
 commandHandlers["coins.grant"] = function(params)
@@ -234,6 +242,401 @@ commandHandlers["boost.start"] = function(params)
 	end
 	GlobalBoosts.extend(boost.id, minutes * 60)
 	return true, string.format("%s extended by %d minutes", boost.name, minutes)
+end
+
+-- ------------------------------------------------- server and world verbs
+
+commandHandlers["server.save"] = function(params)
+	local startedAt = os.mtime()
+	local onlineBefore = #Game.getPlayers()
+
+	-- The same sequence serversave.lua runs on its timer, minus the warning
+	-- countdown: a save asked for by hand is wanted now, and the operator
+	-- broadcasts first themselves if they want to warn anyone.
+	local closeDuring = configManager.getBoolean(configKeys.SERVER_SAVE_CLOSE)
+	if closeDuring then
+		Game.setGameState(GAME_STATE_CLOSED)
+	end
+
+	saveServer()
+
+	if closeDuring then
+		Game.setGameState(GAME_STATE_NORMAL)
+	end
+
+	local duration = os.mtime() - startedAt
+
+	-- Emitted with the same type and payload shape as the scheduled save, so
+	-- the save-duration chart and the save_drift detector see one series
+	-- rather than two. `manual` is what lets a slow hand-run be excluded from
+	-- the baseline if it ever needs to be.
+	GameEvents.emit("server.save", {
+		payload = {
+			duration_ms = duration,
+			players_online = onlineBefore,
+			kicked = 0,
+			cleaned_map = false,
+			shutdown = false,
+			manual = true,
+			requested_by = tostring(params.requested_by or "console"),
+		},
+	})
+
+	return true, string.format("saved in %d ms with %d online", duration, onlineBefore)
+end
+
+commandHandlers["server.clean"] = function(params)
+	-- cleanMap() prints its own count to the console and returns nothing, so
+	-- the message here says what was asked rather than what was removed.
+	cleanMap()
+	return true, "map cleaned"
+end
+
+commandHandlers["server.state"] = function(params)
+	local wanted = tostring(params.state or ""):lower()
+	local states = {
+		normal = GAME_STATE_NORMAL,
+		closed = GAME_STATE_CLOSED,
+	}
+	local target = states[wanted]
+	if not target then
+		return false, "state must be normal or closed"
+	end
+
+	Game.setGameState(target)
+	return true, wanted == "closed"
+		and "the server is closed; nobody new can log in"
+		or "the server is open"
+end
+
+commandHandlers["server.restart"] = function(params)
+	local minutes = math.floor(tonumber(params.minutes) or 0)
+	if minutes < 0 or minutes > 60 then
+		return false, "minutes must be between 0 and 60"
+	end
+
+	-- Restart, not shutdown, and the difference is entirely in the unit file:
+	-- tfs.service is Restart=always, so exiting brings the server back. Under
+	-- the old on-failure policy this same call left the server down, which is
+	-- why the unit change is a prerequisite of this handler and not a tidy-up.
+	local function finish()
+		Game.setGameState(GAME_STATE_SHUTDOWN)
+	end
+
+	if minutes == 0 then
+		Game.broadcastMessage("The server is restarting now.", MESSAGE_STATUS_WARNING)
+		addEvent(finish, 2000)
+		return true, "restarting now"
+	end
+
+	local function step(remaining)
+		if remaining <= 0 then
+			finish()
+			return
+		end
+		Game.broadcastMessage(string.format(
+			"The server is restarting in %d minute%s. Please log out.",
+			remaining, remaining == 1 and "" or "s"), MESSAGE_STATUS_WARNING)
+		if remaining > 1 then
+			addEvent(step, 60000, remaining - 1)
+		else
+			addEvent(function()
+				Game.broadcastMessage("The server is restarting in 30 seconds.", MESSAGE_STATUS_WARNING)
+			end, 30000)
+			addEvent(function()
+				Game.broadcastMessage("The server is restarting in 10 seconds.", MESSAGE_STATUS_WARNING)
+			end, 50000)
+			addEvent(finish, 60000)
+		end
+	end
+
+	step(minutes)
+	return true, string.format("restarting in %d minute(s); %d online", minutes, #Game.getPlayers())
+end
+
+commandHandlers["raid.start"] = function(params)
+	local name = tostring(params.name or "")
+	if name == "" then
+		return false, "no raid named"
+	end
+
+	local returnValue = Game.startRaid(name)
+	if returnValue ~= RETURNVALUE_NOERROR then
+		return false, Game.getReturnMessage(returnValue)
+	end
+	return true, string.format("raid '%s' started", name)
+end
+
+-- ------------------------------------------------------------ enforcement
+
+-- Resolves a character name to the account behind it, and says whether that
+-- account is staff. Every enforcement verb starts here so they all agree
+-- about who a name refers to and all refuse the same people.
+local function resolveTarget(name)
+	if not name or name == "" then
+		return nil, "no character named"
+	end
+
+	local resultId = db.storeQuery(string.format(
+		"SELECT `p`.`id`, `p`.`name`, `p`.`account_id`, `p`.`group_id`, `p`.`lastip`, `a`.`type` " ..
+		"FROM `players` `p` JOIN `accounts` `a` ON `a`.`id` = `p`.`account_id` " ..
+		"WHERE LOWER(`p`.`name`) = LOWER(%s) LIMIT 1", escaped(name)))
+	if not resultId then
+		return nil, "no such character"
+	end
+
+	local target = {
+		playerId = result.getNumber(resultId, "id"),
+		name = result.getString(resultId, "name"),
+		accountId = result.getNumber(resultId, "account_id"),
+		groupId = result.getNumber(resultId, "group_id"),
+		lastIp = result.getNumber(resultId, "lastip"),
+		accountType = result.getNumber(resultId, "type"),
+	}
+	result.free(resultId)
+
+	-- Staff are deliberately un-bannable from the console. Removing a
+	-- colleague's access is a decision that should cost an SSH session, and a
+	-- console account that has been taken over must not be able to lock out
+	-- the people who would notice.
+	target.isStaff = target.accountType >= 2 or target.groupId >= 2
+	return target
+end
+
+-- Every character of an account, online right now.
+local function onlineCharactersOfAccount(accountId)
+	local found = {}
+	for _, player in ipairs(Game.getPlayers()) do
+		if player:getAccountId() == accountId then
+			found[#found + 1] = player
+		end
+	end
+	return found
+end
+
+-- Sessions.close before remove(), always. Removing a player without it
+-- leaves the session row open, and the next startup counts it as a crash
+-- recovery -- so a routine kick would quietly look like the server had died.
+local function removeWithSession(player, reason)
+	Sessions.close(player, reason or "kick")
+	player:remove()
+end
+
+local function requireBanner(params)
+	local bannedBy = math.floor(tonumber(params.banned_by_player_id) or 0)
+	if bannedBy <= 0 then
+		return nil, "no staff character configured to attribute this to"
+	end
+
+	-- account_bans.banned_by is a foreign key to players.id. An id that does
+	-- not exist fails the constraint at INSERT time with a message nobody
+	-- reading the console would understand, so it is checked here instead.
+	local resultId = db.storeQuery(string.format(
+		"SELECT 1 FROM `players` WHERE `id` = %d LIMIT 1", bannedBy))
+	if not resultId then
+		return nil, string.format("the configured staff character (id %d) does not exist", bannedBy)
+	end
+	result.free(resultId)
+	return bannedBy
+end
+
+commandHandlers["ban.account"] = function(params)
+	local reason = tostring(params.reason or "")
+	if reason:gsub("%s", "") == "" then
+		return false, "a ban needs a reason"
+	end
+
+	local days = math.floor(tonumber(params.days) or 0)
+	if days <= 0 or days > 3650 then
+		return false, "days must be between 1 and 3650"
+	end
+
+	local target, problem = resolveTarget(params.name)
+	if not target then
+		return false, problem
+	end
+	if target.isStaff then
+		return false, string.format("%s is staff and cannot be banned from the console", target.name)
+	end
+
+	local bannedBy, bannerProblem = requireBanner(params)
+	if not bannedBy then
+		return false, bannerProblem
+	end
+
+	-- account_bans is keyed on account_id, so a second ban on a banned
+	-- account is a duplicate-key error rather than an extension. Saying so is
+	-- more useful than either failing opaquely or silently overwriting
+	-- somebody else's ban and its reason.
+	local existing = db.storeQuery(string.format(
+		"SELECT `expires_at` FROM `account_bans` WHERE `account_id` = %d", target.accountId))
+	if existing then
+		local expires = result.getNumber(existing, "expires_at")
+		result.free(existing)
+		return false, string.format("account %d is already banned until %s",
+			target.accountId, os.date("%Y-%m-%d %H:%M", expires))
+	end
+
+	local now = os.time()
+	local ok = db.query(string.format(
+		"INSERT INTO `account_bans` (`account_id`, `reason`, `banned_at`, `expires_at`, `banned_by`) " ..
+		"VALUES (%d, %s, %d, %d, %d)",
+		target.accountId, escaped(reason:sub(1, 255)), now, now + (days * 86400), bannedBy))
+	if not ok then
+		return false, "the ban could not be written"
+	end
+
+	local kicked = {}
+	for _, player in ipairs(onlineCharactersOfAccount(target.accountId)) do
+		kicked[#kicked + 1] = player:getName()
+		removeWithSession(player, "kick")
+	end
+
+	return true, string.format("banned account %d for %d day(s)%s", target.accountId, days,
+		#kicked > 0 and (", kicked " .. table.concat(kicked, ", ")) or " (nobody was online)")
+end
+
+commandHandlers["ban.remove"] = function(params)
+	local target, problem = resolveTarget(params.name)
+	if not target then
+		return false, problem
+	end
+
+	local resultId = db.storeQuery(string.format(
+		"SELECT `reason`, `banned_at`, `banned_by` FROM `account_bans` WHERE `account_id` = %d",
+		target.accountId))
+	if not resultId then
+		return false, string.format("account %d is not banned", target.accountId)
+	end
+	local reason = result.getString(resultId, "reason")
+	local bannedAt = result.getNumber(resultId, "banned_at")
+	local bannedBy = result.getNumber(resultId, "banned_by")
+	result.free(resultId)
+
+	-- Into the history table before deleting, so lifting a ban does not erase
+	-- the fact that there was one. A player with three lifted bans looks very
+	-- different from a player with none, and only the history says which.
+	db.query(string.format(
+		"INSERT INTO `account_ban_history` (`account_id`, `reason`, `banned_at`, `expired_at`, `banned_by`) " ..
+		"VALUES (%d, %s, %d, %d, %d)",
+		target.accountId, escaped(reason), bannedAt, os.time(), bannedBy))
+	db.query(string.format("DELETE FROM `account_bans` WHERE `account_id` = %d", target.accountId))
+
+	return true, string.format("unbanned account %d (%s)", target.accountId, target.name)
+end
+
+commandHandlers["ban.ip"] = function(params)
+	local reason = tostring(params.reason or "")
+	if reason:gsub("%s", "") == "" then
+		return false, "an IP ban needs a reason"
+	end
+
+	local days = math.floor(tonumber(params.days) or 0)
+	if days <= 0 or days > 3650 then
+		return false, "days must be between 1 and 3650"
+	end
+
+	local target, problem = resolveTarget(params.name)
+	if not target then
+		return false, problem
+	end
+	if target.isStaff then
+		return false, string.format("%s is staff and cannot be banned from the console", target.name)
+	end
+
+	local bannedBy, bannerProblem = requireBanner(params)
+	if not bannedBy then
+		return false, bannerProblem
+	end
+
+	-- The live address beats the stored one: lastip is only written at
+	-- logout, so for somebody who is online right now it is where they were
+	-- last time, not where they are.
+	local address = target.lastIp
+	local online = Player(target.name)
+	if online then
+		address = online:getIp()
+	end
+	if not address or address == 0 then
+		return false, "no address is known for that character"
+	end
+
+	local existing = db.storeQuery(string.format("SELECT 1 FROM `ip_bans` WHERE `ip` = %d", address))
+	if existing then
+		result.free(existing)
+		return false, "that address is already banned"
+	end
+
+	local now = os.time()
+	local ok = db.query(string.format(
+		"INSERT INTO `ip_bans` (`ip`, `reason`, `banned_at`, `expires_at`, `banned_by`) " ..
+		"VALUES (%d, %s, %d, %d, %d)",
+		address, escaped(reason:sub(1, 255)), now, now + (days * 86400), bannedBy))
+	if not ok then
+		return false, "the IP ban could not be written"
+	end
+
+	local kicked = 0
+	for _, player in ipairs(Game.getPlayers()) do
+		if player:getIp() == address then
+			kicked = kicked + 1
+			removeWithSession(player, "kick")
+		end
+	end
+
+	return true, string.format("banned the address behind %s for %d day(s), kicked %d character(s)",
+		target.name, days, kicked)
+end
+
+commandHandlers["ban.ip_remove"] = function(params)
+	local address = math.floor(tonumber(params.ip) or 0)
+	if address <= 0 then
+		return false, "no address given"
+	end
+	db.query(string.format("DELETE FROM `ip_bans` WHERE `ip` = %d", address))
+	return true, db.affectedRows() == 1 and "address unbanned" or "that address was not banned"
+end
+
+commandHandlers["namelock"] = function(params)
+	local reason = tostring(params.reason or "")
+	if reason:gsub("%s", "") == "" then
+		return false, "a namelock needs a reason"
+	end
+
+	local target, problem = resolveTarget(params.name)
+	if not target then
+		return false, problem
+	end
+	if target.isStaff then
+		return false, string.format("%s is staff and cannot be namelocked from the console", target.name)
+	end
+
+	local lockedBy, bannerProblem = requireBanner(params)
+	if not lockedBy then
+		return false, bannerProblem
+	end
+
+	local existing = db.storeQuery(string.format(
+		"SELECT 1 FROM `player_namelocks` WHERE `player_id` = %d", target.playerId))
+	if existing then
+		result.free(existing)
+		return false, string.format("%s is already namelocked", target.name)
+	end
+
+	local ok = db.query(string.format(
+		"INSERT INTO `player_namelocks` (`player_id`, `reason`, `namelocked_at`, `namelocked_by`) " ..
+		"VALUES (%d, %s, %d, %d)",
+		target.playerId, escaped(reason:sub(1, 255)), os.time(), lockedBy))
+	if not ok then
+		return false, "the namelock could not be written"
+	end
+
+	local online = Player(target.name)
+	if online then
+		removeWithSession(online, "kick")
+	end
+
+	return true, string.format("namelocked %s", target.name)
 end
 
 -- ------------------------------------------------------------------ pumps
