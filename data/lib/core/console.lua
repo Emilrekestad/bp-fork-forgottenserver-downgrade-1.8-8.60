@@ -710,3 +710,84 @@ end
 function Activity.pending()
 	return activityPendingCount
 end
+
+-- ---------------------------------------------------------------- rarity
+
+-- Rarity roll counters, buffered exactly like Kills.
+--
+-- The bonus system rolls on every eligible item in every corpse, so this is
+-- hotter than the kill counter by an order of magnitude -- one row per kill
+-- becomes one row per dropped item. Buffering is not an optimisation here, it
+-- is the only way to record this at all.
+--
+-- Two stages are recorded because the system rolls twice and the two rolls
+-- answer different questions:
+--
+--   'drop'     did this item qualify to become Dormant? tier 0 is a miss.
+--              The tier this roll computes is discarded by the engine, so
+--              only 0-or-1 is meaningful and 1 is recorded for any hit.
+--   'identify' which tier did a woken Dormant item actually land on? This is
+--              the tier a player sees, and it is picked uniformly across the
+--              four tiers rather than by the threshold ladder.
+--
+-- Recording misses is the entire point: a rate needs a denominator.
+
+Rarity = Rarity or {}
+
+local rarityPending = {}      -- key -> count
+local rarityPendingCount = 0
+
+--- Counts one roll. `stage` is "drop" or "identify"; `tier` is 0 for a miss.
+function Rarity.record(stage, tier, itemClass, boosted)
+	stage = stage == "identify" and "identify" or "drop"
+	tier = math.max(0, math.min(tonumber(tier) or 0, 9))
+	itemClass = math.max(0, math.min(tonumber(itemClass) or 0, 9))
+	boosted = boosted and 1 or 0
+
+	local key = string.format("%s|%d|%d|%d", stage, tier, itemClass, boosted)
+	local entry = rarityPending[key]
+	if entry then
+		rarityPending[key] = entry + 1
+	else
+		rarityPending[key] = 1
+		rarityPendingCount = rarityPendingCount + 1
+	end
+end
+
+--- Writes everything buffered. `sync` is for the shutdown path only.
+function Rarity.flush(sync)
+	if rarityPendingCount == 0 then
+		return 0
+	end
+
+	local buffered = rarityPending
+	local count = rarityPendingCount
+	rarityPending = {}
+	rarityPendingCount = 0
+
+	local day = db.escapeString(os.date("%Y-%m-%d"))
+	local values = {}
+	for key, rolls in pairs(buffered) do
+		local stage, tier, itemClass, boosted = key:match("^(%a+)|(%d+)|(%d+)|(%d+)$")
+		if stage then
+			values[#values + 1] = string.format("(%s, %s, %d, %d, %d, %d)",
+				day, db.escapeString(stage), tonumber(tier), tonumber(itemClass), tonumber(boosted), rolls)
+		end
+	end
+
+	if #values == 0 then
+		return 0
+	end
+
+	local write = sync and db.query or db.asyncQuery
+	write(
+		"INSERT INTO `rarity_rolls_daily` (`day`, `stage`, `tier`, `item_class`, `boosted`, `rolls`) VALUES " ..
+		table.concat(values, ", ") ..
+		" ON DUPLICATE KEY UPDATE `rolls` = `rolls` + VALUES(`rolls`)")
+
+	return count
+end
+
+function Rarity.pending()
+	return rarityPendingCount
+end

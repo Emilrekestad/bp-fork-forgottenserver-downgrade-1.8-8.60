@@ -77,6 +77,11 @@ function killFlush.onThink(interval)
 	-- hour they were earned in together, or their kill rate is overstated
 	-- for exactly the window a detector would be looking at.
 	local sampled = Activity.flush()
+	-- The bonus system rolls on every dropped item, so this buffer fills far
+	-- faster than the kill one. Flushed in the same pass for the same reason
+	-- as the others: a lost flush must lose the hits and the misses together,
+	-- or the drop rate it feeds is overstated for exactly that window.
+	local rolled = Rarity.flush()
 	-- Only when something was actually written. This is the one observable
 	-- proof that the timer is running at all: with no metric and no rows, a
 	-- flush that never fires and a server where nothing died look identical.
@@ -92,6 +97,9 @@ function killFlush.onThink(interval)
 	end
 	if sampled > 0 then
 		Metrics.write("activity.flushed", sampled)
+	end
+	if rolled > 0 then
+		Metrics.write("rarity.flushed", rolled)
 	end
 	return true
 end
@@ -127,6 +135,7 @@ function killShutdown.onShutdown()
 	Kills.flush(true)
 	Loot.flush(true)
 	Activity.flush(true)
+	Rarity.flush(true)
 	return true
 end
 

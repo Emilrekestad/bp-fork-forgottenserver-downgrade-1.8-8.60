@@ -119,6 +119,17 @@ queryHandlers["server.uptime"] = function()
 		uptime_seconds = os.time() - (Console.bootTime or os.time()),
 		players_online = #Game.getPlayers(),
 		boot_time = Console.bootTime,
+		-- Counts sitting in the telemetry buffers, not yet written. Two uses:
+		-- a flush timer that has stopped firing shows up as a number that only
+		-- ever grows, and a counter module that failed to load reports nil
+		-- rather than zero -- which is the difference between "nothing is
+		-- happening" and "nothing is being recorded".
+		buffered = {
+			kills = Kills and Kills.pending() or nil,
+			loot = Loot and Loot.pending() or nil,
+			activity = Activity and Activity.pending() or nil,
+			rarity = Rarity and Rarity.pending() or nil,
+		},
 	}
 end
 

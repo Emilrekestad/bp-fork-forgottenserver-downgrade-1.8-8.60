@@ -1368,6 +1368,29 @@ function RarityStats.rollRarity(container, forced, skipDormant)
 		-- is gone -- Scarce is back as a normal possible outcome, including
 		-- on identify. See BONUS_BACKLOG.md/REBIRTH_STATUS.md-style history
 		-- if this needs to be found again later.)
+		-- Balance telemetry. Two separate facts, recorded separately because
+		-- they are decided by two different mechanisms:
+		--
+		--   the drop roll  decides only whether the item becomes Dormant, so
+		--                  it is recorded as hit-or-miss and its computed tier
+		--                  is not, because the engine discards that tier.
+		--   the identify   decides the tier the player actually sees, and it
+		--                  reaches here as forced == true, which picks
+		--                  uniformly across the four tiers.
+		--
+		-- Guarded on Rarity because this lib loads before core/console.lua,
+		-- the same guard GlobalBoosts gets above. A GM /roll with an explicit
+		-- tier string is not counted: it is a test, not a drop, and mixing it
+		-- into the rate would make the rate a lie.
+		if Rarity then
+			local boosted = GlobalBoosts and GlobalBoosts.magnitude(GlobalBoosts.ID.RARE) > 0
+			if not forced then
+				Rarity.record("drop", tier > 0 and 1 or 0, itemClass, boosted)
+			elseif forced == true then
+				Rarity.record("identify", tier, itemClass, boosted)
+			end
+		end
+
 		if tier > 0 then
 			if not skipDormant then
 				-- Dormant: don't roll or reveal anything about this item's
