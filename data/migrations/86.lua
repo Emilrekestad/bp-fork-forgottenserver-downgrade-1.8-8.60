@@ -6,6 +6,13 @@
 -- from any view, drag it where you want it, size it to how much of it you
 -- actually read.
 --
+-- The layout is a real two-dimensional placement, not an ordering. A list with
+-- a width per item can only ever be reflowed, which means the gaps a mixed set
+-- of card sizes leaves behind are not places you can put anything -- they are
+-- just holes. So each pin stores a column, a row, a width and a height, and
+-- the board is a grid twelve columns wide that a card can be dropped into
+-- anywhere it fits.
+--
 -- Stored server-side rather than in the browser, deliberately. A layout in
 -- localStorage is gone the moment you open the console on the laptop instead
 -- of the desktop, or clear site data, and a board you have arranged by hand is
@@ -38,11 +45,13 @@ function onUpdateDatabase()
 		CREATE TABLE IF NOT EXISTS `console_pins` (
 			`username` VARCHAR(32) NOT NULL,
 			`pin_id` VARCHAR(96) NOT NULL,
-			`position` SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-			`span` TINYINT UNSIGNED NOT NULL DEFAULT 4,
+			`x` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+			`y` SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+			`w` TINYINT UNSIGNED NOT NULL DEFAULT 4,
+			`h` TINYINT UNSIGNED NOT NULL DEFAULT 6,
 			`added_at` INT UNSIGNED NOT NULL DEFAULT 0,
 			PRIMARY KEY (`username`, `pin_id`),
-			KEY `idx_pins_order` (`username`, `position`)
+			KEY `idx_pins_place` (`username`, `y`, `x`)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 	]]) then return false end
 
