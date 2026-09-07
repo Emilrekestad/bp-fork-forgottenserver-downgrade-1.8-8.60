@@ -39,6 +39,12 @@ function monsterDeath.onDeath(monster, corpse, killer, mostDamageKiller)
 	local isBoss = mType and (mType:isBoss() or mType:isRewardBoss()) or false
 
 	Kills.record(monster:getName(), isBoss)
+	-- Where it died, for the world map. The position is read here, on the
+	-- death path, because the corpse is the last place the monster is known
+	-- to have been.
+	if KillPositions then
+		KillPositions.record(monster:getPosition(), isBoss)
+	end
 
 	-- The same resolution the boss branch uses, so a summon's kill is credited
 	-- to the mage standing behind it rather than to the fire elemental. Done
@@ -82,6 +88,10 @@ function killFlush.onThink(interval)
 	-- as the others: a lost flush must lose the hits and the misses together,
 	-- or the drop rate it feeds is overstated for exactly that window.
 	local rolled = Rarity.flush()
+	-- Positions ride the same flush, so a lost window loses the kills and
+	-- where they happened together.
+	if Presence then Presence.flush() end
+	if KillPositions then KillPositions.flush() end
 	-- Only when something was actually written. This is the one observable
 	-- proof that the timer is running at all: with no metric and no rows, a
 	-- flush that never fires and a server where nothing died look identical.
@@ -115,6 +125,9 @@ local activitySampler = GlobalEvent("ConsoleActivitySampler")
 function activitySampler.onThink(interval)
 	for _, player in ipairs(Game.getPlayers()) do
 		Activity.sample(player)
+		if Presence then
+			Presence.record(player)
+		end
 	end
 	return true
 end
@@ -136,6 +149,8 @@ function killShutdown.onShutdown()
 	Loot.flush(true)
 	Activity.flush(true)
 	Rarity.flush(true)
+	if Presence then Presence.flush(true) end
+	if KillPositions then KillPositions.flush(true) end
 	return true
 end
 

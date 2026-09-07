@@ -464,6 +464,13 @@ commandHandlers["server.restart"] = function(params)
 	if minutes < 0 or minutes > 60 then
 		return false, "minutes must be between 0 and 60"
 	end
+	-- `after_minutes` defers the whole thing: the console's "restart at the
+	-- quietest hour" computes how far away that hour is and sends it here,
+	-- so the countdown starts then rather than now. Up to a day ahead.
+	local after = math.floor(tonumber(params.after_minutes) or 0)
+	if after < 0 or after > 1440 then
+		return false, "after_minutes must be between 0 and 1440"
+	end
 
 	-- Restart, not shutdown, and the difference is entirely in the unit file:
 	-- tfs.service is Restart=always, so exiting brings the server back. Under
@@ -498,6 +505,12 @@ commandHandlers["server.restart"] = function(params)
 			end, 50000)
 			addEvent(finish, 60000)
 		end
+	end
+
+	if after > 0 then
+		addEvent(step, after * 60000, minutes)
+		return true, string.format("restart scheduled: countdown of %d minute(s) begins in %d minute(s); %d online now",
+			minutes, after, #Game.getPlayers())
 	end
 
 	step(minutes)

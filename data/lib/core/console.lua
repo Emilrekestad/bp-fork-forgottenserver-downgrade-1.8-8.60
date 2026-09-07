@@ -791,3 +791,125 @@ end
 function Rarity.pending()
 	return rarityPendingCount
 end
+
+-- ------------------------------------------------------------- positions
+
+-- Where things happen, for the console's world map.
+--
+-- Two counters over 8x8-tile buckets per floor: where players stand
+-- (minute-samples, from the activity sampler) and where monsters die (from
+-- the death hook). Coarse on purpose -- a bucket is the resolution a heat map
+-- is read at, and a trail of exact positions per named character is a
+-- surveillance log that answers no question this is asked.
+--
+-- Same buffer-and-flush shape as Kills and Activity, flushed on the same
+-- timer, for the same reason: a lost flush must lose the kills and where they
+-- happened together.
+
+Presence = Presence or {}
+KillPositions = KillPositions or {}
+
+local BUCKET_SHIFT = 3 -- 8 tiles
+
+local presencePending = {}     -- "z|bx|by" -> {samples = n, players = {guid = true}, count = n}
+local presencePendingCount = 0
+local killPosPending = {}      -- "z|bx|by" -> {kills = n, boss = n}
+local killPosPendingCount = 0
+
+local function bucketKey(position)
+	return string.format("%d|%d|%d", position.z, position.x >> BUCKET_SHIFT, position.y >> BUCKET_SHIFT)
+end
+
+--- One minute-sample of one player standing somewhere.
+function Presence.record(player)
+	if not player then
+		return
+	end
+	local key = bucketKey(player:getPosition())
+	local entry = presencePending[key]
+	if not entry then
+		entry = {samples = 0, players = {}, count = 0}
+		presencePending[key] = entry
+		presencePendingCount = presencePendingCount + 1
+	end
+	entry.samples = entry.samples + 1
+	local guid = player:getGuid()
+	if not entry.players[guid] then
+		entry.players[guid] = true
+		entry.count = entry.count + 1
+	end
+end
+
+--- One monster death at a position.
+function KillPositions.record(position, isBoss)
+	if not position then
+		return
+	end
+	local key = bucketKey(position)
+	local entry = killPosPending[key]
+	if not entry then
+		entry = {kills = 0, boss = 0}
+		killPosPending[key] = entry
+		killPosPendingCount = killPosPendingCount + 1
+	end
+	entry.kills = entry.kills + 1
+	if isBoss then
+		entry.boss = entry.boss + 1
+	end
+end
+
+local function splitKey(key)
+	local z, bx, by = key:match("^(%d+)|(%d+)|(%d+)$")
+	return tonumber(z), tonumber(bx), tonumber(by)
+end
+
+function Presence.flush(sync)
+	if presencePendingCount == 0 then
+		return 0
+	end
+	local buffered, count = presencePending, presencePendingCount
+	presencePending, presencePendingCount = {}, 0
+
+	local day = db.escapeString(os.date("%Y-%m-%d"))
+	local values = {}
+	for key, entry in pairs(buffered) do
+		local z, bx, by = splitKey(key)
+		values[#values + 1] = string.format("(%s, %d, %d, %d, %d, %d)", day, z, bx, by, entry.samples, entry.count)
+	end
+	local write = sync and db.query or db.asyncQuery
+	-- `players` is the distinct count within one flush window, so GREATEST
+	-- keeps the busiest half-minute rather than adding overlapping sets.
+	write("INSERT INTO `player_presence_daily` (`day`, `z`, `bx`, `by`, `samples`, `players`) VALUES " ..
+		table.concat(values, ", ") ..
+		" ON DUPLICATE KEY UPDATE `samples` = `samples` + VALUES(`samples`), " ..
+		"`players` = GREATEST(`players`, VALUES(`players`))")
+	return count
+end
+
+function KillPositions.flush(sync)
+	if killPosPendingCount == 0 then
+		return 0
+	end
+	local buffered, count = killPosPending, killPosPendingCount
+	killPosPending, killPosPendingCount = {}, 0
+
+	local day = db.escapeString(os.date("%Y-%m-%d"))
+	local values = {}
+	for key, entry in pairs(buffered) do
+		local z, bx, by = splitKey(key)
+		values[#values + 1] = string.format("(%s, %d, %d, %d, %d, %d)", day, z, bx, by, entry.kills, entry.boss)
+	end
+	local write = sync and db.query or db.asyncQuery
+	write("INSERT INTO `monster_kills_pos_daily` (`day`, `z`, `bx`, `by`, `kills`, `boss_kills`) VALUES " ..
+		table.concat(values, ", ") ..
+		" ON DUPLICATE KEY UPDATE `kills` = `kills` + VALUES(`kills`), `boss_kills` = `boss_kills` + VALUES(`boss_kills`)")
+	return count
+end
+
+function Presence.pending()
+	return presencePendingCount
+end
+
+function KillPositions.pending()
+	return killPosPendingCount
+end
