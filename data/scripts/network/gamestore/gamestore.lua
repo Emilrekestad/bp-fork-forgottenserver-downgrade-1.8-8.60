@@ -14,6 +14,50 @@ local RESP_CATALOG = 0x01
 local RESP_SUCCESS = 0x02
 local RESP_HISTORY = 0x03
 
+-- ─── Retired offers ────────────────────────────────────────────────────────
+--
+-- Offers that are still present in data/store/gamestore.xml but must never be
+-- shown or sold.
+--
+-- (!) This list exists because THE XML IS NOT A SAFE PLACE TO DELETE AN OFFER.
+-- Something outside this repository syncs/regenerates that file -- it has been
+-- observed rewritten in both directions, locally and on the VPS, inside a
+-- single session -- so an offer deleted there reappears. Retiring it here
+-- survives, because this file is only ever changed by hand.
+--
+-- Both enforcement points matter and they are separate: sendStoreCatalog stops
+-- it being SHOWN, and the 0xFC buy handler stops it being BOUGHT. Filtering
+-- only the catalogue would leave a working purchase for anyone who kept an old
+-- offer id, since the buy path looks up storeItemsById directly.
+--
+-- A category that is emptied entirely by this list is dropped from the
+-- catalogue too, otherwise it ships as a sub-tab with nothing behind it.
+local RETIRED_OFFERS = {
+	-- The twelve potion packs. Removed 2026-09-05; this was the whole of the
+	-- "Supplies" category, so that category disappears with them.
+	[3001] = true, [3002] = true, [3003] = true, [3004] = true,
+	[3005] = true, [3006] = true, [3007] = true, [3008] = true,
+	[3009] = true, [3010] = true, [3011] = true, [3012] = true,
+
+	-- Loot Boost. The global boost MECHANIC is deliberately left in place
+	-- (data/lib/boosts/global_boosts.lua, GlobalBoosts.ID.LOOT): retiring the
+	-- offer only removes the way to buy it, and the server_boosts table may
+	-- still hold a row for a boost that was running when this shipped.
+	[7105] = true,
+
+	-- The plain half of the three duplicate pairs in Convenience. Each pair was
+	-- the same fixture twice -- a 150 BPC version and a 200 BPC version that
+	-- does the same job and looks better -- so the cheap one was three cards
+	-- spent saying nothing. The ornate/gilded/shiny half survives in each case.
+	[14308] = true, -- Mailbox            (Ornate Mailbox, 14310, remains)
+	[14307] = true, -- Imbuing Shrine     (Gilded Imbuing Shrine, 14306)
+	[14303] = true, -- Daily Reward Shrine (Shiny Daily Reward Shrine, 14311)
+}
+
+local function isRetiredOffer(offer)
+	return offer ~= nil and RETIRED_OFFERS[offer.id] == true
+end
+
 local STORE_ACTION_DELAY = 2
 local MAX_TARGET_NAME_LENGTH = 50
 local MAX_CHARACTER_NAME_LENGTH = 20
@@ -478,6 +522,290 @@ end
 
 loadStoreXML()
 
+-- ─── Catalogue overlay ─────────────────────────────────────────────────────
+--
+-- Structural edits applied to whatever loadStoreXML() just read: categories
+-- renamed, copy rewritten, offers moved between categories, and categories
+-- (with their offers) that data/store/gamestore.xml has never contained.
+--
+-- (!) This lives here for exactly the reason RETIRED_OFFERS does. That XML is
+-- regenerated/synced by something outside this repository, so a category added
+-- or renamed THERE does not stay added or renamed. Re-applied after every
+-- load, the overlay survives a restored catalogue -- and the two mechanisms
+-- compose: retire an offer to take it away, overlay one to move or re-word it.
+--
+-- Applied in a fixed order, because the steps feed each other: renames first
+-- (a category's children carry its name in `parent`, and every table below is
+-- keyed on the NEW name), then additions, then copy, then moves -- moves last
+-- so an offer can be moved into a category the overlay itself just added.
+
+local RENAMED_CATEGORIES = {
+	-- "Equipment" was three exercise dummies, two weapons and a backpack. The
+	-- backpack has a tab of its own now, and what is left is training gear.
+	["Equipment"] = "Training & Gear",
+	-- "Services" reads like account services. These two act on exactly ONE
+	-- character -- the one that buys them -- and that is the single thing
+	-- players get wrong about them.
+	["Services"] = "Character Services",
+}
+
+-- The overlay owns offer ids 5100-5199. 5001 (the Feedbag) is the only other
+-- id the XML uses in the 5xxx range.
+local COSMETIC_BACKPACK_FIRST_ID = 5101
+local COSMETIC_BACKPACK_PRICE = 75
+local COSMETIC_BACKPACK_TEXT =
+	"Twenty slots and one imbuement slot -- identical to a plain backpack, so " ..
+	"this buys the look and nothing else. Delivered to your Store Inbox."
+
+-- Every one of these is mechanically IDENTICAL to a plain backpack in
+-- data/items/items.xml: containersize 20, one imbuement slot, the same
+-- moveevent. Checked item by item, and it is why the range is priced flat --
+-- there is nothing here to price a difference on. Candidates that differed
+-- were left out rather than quietly sold as equals: the war backpack has no
+-- imbuement slot, the jewelled one holds 22 and the anniversary one holds 15.
+--
+-- None of the ten drops from a monster on this server, so the store is not
+-- undercutting a hunt.
+local COSMETIC_BACKPACKS = {
+	{item = 9604,  name = "Moon Backpack"},
+	{item = 9605,  name = "Crown Backpack"},
+	{item = 9601,  name = "Demon Backpack"},
+	{item = 10326, name = "Dragon Backpack"},
+	{item = 16100, name = "Crystal Backpack"},
+	{item = 10202, name = "Heart Backpack"},
+	{item = 5926,  name = "Pirate Backpack"},
+	{item = 10324, name = "Expedition Backpack"},
+	{item = 22084, name = "Wolf Backpack"},
+	{item = 10327, name = "Minotaur Backpack"},
+}
+
+-- Fills an offer out to the exact shape loadStoreXML() produces. Every field
+-- matters: deliverOffer and the catalogue writer both read this table straight,
+-- and a missing `count` or `oftype` is a nil arithmetic three layers away from
+-- the row that omitted it.
+local function makeOffer(fields)
+	local offer = {
+		id = 0, name = "Unknown", icon = "", price = 0, eid = 0, itemid = 0,
+		items = {}, count = 1, description = "", oftype = "item", boost = "",
+		value = 0, charges = 0, delivery = "", femalevalue = 0, addon = 0,
+	}
+	for key, value in pairs(fields) do
+		offer[key] = value
+	end
+	return offer
+end
+
+local function cosmeticBackpackOffers()
+	local offers = {}
+	for index, entry in ipairs(COSMETIC_BACKPACKS) do
+		offers[#offers + 1] = makeOffer({
+			id = COSMETIC_BACKPACK_FIRST_ID + index - 1,
+			name = entry.name,
+			price = COSMETIC_BACKPACK_PRICE,
+			eid = entry.item,
+			itemid = entry.item,
+			description = COSMETIC_BACKPACK_TEXT,
+		})
+	end
+	return offers
+end
+
+-- `after` names the category this one is inserted behind, because the array
+-- order IS the tab order and the section order -- the client walks it as it
+-- comes off the wire. Backpacks lands between Quality of Life's last child and
+-- House; its own two children follow it, the way every other parent's do.
+local ADDED_CATEGORIES = {
+	{
+		name = "Backpacks", icon = "store_backpacks", parent = "",
+		after = "Task Hunt",
+		description = "Containers, and what they look like. Every backpack " ..
+			"here is delivered to your Store Inbox.",
+	},
+	{
+		name = "Utility", icon = "store_backpacks", parent = "Backpacks",
+		after = "Backpacks",
+		description = "Backpacks that change what you can carry.",
+	},
+	{
+		name = "Cosmetic", icon = "store_cosmetics", parent = "Backpacks",
+		after = "Utility",
+		description = "Ten backpacks that hold exactly what a plain one " ..
+			"holds. Bought for the look.",
+		offers = cosmeticBackpackOffers(),
+	},
+}
+
+local MOVED_OFFERS = {
+	[5001] = "Utility", -- the Feedbag, out of the old Equipment category
+}
+
+local CATEGORY_TEXT = {
+	-- Was "Premium Time, the Battle Pass and character services". The Battle
+	-- Pass is disabled on this server and its category is filtered out of the
+	-- catalogue entirely, so the description named a tab that is not there.
+	["Account"] = "Premium Time for the whole account, and one-off services " ..
+		"that act on the character you are playing.",
+	-- Was "convenience tools, supplies, blessings, training gear and task hunt
+	-- upgrades". Supplies were the twelve potion packs, retired 2026-09-05.
+	["Quality of Life"] = "Convenience tools, blessings, training gear and " ..
+		"task upgrades. Bought once and kept, unless the offer says otherwise.",
+	["Character Services"] = "Applied to the character that buys them. Both " ..
+		"need you out of combat and standing in a protection zone.",
+	["Training & Gear"] = "Exercise dummies arrive as kits in your Store " ..
+		"Inbox to unwrap inside your house. The weapons go straight to your " ..
+		"character.",
+}
+
+-- Rewritten offer copy.
+--
+-- The two character services say what deliverOffer() actually enforces -- the
+-- protection-zone and combat checks, the outfit reset, the disconnect -- rather
+-- than describing the feature in the abstract, because those are the terms
+-- someone spending 100 BPC is agreeing to.
+--
+-- (!) A store tile holds about 200 characters (StoreOfferTile in the client's
+-- game_store.otui: four lines in a 330px column). Past that a description
+-- clips mid-sentence, which reads as a broken tile rather than as a long one.
+-- Measured, not guessed: 205 characters clipped its last word on screen and
+-- 196 did not. The Loot Seller's original 365 is why this table exists at all.
+-- Write to the ceiling; do not let the tile find it.
+local OFFER_TEXT = {
+	[8001] = "Renames this character. Items, house, guild, level and skills " ..
+		"all stay -- they belong to the character, not the name. Out of " ..
+		"combat, in a protection zone; you are disconnected three seconds " ..
+		"later.",
+	[8002] = "Switches this character between male and female. Unlocked " ..
+		"outfits and mounts stay unlocked, but the outfit you are wearing " ..
+		"resets to the basic citizen look. Out of combat and in a protection " ..
+		"zone.",
+	[4701] = "100 charges, delivered into your backpack. Use one on a piece " ..
+		"of loot equipment and it crumbles to dust, paying you half the shop " ..
+		"price on the spot -- anything a shop would buy for up to 1,000 gold.",
+	-- Had no description at all, so the tile fell back to its category's --
+	-- which said nothing about wildcards. The numbers are prey_system.lua's:
+	-- PREY_AUTO_BONUS_COST 1, PREY_LOCK_COST 5, PREY_MAX_WILDCARDS 53.
+	[4002] = "Five Prey Wildcards, added to your character straight away. One " ..
+		"rerolls a slot's bonus; five let you pick your prey from a list. You " ..
+		"can hold 53 at a time.",
+}
+
+-- The four Premium Time tiers are ONE product at four sizes, so they get one
+-- sentence with the day count swapped in rather than four inventions. "Adds"
+-- and not "gives you": deliverOffer calls player:addPremiumDays(), so the time
+-- stacks on whatever the account already has, and that is worth being exact
+-- about on a 3,000 BPC offer. The benefits are the ones the Premium Time
+-- category has always claimed.
+for days, id in pairs({[30] = 1001, [90] = 1002, [180] = 1003, [360] = 1004}) do
+	OFFER_TEXT[id] = string.format(
+		"Adds %d days of Premium Time to the account. Premium opens the " ..
+		"premium areas, faster travel, extra spells, house rental, guild " ..
+		"creation, offline training and a larger depot.", days)
+end
+
+local function findCategoryIndex(name)
+	for index, category in ipairs(storeCategories) do
+		if category.name == name then
+			return index
+		end
+	end
+	return nil
+end
+
+local function applyCatalogOverlay()
+	for from, to in pairs(RENAMED_CATEGORIES) do
+		for _, category in ipairs(storeCategories) do
+			if category.name == from then
+				category.name = to
+			end
+			if category.parent == from then
+				category.parent = to
+			end
+		end
+	end
+
+	for _, entry in ipairs(ADDED_CATEGORIES) do
+		-- A name the XML has taken back is not something to merge into
+		-- silently: the overlay would be adding a second category the client
+		-- keys by the same title. Say so and skip.
+		if findCategoryIndex(entry.name) then
+			logError(string.format(
+				"[GameStore] overlay: category '%s' already exists in gamestore.xml, not added",
+				entry.name))
+		else
+			local offers = entry.offers or {}
+			for _, offer in ipairs(offers) do
+				if storeItemsById[offer.id] then
+					logError(string.format(
+						"[GameStore] overlay: offer id %d is already in gamestore.xml", offer.id))
+				end
+				storeItemsById[offer.id] = offer
+			end
+
+			local category = {
+				name = entry.name,
+				icon = entry.icon or "",
+				parent = entry.parent or "",
+				description = entry.description or "",
+				offers = offers,
+			}
+
+			local anchor = entry.after and findCategoryIndex(entry.after)
+			table.insert(storeCategories, anchor and (anchor + 1) or (#storeCategories + 1), category)
+		end
+	end
+
+	for _, category in ipairs(storeCategories) do
+		local text = CATEGORY_TEXT[category.name]
+		if text then
+			category.description = text
+		end
+	end
+
+	for id, text in pairs(OFFER_TEXT) do
+		local offer = storeItemsById[id]
+		if offer then
+			offer.description = text
+		else
+			logError(string.format("[GameStore] overlay: no offer %d to re-word", id))
+		end
+	end
+
+	-- Lifted out of every category first and appended afterwards, so a move
+	-- does not depend on which category the walk reaches first, and moving an
+	-- offer into a category the overlay just added works the same as any other.
+	local arriving = {}
+	for id, target in pairs(MOVED_OFFERS) do
+		local moving = nil
+		for _, category in ipairs(storeCategories) do
+			for index = #category.offers, 1, -1 do
+				if category.offers[index].id == id then
+					moving = table.remove(category.offers, index)
+				end
+			end
+		end
+
+		if not moving then
+			logError(string.format("[GameStore] overlay: no offer %d to move to '%s'", id, target))
+		else
+			arriving[target] = arriving[target] or {}
+			table.insert(arriving[target], moving)
+		end
+	end
+
+	for target, offers in pairs(arriving) do
+		local index = findCategoryIndex(target)
+		if not index then
+			logError(string.format("[GameStore] overlay: no category '%s' to move offers into", target))
+		else
+			for _, offer in ipairs(offers) do
+				table.insert(storeCategories[index].offers, offer)
+			end
+		end
+	end
+end
+
+applyCatalogOverlay()
+
 ensureDeathSearchIndexes()
 
 local function sendStoreCatalog(player)
@@ -494,13 +822,19 @@ local function sendStoreCatalog(player)
 			local hirelingVisible = not isRetiredHirelingOfferType(offer.oftype) and
 				(not isHirelingOfferType(offer.oftype) or supportsHirelingStore(player))
 			local battlePassVisible = not isBattlePassOfferType(offer.oftype) or supportsBattlePassStore(player)
-			if taskBoardVisible and hirelingVisible and battlePassVisible then
+			if taskBoardVisible and hirelingVisible and battlePassVisible and not isRetiredOffer(offer) then
 				visibleOffers[#visibleOffers + 1] = offer
 			end
 		end
 
-		if #visibleOffers > 0 or
-			(not isHirelingCategory(cat) and not isTaskBoardCategory(cat) and not isBattlePassCategory(cat)) then
+		-- A category that HAD offers and now shows none has been emptied by the
+		-- filters above, and an empty sub-tab is worse than no sub-tab. One that
+		-- never had offers of its own is a parent shell (Quality of Life,
+		-- House, Account) and must survive, or its whole tab disappears.
+		local emptied = #cat.offers > 0 and #visibleOffers == 0
+
+		if not emptied and (#visibleOffers > 0 or
+			(not isHirelingCategory(cat) and not isTaskBoardCategory(cat) and not isBattlePassCategory(cat))) then
 			visibleCategories[#visibleCategories + 1] = {
 				name = cat.name,
 				icon = cat.icon,
@@ -945,6 +1279,13 @@ function buyHandler.onReceive(player, msg)
 		return
 	end
 
+	-- Circuit breaker, thrown from the console. Refuses before the offer is
+	-- even read, so a tripped store cannot be talked into anything.
+	if Tuning and not Tuning.enabled("feature.store") then
+		sendStoreError(player, "The store is closed for maintenance. Please try again later.")
+		return
+	end
+
 	local offerId = NetworkGuard.readU32(msg)
 	if not offerId then
 		return
@@ -952,6 +1293,12 @@ function buyHandler.onReceive(player, msg)
 
 	local offer = storeItemsById[offerId]
 	if not offer then
+		sendStoreError(player, "Offer not found.")
+		return
+	end
+	-- Same message as an unknown id: a retired offer is not "unavailable to
+	-- you", it is gone, and saying so invites asking when it comes back.
+	if isRetiredOffer(offer) then
 		sendStoreError(player, "Offer not found.")
 		return
 	end

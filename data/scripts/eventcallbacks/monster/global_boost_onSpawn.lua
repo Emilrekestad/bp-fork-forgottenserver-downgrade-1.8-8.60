@@ -117,7 +117,8 @@ function event.onSpawn(monster, position, startup, artificial)
 		return true
 	end
 
-	local percent = GlobalBoosts.magnitude(BOOST_ID)
+	-- Boost plus the console's base spawn knob.
+	local percent = GlobalBoosts.magnitude(BOOST_ID) + (Tuning and Tuning.percent("rate.spawn") or 0)
 	if percent <= 0 then
 		return true
 	end

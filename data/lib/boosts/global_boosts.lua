@@ -272,7 +272,18 @@ function GlobalBoosts.magnitude(boostId)
 		return 0
 	end
 	local boost = GlobalBoosts.Types[boostId]
-	return boost and boost.magnitude or 0
+	if not boost then
+		return 0
+	end
+	-- The console can override what a boost is worth without a restart. The
+	-- table above stays the documented default; the knob wins when set.
+	if Tuning then
+		local override = Tuning.get("boost." .. boost.key .. ".magnitude")
+		if override ~= nil then
+			return override
+		end
+	end
+	return boost.magnitude
 end
 
 -- Every currently-running boost, ordered by id so the client HUD keeps a

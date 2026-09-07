@@ -31,6 +31,10 @@ dofile(CORE_DIRECTORY .. '/lib/achievements/achievements_db.lua')
 -- here rather than from a script so the store's purchase handler, the
 -- eventcallbacks and the globalevent all see the same GlobalBoosts table
 -- regardless of which of them the script loader reaches first.
+-- Live tuning must precede the boosts: GlobalBoosts.magnitude reads the
+-- magnitude overrides through it, and a lib that reads a global before the
+-- global exists gets nil, not a default.
+dofile(CORE_DIRECTORY .. '/lib/core/tuning.lua')
 dofile(CORE_DIRECTORY .. '/lib/boosts/global_boosts.lua')
 
 -- Highscores. Pure catalogue plus a query engine; it reads `players` and the

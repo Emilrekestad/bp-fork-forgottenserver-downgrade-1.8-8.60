@@ -53,7 +53,9 @@ end
 local event = Event()
 
 function event.onDropLoot(monster, corpse)
-	local percent = GlobalBoosts.magnitude(BOOST_ID)
+	-- Boost plus the console's base loot knob, so a server run on "+25% loot"
+	-- is a setting on the Balance view rather than a number in this file.
+	local percent = GlobalBoosts.magnitude(BOOST_ID) + (Tuning and Tuning.percent("rate.loot") or 0)
 	if percent <= 0 or not corpse then
 		return
 	end

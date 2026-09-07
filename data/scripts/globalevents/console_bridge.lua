@@ -114,6 +114,16 @@ queryHandlers["world.boosts"] = function()
 	return {available = true, active = active}
 end
 
+-- Every live knob with its current value, default and range, so the Balance
+-- view can draw a control for each without a copy of the catalogue.
+queryHandlers["tuning.snapshot"] = function()
+	if not Tuning then
+		return {available = false}
+	end
+	local knobs, loadedAt = Tuning.snapshot()
+	return {available = true, knobs = knobs, loaded_at = loadedAt}
+end
+
 queryHandlers["server.uptime"] = function()
 	return {
 		uptime_seconds = os.time() - (Console.bootTime or os.time()),
@@ -492,6 +502,26 @@ commandHandlers["server.restart"] = function(params)
 
 	step(minutes)
 	return true, string.format("restarting in %d minute(s); %d online", minutes, #Game.getPlayers())
+end
+
+-- ----------------------------------------------------------- live tuning
+
+-- Applied in-process rather than by the console writing the table directly,
+-- for the same reason every other verb goes through here: the value lands in
+-- memory the same instant it lands in the row, and the reply says what it
+-- was before. A table the console wrote behind the server's back would be
+-- picked up on the next refresh -- correct, but a minute of "did that take?".
+commandHandlers["tuning.set"] = function(params)
+	if not Tuning then
+		return false, "live tuning is not loaded"
+	end
+	local ok, message, change = Tuning.set(tostring(params.key or ""), params.value, params.requested_by)
+	if not ok then
+		return false, message
+	end
+	-- The value that actually applied, after clamping, is what the console
+	-- should record on the intervention -- not what was asked for.
+	return true, string.format("%s|%s|%s", change.key, tostring(change.previous), tostring(change.value))
 end
 
 commandHandlers["raid.start"] = function(params)

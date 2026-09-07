@@ -22,8 +22,11 @@ function event.onGainExperience(player, source, exp, rawExp, sendText)
 		return exp
 	end
 
-	local percent = GlobalBoosts.magnitude(BOOST_ID)
-	if percent <= 0 then
+	-- The boost and the console's base rate knob add together: a server set
+	-- to +25% with an Experience Boost running is +75%. The knob may be
+	-- negative (a deliberate nerf), so the guard is on the sum, not on each.
+	local percent = GlobalBoosts.magnitude(BOOST_ID) + (Tuning and Tuning.percent("rate.experience") or 0)
+	if percent == 0 then
 		return exp
 	end
 

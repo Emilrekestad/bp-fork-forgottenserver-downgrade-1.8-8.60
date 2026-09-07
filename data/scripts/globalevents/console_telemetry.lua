@@ -59,6 +59,13 @@ function consoleSampler.onThink(interval)
 	local players = Game.getPlayers()
 	Metrics.write("online.total", #players)
 
+	-- Re-read the live tuning knobs. The console normally changes them
+	-- through the bridge, which applies in-process, so this exists for the
+	-- other case: a row edited by hand, or a second server sharing the table.
+	if Tuning and Tuning.load then
+		Tuning.load()
+	end
+
 	-- Population by vocation and by town, as tagged series. The console's
 	-- World view draws both from these rather than scanning `players`, which
 	-- would count offline characters.

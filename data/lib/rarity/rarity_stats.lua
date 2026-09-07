@@ -1000,6 +1000,17 @@ function RarityStats.rollRarity(container, forced, skipDormant)
 		[3] = { prefix = 'superior', rollThreshold = 1000, slotCount = 3, lockChance = 6000  }, -- live 200 (2%); 60% locked/slot
 		[4] = { prefix = 'prime',    rollThreshold = 700,  slotCount = 4, lockChance = 7000  }, -- live 100 (1%); 70% locked/slot
 	}
+	-- The switch between the testing set above and the tuned live set is a
+	-- console knob (data/lib/core/tuning.lua), not a file edit: the whole
+	-- reason the testing rates were still in force weeks later was that
+	-- changing them meant a deploy and a restart. Live values are the ones
+	-- documented on each line above.
+	if Tuning and Tuning.get("rarity.mode") == "live" then
+		tiers[1].rollThreshold = 750
+		tiers[2].rollThreshold = 375
+		tiers[3].rollThreshold = 200
+		tiers[4].rollThreshold = 100
+	end
 	-- Prime has no hand-authored magnitude range on any stat (~50+ stats
 	-- would need one) -- per owner spec, formulaically scaled up from
 	-- Superior's range instead. One constant to tune later rather than
@@ -1343,11 +1354,13 @@ function RarityStats.rollRarity(container, forced, skipDormant)
 		-- forced rolls (/roll, identify with an explicit tier) ignore `rarity`
 		-- entirely, so a boost can never distort a GM-forced or scripted tier.
 		-- Guarded on GlobalBoosts because the rarity lib loads before it.
-		if GlobalBoosts then
-			local rareBoost = GlobalBoosts.magnitude(GlobalBoosts.ID.RARE)
-			if rareBoost > 0 then
-				rarity = math.max(1, math.floor(rarity * 100 / (100 + rareBoost)))
-			end
+		-- The console's `rarity.bonus` knob rides the same arithmetic: a
+		-- standing +20% and a running +50% boost scale the roll by 1.7. It may
+		-- be negative, which scales the roll UP and makes every tier rarer.
+		local rareBoost = (GlobalBoosts and GlobalBoosts.magnitude(GlobalBoosts.ID.RARE) or 0)
+			+ (Tuning and Tuning.percent("rarity.bonus") or 0)
+		if rareBoost ~= 0 and rareBoost > -100 then
+			rarity = math.max(1, math.floor(rarity * 100 / (100 + rareBoost)))
 		end
 		if type(forced) == "string" then
 			for i = 1, #tiers do
@@ -1357,6 +1370,11 @@ function RarityStats.rollRarity(container, forced, skipDormant)
 			end
 		elseif forced == true then
 			tier = math.random(1, #tiers)
+		elseif Tuning and not Tuning.enabled("feature.rarity") then
+			-- Circuit breaker: natural rolls produce nothing. Forced rolls
+			-- (GM, identify) are left alone so the breaker cannot be confused
+			-- with the system being broken.
+			tier = 0
 		else
 			for i = 1, #tiers do
 				if rarity <= tiers[i].rollThreshold then

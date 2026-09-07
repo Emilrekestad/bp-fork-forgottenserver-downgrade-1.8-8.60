@@ -10,6 +10,7 @@ HIRELING_SKILLS = {
 	COOKING = { 1002, "cooker" },
 	STEWARD = { 1003, "steward" },
 	TRADER = { 1004, "trader" },
+	CRAFTER = { 1005, "rune crafter" },
 }
 
 HIRELING_OUTFITS = {
@@ -83,6 +84,11 @@ HIRELING_FOODS_IDS = {
 }
 
 local function hirelingSystemEnabled()
+	-- The config flag is the design decision; the tuning knob is the circuit
+	-- breaker the console can throw at two in the morning without a restart.
+	if Tuning and not Tuning.enabled("feature.hirelings") then
+		return false
+	end
 	return configManager and configKeys and configKeys.HIRELING_SYSTEM_ENABLED and
 		configManager.getBoolean(configKeys.HIRELING_SYSTEM_ENABLED)
 end
