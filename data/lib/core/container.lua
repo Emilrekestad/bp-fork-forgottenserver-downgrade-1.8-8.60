@@ -86,24 +86,42 @@ end
 -- (blue/purple/yellow/orange all present) -- no client changes needed.
 -- Per owner spec 2026-08-25: tiers renamed (Rare->Scarce, Epic->Adept,
 -- Legendary->Superior) and Prime added as a new top tier above Superior.
--- Colors (also revised twice same day): Scarce=grey, Adept=lightblue,
--- Superior=lightgreen, Prime=lightred. "grey" isn't one of the client's
--- named hexColorStrings (checked -- only light/dark variants of green/teal/
--- red/purple/orange/yellow/blue exist there), so it's a literal hex code --
--- the [color=...] tag accepts either a name from that table or a raw
--- #RRGGBB directly, confirmed in getBBColorData's regex.
+--
+-- Ladder recoloured 2026-09-07 to green/blue/purple/crimson -- the step order
+-- players import from every major loot game. What it replaced (grey, lightblue,
+-- lightgreen, lightred) got two things wrong on first contact: grey is the
+-- universal "no rarity at all" colour, so the entry tier looked like vendor
+-- trash, and blue sat BELOW green, inverting the one ordering nobody has to be
+-- taught. Prime is crimson rather than gold because gold means money and
+-- nothing else across this client (docs/client-ui-guide.md sec.4). Dormant is
+-- not a rank on that ladder at all -- it is a STATE -- and it stays warm yellow
+-- to match its in-world identity, the gold sparkle in src/client/uiitem.cpp and
+-- item.cpp (owner call 2026-09-07). The sparkle is deliberately unchanged.
+--
+-- These are all literal hex now rather than names from the client's
+-- hexColorStrings table: none of the named entries land on these values, and
+-- the [color=...] tag accepts a name or a raw #RRGGBB interchangeably (the
+-- "[#%w]+" class in getBBColorData's pattern, console.lua). Values are the
+-- dark-ground half of the ladder -- the console is dark -- and are kept in
+-- lockstep with TIER_COLOR in modules/game_bazaar/bazaar.lua and the corner
+-- marker in src/client/uiitem.cpp.
 local RARITY_COLOR = {
-	scarce = "#AAAAAA",
-	adept = "lightblue",
-	superior = "lightgreen",
-	prime = "lightred",
-	-- Dormant (owner spec 2026-08-30): now the prominent, common-case
+	-- Moss, not a true green: side by side, a straight green sat on top of the
+	-- positive/gain green the client prints in the same rows. The yellow shift
+	-- keeps it the green step of the ladder without reading as "a gain".
+	scarce = "#9fb86a",
+	adept = "#7cc3e4",
+	superior = "#b98cf0",
+	prime = "#f2554b",
+	-- Dormant (owner spec 2026-08-30) is the prominent, common-case
 	-- loot-channel color, since virtually every real rarity roll surfaces
 	-- as Dormant first -- scarce/adept/superior/prime only show up here
-	-- anymore via the GM /roll <tier> testing bypass. Orange, matching the
-	-- client's Dormant sparkle color exactly (src/client/uiitem.cpp /
-	-- item.cpp).
-	dormant = "orange",
+	-- anymore via the GM /roll <tier> testing bypass. Warm yellow, matching
+	-- the sparkle it wears in the world. It is NOT the old #f0c674 though:
+	-- that was the money gold exactly, and rendered side by side the two were
+	-- indistinguishable. Nudged orange far enough to separate from money while
+	-- staying the same warm family as the sparkle (255,195,100).
+	dormant = "#ffb347",
 }
 
 -- Bag you Desire (34109) / Bag you Covet (43895): boss loot, not equipment,

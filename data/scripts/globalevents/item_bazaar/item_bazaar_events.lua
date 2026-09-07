@@ -57,11 +57,11 @@ local TIER_NAME = {
 }
 
 local TIER_COLOR = {
-	[1] = "#AAAAAA",
-	[2] = "lightblue",
-	[3] = "lightgreen",
-	[4] = "lightred",
-	[5] = "orange",
+	[1] = "#9fb86a",
+	[2] = "#7cc3e4",
+	[3] = "#b98cf0",
+	[4] = "#f2554b",
+	[5] = "#ffb347",
 }
 
 local function comma(value)
