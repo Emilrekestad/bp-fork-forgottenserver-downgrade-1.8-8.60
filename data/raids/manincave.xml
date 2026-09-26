@@ -2,20 +2,19 @@
 <!--
 	Man in the Cave -- six times a day on average.
 
-	Placed in ground already held by Stalker spawns, so the tiles are known
-	to exist. map.probe reported 22.9% of the tiles in this box usable by
-	AreaSpawnEvent (exists, not blocking, not a protection zone, unoccupied).
-	Nearest town: Ankrahmun, 105 tiles.
+	Placed by the owner in the gargoyle cave west of Svargrond (floor 10).
+	The boss tile 32108,31125,10 is rock with debris: it exists and does not
+	block. Nearest town: Svargrond, about 104 tiles.
 
-	The boss lands before its escort, on the one tile that was probed directly.
+	The boss lands before its escort, on the tile the owner picked.
 	Re-probe before moving any coordinate in this file.
 -->
 <raid>
-	<announce delay="1000" type="event" message="Man in the Cave has been sighted in the deep caves below Ankrahmun!" />
+	<announce delay="1000" type="event" message="Man in the Cave has been sighted in the caves near Svargrond!" />
 
-	<singlespawn delay="4000" name="Man in the Cave" x="33142" y="32942" z="14" />
+	<singlespawn delay="4000" name="Man in the Cave" x="32108" y="31125" z="10" />
 
-	<areaspawn delay="6000" radius="10" centerx="33142" centery="32941" centerz="14">
+	<areaspawn delay="6000" radius="10" centerx="32108" centery="31125" centerz="10">
 		<monster name="Stalker" amount="8" />
 	</areaspawn>
 </raid>
