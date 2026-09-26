@@ -2,20 +2,19 @@
 <!--
 	Ghazbaran -- once a week on average.
 
-	Placed in ground already held by Demon spawns, so the tiles are known
-	to exist. map.probe reported 51.7% of the tiles in this box usable by
-	AreaSpawnEvent (exists, not blocking, not a protection zone, unoccupied).
-	Nearest town: Rathleton, 135 tiles.
+	Spawn point picked by the owner in RME: 32222,31155,15 (rock floor, inside
+	the Destroyer / Juggernaut / Nightmare spawn centred on 32216,31156,15, so
+	the tiles around it exist). Deep below Svargrond, about 23 tiles away.
 
-	The boss lands before its escort, on the one tile that was probed directly.
+	The boss lands before its escort, on the owner's tile.
 	Re-probe before moving any coordinate in this file.
 -->
 <raid>
-	<announce delay="1000" type="event" message="Ghazbaran has been sighted in the depths below Rathleton!" />
+	<announce delay="1000" type="event" message="Ghazbaran has been sighted in the depths below Svargrond!" />
 
-	<singlespawn delay="4000" name="Ghazbaran" x="33539" y="31777" z="8" />
+	<singlespawn delay="4000" name="Ghazbaran" x="32222" y="31155" z="15" />
 
-	<areaspawn delay="6000" radius="10" centerx="33541" centery="31775" centerz="8">
+	<areaspawn delay="6000" radius="10" centerx="32222" centery="31155" centerz="15">
 		<monster name="Demon" amount="6" />
 	</areaspawn>
 </raid>
