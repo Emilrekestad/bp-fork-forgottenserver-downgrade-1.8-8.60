@@ -2,20 +2,19 @@
 <!--
 	Morgaroth -- once a week on average.
 
-	Placed in ground already held by Demon spawns, so the tiles are known
-	to exist. map.probe reported 35.4% of the tiles in this box usable by
-	AreaSpawnEvent (exists, not blocking, not a protection zone, unoccupied).
-	Nearest town: Rathleton, 192 tiles.
+	Spawn point picked by the owner in RME: 32061,32618,14 (dirt floor, inside
+	the Demon / Fire Devil / Dragon Lord spawn centred on 32062,32609,14, so the
+	tiles around it exist). Nearest town: Liberty Bay, about 260 tiles.
 
-	The boss lands before its escort, on the one tile that was probed directly.
+	The boss lands before its escort, on the owner's tile.
 	Re-probe before moving any coordinate in this file.
 -->
 <raid>
-	<announce delay="1000" type="event" message="Morgaroth has been sighted deep beneath the eastern mountains!" />
+	<announce delay="1000" type="event" message="Morgaroth has been sighted deep under the south-west!" />
 
-	<singlespawn delay="4000" name="Morgaroth" x="33416" y="31824" z="8" />
+	<singlespawn delay="4000" name="Morgaroth" x="32061" y="32618" z="14" />
 
-	<areaspawn delay="6000" radius="10" centerx="33417" centery="31825" centerz="8">
+	<areaspawn delay="6000" radius="10" centerx="32061" centery="32618" centerz="14">
 		<monster name="Demon" amount="6" />
 	</areaspawn>
 </raid>
