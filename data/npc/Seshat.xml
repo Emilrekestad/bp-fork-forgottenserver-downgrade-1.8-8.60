@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<npc name="Seshat" script="Seshat.lua" walkinterval="0" floorchange="0">
+	<health now="100" max="100" />
+	<look type="956" head="114" body="98" legs="107" feet="79" addons="3" />
+	<parameters>
+		<parameter key="message_greet" value="I know you, |PLAYERNAME|. Sit. The sand is patient." />
+		<parameter key="message_farewell" value="Go well. The sand remembers you." />
+		<parameter key="message_walkaway" value="The sand is patient. So am I." />
+	</parameters>
+</npc>

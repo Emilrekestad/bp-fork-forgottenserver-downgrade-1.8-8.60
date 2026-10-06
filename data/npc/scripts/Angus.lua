@@ -18,25 +18,6 @@ local function creatureSayCallback(cid, type, msg)
 			npcHandler:say("Do you want to join the explorer society?", cid)
 			npcHandler.topic[cid] = 1
 		end
-	--The New Frontier
-	elseif msgcontains(msg, "farmine") then
-		if player:getStorageValue(Storage.TheNewFrontier.Questline) <= 15 and player:getStorageValue(Storage.TheNewFrontier.BribeExplorerSociety) < 1 then
-			npcHandler:say("Oh yes, an interesting topic. We had vivid discussions about this discovery. But what is it that you want?", cid)
-			npcHandler.topic[cid] = 30
-		end
-	elseif msgcontains(msg, "bluff") then
-		if npcHandler.topic[cid] == 30 then
-			if player:getStorageValue(Storage.TheNewFrontier.BribeExplorerSociety) < 1 then
-				npcHandler:say({
-					"Those stories are just amazing! Men with faces on their stomach instead of heads you say? And hens that lay golden eggs? Whereas, most amazing is this fountain of youth you've mentioned! ...",
-					"I'll immediately send some of our most dedicated explorers to check those things out!"
-				}, cid)
-				player:setStorageValue(Storage.TheNewFrontier.BribeExplorerSociety, 1)
-				--Questlog, The New Frontier Quest "Mission 05: Getting Things Busy"
-				player:setStorageValue(Storage.TheNewFrontier.Mission05, player:getStorageValue(Storage.TheNewFrontier.Mission05) + 1)
-			end
-		end
-
 	-- SPECTRAL STONE
 	elseif msgcontains(msg, "mission") then
 		if player:getStorageValue(Storage.ExplorerSociety.QuestLine) == 51 then
@@ -99,7 +80,7 @@ local function creatureSayCallback(cid, type, msg)
 					"A frozen dragon lord? This is just the information we needed! And you even brought a scale from it! Take these 5000 gold pieces as a reward. ...",
 					"As you did such a great job, I might have another mission for you later."
 				}, cid)
-				player:addItem(2152, 50)
+				player:addItem(3035, 50)
 				player:setStorageValue(Storage.ExplorerSociety.QuestLine, 58)
 			else
 				npcHandler:say("You're not done yet...", cid)
@@ -300,7 +281,7 @@ local function creatureSayCallback(cid, type, msg)
 			npcHandler.topic[cid] = 0
 			player:setStorageValue(Storage.ExplorerSociety.QuestLine, 1)
 		elseif npcHandler.topic[cid] == 3 then
-			if player:removeItem(4848, 1) then
+			if player:removeItem(4837, 1) then
 				player:setStorageValue(Storage.ExplorerSociety.QuestLine, 4)
 				npcHandler:say({
 					"Excellent, you brought just the tool we need! Of course it was only a simple task. However ...",
@@ -315,9 +296,9 @@ local function creatureSayCallback(cid, type, msg)
 				"Should the ice melt away, report on your ice delivery mission anyway. I will then tell you if the time is right to start another mission."
 			}, cid)
 			npcHandler.topic[cid] = 0
-			player:addItem(4856, 1)
+			player:addItem(4872, 1)
 		elseif npcHandler.topic[cid] == 5 then
-			if player:removeItem(11421, 1) then
+			if player:removeItem(4872, 1) then
 				player:setStorageValue(Storage.ExplorerSociety.QuestLine, 7)
 				npcHandler:say("Just in time. Sadly not much ice is left over but it will do. Thank you again.", cid)
 				npcHandler.topic[cid] = 0
@@ -337,7 +318,7 @@ local function creatureSayCallback(cid, type, msg)
 			npcHandler.topic[cid] = 0
 			player:addItem(4865, 1)
 		elseif npcHandler.topic[cid] == 8 then
-			if player:removeItem(4868, 1) then
+			if player:removeItem(4866, 1) then
 				player:setStorageValue(Storage.ExplorerSociety.QuestLine, 10)
 				npcHandler:say("A little bit battered but it will do. Thank you! If you think you are ready, ask for another butterfly hunt.", cid)
 				npcHandler.topic[cid] = 0
@@ -349,7 +330,7 @@ local function creatureSayCallback(cid, type, msg)
 				npcHandler.topic[cid] = 0
 			end
 		elseif npcHandler.topic[cid] == 10 then
-			if player:removeItem(4867, 1) then
+			if player:removeItem(4865, 1) then
 				player:setStorageValue(Storage.ExplorerSociety.QuestLine, 15)
 				npcHandler:say("That is an extraordinary species you have brought. Thank you! That was the last butterfly we needed.", cid)
 				npcHandler.topic[cid] = 0
@@ -369,13 +350,13 @@ local function creatureSayCallback(cid, type, msg)
 				npcHandler.topic[cid] = 0
 			end
 		elseif npcHandler.topic[cid] == 13 then
-			if player:removeItem(4871, 1) then
+			if player:removeItem(4869, 1) then
 				player:setStorageValue(Storage.ExplorerSociety.QuestLine, 21)
 				npcHandler:say("Ah, finally. I started to wonder what took you so long. But thank you! Another fine sample, indeed. Just tell me when you are ready to continue with the plant collection.", cid)
 				npcHandler.topic[cid] = 0
 			end
 		elseif npcHandler.topic[cid] == 14 then
-			if player:removeItem(4872, 1) then
+			if player:removeItem(4870, 1) then
 				player:setStorageValue(Storage.ExplorerSociety.QuestLine, 26)
 				npcHandler:say("What a lovely sample! With that you have finished your plant collection missions.", cid)
 				npcHandler.topic[cid] = 0
@@ -393,7 +374,7 @@ local function creatureSayCallback(cid, type, msg)
 			}, cid)
 			npcHandler.topic[cid] = 0
 		elseif npcHandler.topic[cid] == 16 then
-			if player:removeItem(4858, 1) then
+			if player:removeItem(4847, 1) then
 				player:setStorageValue(Storage.ExplorerSociety.QuestLine, 29)
 				npcHandler:say("Yes, that is the prized relic we have been looking for so long. You did a great job, thank you.", cid)
 				npcHandler.topic[cid] = 0
@@ -410,7 +391,7 @@ local function creatureSayCallback(cid, type, msg)
 			}, cid)
 			npcHandler.topic[cid] = 0
 		elseif npcHandler.topic[cid] == 18 then
-			if player:removeItem(4857, 1) then
+			if player:removeItem(4846, 1) then
 				player:setStorageValue(Storage.ExplorerSociety.QuestLine, 32)
 				npcHandler:say("You did it! Excellent! The scientific world will be shaken by this discovery!", cid)
 				npcHandler.topic[cid] = 0
@@ -427,7 +408,7 @@ local function creatureSayCallback(cid, type, msg)
 			}, cid)
 			npcHandler.topic[cid] = 0
 		elseif npcHandler.topic[cid] == 20 then
-			if player:removeItem(15389, 1) then
+			if player:removeItem(13974, 1) then
 				player:setStorageValue(Storage.ExplorerSociety.QuestLine, 35)
 				npcHandler:say("You really got it? Amazing! Thank you for your efforts.", cid)
 				npcHandler.topic[cid] = 0
@@ -440,7 +421,7 @@ local function creatureSayCallback(cid, type, msg)
 			npcHandler:say("Excellent. This mission is easy but nonetheless vital. Travel to Ab'Dendriel and get the book.", cid)
 			npcHandler.topic[cid] = 0
 		elseif npcHandler.topic[cid] == 22 then
-			if player:removeItem(4855, 1) then
+			if player:removeItem(4844, 1) then
 				player:setStorageValue(Storage.ExplorerSociety.QuestLine, 38)
 				npcHandler:say("Let me have a look! Yes, that's what we wanted. A copy of 'Songs of the Forest'. I won't ask any questions about those bloodstains.", cid)
 				npcHandler.topic[cid] = 0
@@ -454,7 +435,7 @@ local function creatureSayCallback(cid, type, msg)
 			npcHandler:say("In the ruins of north-western Edron you should be able to find a memory stone. Good luck.", cid)
 			npcHandler.topic[cid] = 0
 		elseif npcHandler.topic[cid] == 24 then
-			if player:removeItem(4852, 1) then
+			if player:removeItem(4841, 1) then
 				player:setStorageValue(Storage.ExplorerSociety.QuestLine, 41)
 				npcHandler:say("A flawless memory stone! Incredible! It will take years even to figure out how it works but what an opportunity for science, thank you!", cid)
 				npcHandler.topic[cid] = 0
@@ -467,7 +448,7 @@ local function creatureSayCallback(cid, type, msg)
 			npcHandler:say("Excellent! Here, take this tracing paper and use it on the object you will find there to create a copy of the ancient runes.", cid)
 			npcHandler.topic[cid] = 0
 		elseif npcHandler.topic[cid] == 26 then
-			if player:removeItem(4853, 1) then
+			if player:removeItem(4842, 1) then
 				player:setStorageValue(Storage.ExplorerSociety.QuestLine, 44)
 				npcHandler:say("It's a bit wrinkled but it will do. Thanks again.", cid)
 				npcHandler.topic[cid] = 0
@@ -487,9 +468,9 @@ local function creatureSayCallback(cid, type, msg)
 			npcHandler:say("Don't lose the container. They are expensive!", cid)
 			npcHandler.topic[cid] = 0
 			player:setStorageValue(Storage.ExplorerSociety.QuestLine, 45)
-			player:addItem(4863, 1)
+			player:addItem(4852, 1)
 		elseif npcHandler.topic[cid] == 28 then
-			if player:removeItem(4864, 1) then
+			if player:removeItem(131, 1) then
 				player:setStorageValue(Storage.ExplorerSociety.QuestLine, 47)
 				npcHandler:say("Phew, I had no idea that ectoplasm would smell that ... oh, it's you, well, sorry. Thank you for the ectoplasm.", cid)
 				npcHandler.topic[cid] = 0
@@ -505,7 +486,7 @@ local function creatureSayCallback(cid, type, msg)
 			npcHandler.topic[cid] = 0
 			player:setStorageValue(Storage.ExplorerSociety.QuestLine, 48)
 		elseif npcHandler.topic[cid] == 30 then
-			if player:removeItem(4847, 1) then
+			if player:removeItem(4836, 1) then
 				player:setStorageValue(Storage.ExplorerSociety.QuestLine, 50)
 				npcHandler:say("Good! Ask me for another mission.", cid)
 				npcHandler.topic[cid] = 0

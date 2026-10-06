@@ -5,6 +5,61 @@ dofile("data/npc/lib/revnpcsys/npc.lua")
 NPC_SHOP_BUY_EXHAUST_MS = NPC_SHOP_BUY_EXHAUST_MS or 500
 NPC_SHOP_EXHAUST_MESSAGE = NPC_SHOP_EXHAUST_MESSAGE or "Please wait before buying again."
 
+-- Item names are lowercase in items.xml ("great health potion"). The trade window
+-- shows them as Title Case, with small joining words kept lowercase ("Vial of
+-- Blood"). Only the window copy is changed: buy and sell messages keep the item name.
+local SHOP_SMALL_WORDS = {of = true, the = true, a = true, an = true, ["and"] = true, ["in"] = true,
+	on = true, ["for"] = true, to = true, with = true, from = true, at = true, by = true}
+
+function ShopDisplayName(name)
+	if type(name) ~= "string" or name == "" then
+		return name
+	end
+	local first = true
+	local result = name:gsub("(%a)([%w']*)", function(a, b)
+		local word = a .. b
+		local isFirst = first
+		first = false
+		if not isFirst and SHOP_SMALL_WORDS[word:lower()] then
+			return word:lower()
+		end
+		return a:upper() .. b
+	end)
+	return result
+end
+
+-- Charged items that an NPC both buys and sells (amulets, rings) carry their default charges as the
+-- sub type, and the engine then lists them in the Sell tab WITHOUT looking in the player's bags:
+-- ProtocolGame::sendSaleItemList does `count = subtype` for any non-fluid item with a sub type. So a
+-- player who owns none of the item still saw it as sellable (Haroun, Yaman; owner, 2026-10-06). The
+-- window copy drops the sell price when the player carries none of that item. Buying is untouched.
+local function shopPlayer(who)
+	if type(who) == "number" then
+		return Player(who)
+	end
+	return who
+end
+
+function ShopWindowItems(items, who)
+	local player = shopPlayer(who)
+	local copy = {}
+	for index, item in ipairs(items) do
+		local entry = {}
+		for key, value in pairs(item) do
+			entry[key] = value
+		end
+		entry.name = ShopDisplayName(entry.name)
+		if player and entry.id and (entry.sell or 0) > 0 and entry.subType and entry.subType ~= -1 then
+			local itemType = ItemType(entry.id)
+			if itemType and itemType:getCharges() ~= 0 and not itemType:isStackable() and player:getItemCount(entry.id) == 0 then
+				entry.sell = 0
+			end
+		end
+		copy[index] = entry
+	end
+	return copy
+end
+
 function msgcontains(message, keyword)
 	local message, keyword = message:lower(), keyword:lower()
 	if message == keyword then return true end
@@ -270,7 +325,19 @@ function Player.getTotalMoney(self)
 	return self:getMoney() + self:getBankBalance()
 end
 
-function isValidMoney(money) return isNumber(money) and money > 0 end
+-- A money amount must be a positive whole number small enough to survive the
+-- uint64 conversions in C++ and the raw SQL in bank transfers. tonumber()
+-- happily returns 100.7 or 1e300 for chat input; neither is money.
+MAX_VALID_MONEY = MAX_VALID_MONEY or 9007199254740991 -- 2^53 - 1
+function isValidMoney(money)
+	if type(money) ~= "number" or money ~= money then -- non-number or NaN
+		return false
+	end
+	if money <= 0 or money > MAX_VALID_MONEY then
+		return false
+	end
+	return money == math.floor(money)
+end
 
 function getMoneyCount(string)
 	local b, e = string:find("%d+")
@@ -835,7 +902,7 @@ do
 		local onBuyItem = npcData.onBuyItem
 		local onSellItem = npcData.onSellItem
 
-		return compat.originalNpcOpenShopWindow(npc, playerObject, shopItems,
+		return compat.originalNpcOpenShopWindow(npc, playerObject, ShopWindowItems(shopItems, playerObject),
 			function(playerObj, itemId, subType, amount, ignoreCap, inBackpacks)
 				local playerId = playerObj:getId()
 				if not checkNpcShopBuyExhaust(playerObj) then
@@ -895,7 +962,8 @@ do
 					removeSubType = -1
 				end
 
-				if not playerObj:removeItem(itemId, amount, removeSubType, ignoreEquipped) then
+				-- Never a quest token (data/lib/quests/access_quest_tokens.lua).
+				if not QuestTokens.removeForSale(playerObj, itemId, amount, removeSubType, ignoreEquipped) then
 					return false
 				end
 
@@ -920,7 +988,7 @@ do
 			if buyCallback == nil and sellCallback == nil then
 				return openCompatShopWindow(self, player, items)
 			end
-			return compat.originalNpcOpenShopWindow(self, player, items, buyCallback, sellCallback)
+			return compat.originalNpcOpenShopWindow(self, player, ShopWindowItems(items, player), buyCallback, sellCallback)
 		end
 
 		local npcData = getNpcData(self:getName())

@@ -5,7 +5,7 @@
   
   <parameters>
 		<parameter key="module_shop" value="1" />
-		<parameter key="shop_buyable" value="label, 3507,1;parcel, 140,15;letter, 3505,8" />
+		<parameter key="shop_buyable" value="label, 3507,1;parcel, 3503,15;letter, 3505,8" />
 		<parameter key="message_sendtrade" value="Here. Don't forget that you need to buy a label too if you want to send a parcel. Always write the name of the {receiver} in the first line." />
 	</parameters>
 	

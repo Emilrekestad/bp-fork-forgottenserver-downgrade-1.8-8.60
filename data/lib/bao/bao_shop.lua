@@ -27,13 +27,26 @@
 -- read, so a Marks purchase and a Bp Coins purchase are indistinguishable
 -- afterwards -- there is no second source of truth to drift.
 local PREY_PERMANENT_SLOT_KEY = 780200        -- prey_system.lua
-local TASK_HUNTING_THIRD_SLOT_KEY = 990500    -- task_hunting.lua
-
 -- Bao's own gate keys. 990600-990799 was verified free before use.
 BaoConfig.StorageKeys = {
 	weaponProficiency = 990600,
 	wheelAccess = 990601,
+	gemsAccess = 990602,
 }
+
+-- A one-time unlock can come from somewhere other than Bao: the Bp Coins
+-- store sells the prey slot, Weapon Proficiency and the Talent Compass too
+-- (gamestore.lua, UNLOCK_OFFERS), and the Prey window has its own coin path.
+-- Those write the unlock's storage key but not Bao's purchase record, so an
+-- entry with a `storageKey` counts as owned when that key is set. Without
+-- this his card keeps offering it and takes Marks for something already open.
+function BaoConfig.ownsShopItem(player, itemKey)
+	if BaoState.hasPurchased(player, itemKey) then
+		return true
+	end
+	local item = BaoConfig.ShopItems and BaoConfig.ShopItems[itemKey]
+	return item ~= nil and item.storageKey ~= nil and player:getStorageValue(item.storageKey) == 1
+end
 
 -- Extra hunt slots live in kv rather than storage: nothing outside Bao reads
 -- them, and BaoState already owns slot shape.
@@ -55,26 +68,29 @@ BaoConfig.ProductsMinRank = 4
 -- `key` points at a BaoConfig.ShopItems entry (cost and rank come from there,
 -- so they cannot drift). `rank` entries are gates that are not purchases --
 -- his trade lists open on rank alone.
+-- (!) The Profile column holds at most 11 rows (BaoChapterLine in
+-- game_bao/bao.otui: 20px + 1px each, 244px of room). A 12th row is cut off
+-- the bottom without any error.
 BaoConfig.MilestoneOrder = {
 	{ key = "weapon_proficiency" },
+	{ key = "gems_access" },
 	{ rank = "TradeMinRank", label = "He buys creature products",
 	  note = "The short list -- what a Doorstep hunter finds" },
 	{ key = "wheel_access" },
-	{ key = "task_hunting_slot" },
+	{ key = "charm_slot_7" },
 	{ key = "hunt_slot_4" },
 	{ key = "prey_slot" },
-	{ key = "dormancy_charge" },
 	{ rank = "ProductsMinRank", label = "He buys everything",
 	  note = "All 250 products, at the best price in the game" },
 	{ key = "hunt_slot_5" },
+	{ key = "charm_slot_8" },
 }
 
 BaoConfig.ShopCategories = {
 	{ key = "supplies", title = "Supplies", note = "Things a hunter runs out of" },
 	{ key = "access", title = "What Bao Can Open For You", note = "Permanent, one purchase each" },
-	{ key = "wheel", title = "Promotion Scrolls", note = "Permanent Wheel of Destiny points" },
+	{ key = "wheel", title = "Promotion Scrolls", note = "Talent Compass points that stay forever" },
 	{ key = "capacity", title = "Room to Work", note = "More hunts, more often" },
-	{ key = "rarity", title = "The Dormant Trade", note = "Bao's least explicable service" },
 	{ key = "prestige", title = "Trophies", note = "Nothing here makes you stronger" },
 }
 
@@ -128,6 +144,29 @@ BaoConfig.ShopItems = {
 		description = "Twenty slots. Bao has opinions about hunters who bring less.",
 		itemId = 10324, count = 1, oneTime = false,
 	},
+	-- Hireling job contracts (owner, 2026-10-04): open to everyone from the start. The rune
+	-- crafter is the cheap one; use the contract on one of your hirelings. The Bp Coins store
+	-- sells the same four (gamestore.lua, HIRELING_JOBS).
+	["contract_rune_crafter"] = {
+		displayName = "Rune Crafter's Contract", category = "supplies", minRank = 0, cost = 200,
+		description = "Teaches one of your hirelings to make runes. Use it on the hireling.",
+		itemId = 3236, count = 1, oneTime = false,
+	},
+	["contract_trader"] = {
+		displayName = "Trader's Contract", category = "supplies", minRank = 0, cost = 400,
+		description = "Teaches one of your hirelings to trade. Use it on the hireling.",
+		itemId = 128, count = 1, oneTime = false,
+	},
+	["contract_banker"] = {
+		displayName = "Banker's Contract", category = "supplies", minRank = 0, cost = 400,
+		description = "Teaches one of your hirelings to bank your gold. Use it on the hireling.",
+		itemId = 22706, count = 1, oneTime = false,
+	},
+	["contract_cook"] = {
+		displayName = "Cook's Contract", category = "supplies", minRank = 0, cost = 400,
+		description = "Teaches one of your hirelings to cook. Use it on the hireling.",
+		itemId = 23547, count = 1, oneTime = false,
+	},
 	["blessings"] = {
 		displayName = "Bao's Blessing", category = "supplies", minRank = 1, cost = 400,
 		displayItemId = 3057, -- an amulet of loss -- blessings are what stop death costing you
@@ -155,9 +194,10 @@ BaoConfig.ShopItems = {
 	-- system already reads, so nothing here is a parallel implementation.
 	["weapon_proficiency"] = {
 		displayName = "Weapon Proficiency", category = "access", minRank = 0, cost = 600,
-		displayItemId = 15826, -- a whetstone -- what you do to a weapon to get better with it
+		displayItemId = 6109, -- a weapon rack (the whetstone 15826 read as a brick at 32px)
 		description = "Bao teaches you to actually read a weapon. Unlocks the Proficiency window.",
 		oneTime = true,
+		storageKey = BaoConfig.StorageKeys.weaponProficiency, -- also sold in the store (5171)
 		grant = function(player)
 			player:setStorageValue(BaoConfig.StorageKeys.weaponProficiency, 1)
 			player:sendTextMessage(MESSAGE_EVENT_ADVANCE,
@@ -165,26 +205,48 @@ BaoConfig.ShopItems = {
 			return true
 		end,
 	},
-	["wheel_access"] = {
-		displayName = "The Wheel of Destiny", category = "access", minRank = 2, cost = 2500,
-		displayItemId = 1941, -- a wheel
-		description = "Bao shows you the wheel. What you make of it is your business.",
+	["gems_access"] = {
+		displayName = "Gems", category = "access", minRank = 0, cost = 600,
+		displayItemId = 44604, -- a large knight gem (the small one is a speck at 32px)
+		description = "Bao shows you what is inside a stone. Unlocks the Gems window.",
 		oneTime = true,
 		grant = function(player)
-			player:setStorageValue(BaoConfig.StorageKeys.wheelAccess, 1)
+			player:setStorageValue(BaoConfig.StorageKeys.gemsAccess, 1)
 			player:sendTextMessage(MESSAGE_EVENT_ADVANCE,
-				"Old Man Bao draws a circle in the dirt and does not explain it. The Wheel is open to you.")
+				'Old Man Bao holds a stone up to the light. "Now you can see inside." The Gems window is open to you.')
 			return true
 		end,
 	},
-	["task_hunting_slot"] = {
-		displayName = "Third Hunting Task Slot", category = "access", minRank = 2, cost = 3500,
-		displayItemId = 12260, -- a hunting horn
-		description = "A permanent third Task Hunting slot. No Premium required, ever.",
+	["wheel_access"] = {
+		displayName = "The Talent Compass", category = "access", minRank = 2, cost = 2500,
+		displayItemId = 8775, -- a gear wheel (1941 has no items.xml entry and drew a broken plank)
+		description = "Bao shows you the Talent Compass. What you make of it is your business.",
+		oneTime = true,
+		storageKey = BaoConfig.StorageKeys.wheelAccess, -- also sold in the store (5172)
+		grant = function(player)
+			player:setStorageValue(BaoConfig.StorageKeys.wheelAccess, 1)
+			player:sendTextMessage(MESSAGE_EVENT_ADVANCE,
+				"Old Man Bao draws a circle in the dirt and does not explain it. The Talent Compass is open to you.")
+			return true
+		end,
+	},
+	["charm_slot_7"] = {
+		displayName = "A Seventh Charm Slot", category = "access", minRank = 3, cost = 6000,
+		displayItemId = 8827, -- a charged ghost charm (the blank rune 3147 read as a grey rock)
+		description = "One more creature you can keep a charm on, forever. Stacks on top of whatever your account already allows, Premium or not.",
 		oneTime = true,
 		grant = function(player)
-			player:setStorageValue(TASK_HUNTING_THIRD_SLOT_KEY, 1)
-			return true
+			return player:addCharmExpansion(1)
+		end,
+	},
+	["charm_slot_8"] = {
+		displayName = "An Eighth Charm Slot", category = "access", minRank = 5, cost = 18000,
+		displayItemId = 8827,
+		description = "The last one Bao will cut for you. He does not explain why there is a limit.",
+		oneTime = true,
+		requires = "charm_slot_7",
+		grant = function(player)
+			return player:addCharmExpansion(1)
 		end,
 	},
 	["prey_slot"] = {
@@ -192,6 +254,7 @@ BaoConfig.ShopItems = {
 		displayItemId = 10302, -- a compass -- prey is about tracking something down
 		description = "A permanent third Prey slot. No Premium required, ever.",
 		oneTime = true,
+		storageKey = PREY_PERMANENT_SLOT_KEY, -- also sold in the store (5170)
 		grant = function(player)
 			player:setStorageValue(PREY_PERMANENT_SLOT_KEY, 1)
 			return true
@@ -199,36 +262,38 @@ BaoConfig.ShopItems = {
 	},
 
 	-- ── Wheel promotion scrolls ───────────────────────────────────────
-	-- Real items (43946-43950) that data/scripts/network/wheel/wheel.lua
-	-- already redeems for permanent extra Wheel points -- 3/5/9/13/20 in
-	-- order. They need no new mechanism at all, only a price.
+	-- Real items (43946-43950) that data/scripts/actions/items/wheel_scrolls.lua
+	-- redeems for Wheel points that stay forever -- 10/15/25/40/60 in order
+	-- since 2026-09-11 (WheelTables.PROMOTION_SCROLLS; three times the old
+	-- 3/5/9/13/20, with the wheel's three points a level). The numbers below
+	-- are read from that table so the shop can never disagree with the scroll.
 	--
 	-- Pricing rises faster than the points do, deliberately: the cheap
 	-- scrolls should feel reachable within a couple of bounty weeks and the
 	-- advanced one should be a genuine season-long goal.
 	["scroll_abridged"] = {
 		displayName = "Abridged Promotion Scroll", category = "wheel", minRank = 2, cost = 900,
-		description = "+3 permanent Wheel points.",
+		description = string.format("+%d Talent Compass points. They stay forever.", WheelTables.PROMOTION_SCROLLS[43946].points),
 		itemId = 43946, count = 1, oneTime = true,
 	},
 	["scroll_basic"] = {
 		displayName = "Basic Promotion Scroll", category = "wheel", minRank = 3, cost = 2000,
-		description = "+5 permanent Wheel points.",
+		description = string.format("+%d Talent Compass points. They stay forever.", WheelTables.PROMOTION_SCROLLS[43947].points),
 		itemId = 43947, count = 1, oneTime = true,
 	},
 	["scroll_revised"] = {
 		displayName = "Revised Promotion Scroll", category = "wheel", minRank = 4, cost = 4500,
-		description = "+9 permanent Wheel points.",
+		description = string.format("+%d Talent Compass points. They stay forever.", WheelTables.PROMOTION_SCROLLS[43948].points),
 		itemId = 43948, count = 1, oneTime = true,
 	},
 	["scroll_extended"] = {
 		displayName = "Extended Promotion Scroll", category = "wheel", minRank = 5, cost = 9000,
-		description = "+13 permanent Wheel points.",
+		description = string.format("+%d Talent Compass points. They stay forever.", WheelTables.PROMOTION_SCROLLS[43949].points),
 		itemId = 43949, count = 1, oneTime = true,
 	},
 	["scroll_advanced"] = {
 		displayName = "Advanced Promotion Scroll", category = "wheel", minRank = 6, cost = 18000,
-		description = "+20 permanent Wheel points. The last thing on the wall.",
+		description = string.format("+%d Talent Compass points. The last thing on the wall.", WheelTables.PROMOTION_SCROLLS[43950].points),
 		itemId = 43950, count = 1, oneTime = true,
 	},
 
@@ -254,55 +319,9 @@ BaoConfig.ShopItems = {
 		end,
 	},
 
-	-- ── The Dormant trade ─────────────────────────────────────────────
-	-- A charged Dormancy Rune lets a Dormant Shrine or Dormant Waker put an ordinary piece of
-	-- equipment TO SLEEP rather than waking one -- the item becomes Dormant,
-	-- and from there the existing rarity path takes over. It does not grant a
-	-- rarity; it grants the chance to grind for one on an item the player
-	-- chose, which is the whole appeal.
-	--
-	-- Deliberately expensive and repeatable: this is the endgame Marks sink
-	-- that ties Bao to the rarity system and the Bazaar without ever handing
-	-- anybody a finished item.
-	["dormancy_charge"] = {
-		displayName = "Dormancy Rune charge", category = "rarity", minRank = 4, cost = 6000,
-		description = "One charge. Use it at a Dormant Shrine or with a Dormant Waker and ordinary equipment sleeps.",
-		oneTime = false,
-		-- Display only. The grant sells a CHARGE rather than a rune, so there is
-		-- no itemId to draw from -- but the row still has to show the rune the
-		-- charge goes into, or the most expensive thing in the shop is a blank.
-		displayItemId = 24960,
-		-- Sells a CHARGE, not a rune. A player already carrying one gets it
-		-- topped up; a player without gets the rune itself with that first
-		-- charge on it. Either way one purchase buys exactly one use, which is
-		-- the only thing the price has to mean.
-		-- Charges are bought in whatever quantity the player asks for, so the
-		-- stepper works here the same way it does on potions -- a charge is a
-		-- consumable like any other, and making them buy it twenty times over
-		-- would be the same nuisance the potion bundles were.
-		scalable = true, maxUnits = 25,
-		grant = function(player, amount)
-			amount = math.max(1, math.floor(tonumber(amount) or 1))
-			local rune = player:getItemById(BaoConfig.DORMANCY_RUNE_ID, true)
-			if rune then
-				local charges = rune:getAttribute(ITEM_ATTRIBUTE_CHARGES) or 0
-				rune:setAttribute(ITEM_ATTRIBUTE_CHARGES, charges + amount)
-				player:sendTextMessage(MESSAGE_EVENT_ADVANCE, string.format(
-					"Old Man Bao turns your rune over once and hands it back. %d charge(s) on it now.", charges + amount))
-				return true
-			end
-
-			local granted = player:addItem(BaoConfig.DORMANCY_RUNE_ID, 1)
-			if not granted then
-				return false, "Your hands are full."
-			end
-			granted:setAttribute(ITEM_ATTRIBUTE_CHARGES, amount)
-			player:sendTextMessage(MESSAGE_EVENT_ADVANCE, amount > 1
-				and string.format("Old Man Bao presses something cold into your palm. \"%d uses. Choose the things carefully.\"", amount)
-				or "Old Man Bao presses something cold into your palm. \"One use. Choose the thing carefully.\"")
-			return true
-		end,
-	},
+	-- (The Rune of Mystery left this shop on 2026-10-03: it is now a rare drop from
+	-- Surged monsters, see data/scripts/lib/surge.lua. BaoConfig.DORMANCY_RUNE_ID
+	-- and BaoConfig.spendRuneCharge below are still the rune's own code.)
 }
 
 -- ─── Trophies ───────────────────────────────────────────────────────────
@@ -422,43 +441,35 @@ for _, p in ipairs(POTIONS) do
 	}
 end
 
--- ─── The Dormancy Rune ──────────────────────────────────────────────────
+-- ─── The Rune of Mystery ──────────────────────────────────────────────────
 --
 -- Item 24960, repurposed from the astral shaper rune. See the comment on that
 -- entry in data/items/items.xml for what moved out of the way -- in short, the
 -- Astral Shaper quest now grants the Stone Rhino mount directly instead of
 -- handing over this rune to be used for taming, so nothing was lost.
 --
--- The rune is a charge CARRIER, not a tool. A Dormant Shrine or the portable
--- Dormant Waker performs the ritual and spends the charge.
+-- The rune is used directly on the equipment ("Use with...", 2026-09-11):
+-- data/scripts/actions/items/rune_of_mystery.lua spends a charge from the
+-- rune the player actually used. Before that it was only a charge carrier and
+-- a shrine or the Waker spent the charge from whichever rune it found.
 BaoConfig.DORMANCY_RUNE_ID = 24960
 
--- The carried rune, if it has charges left. `true` searches inside containers,
--- since nobody keeps a rune in a hand slot.
-function BaoConfig.findDormancyRune(player)
-	local rune = player:getItemById(BaoConfig.DORMANCY_RUNE_ID, true)
-	if not rune then
-		return nil
-	end
-	if (rune:getAttribute(ITEM_ATTRIBUTE_CHARGES) or 0) <= 0 then
-		return nil
-	end
-	return rune
-end
-
--- Spends one charge, removing the rune when its last one goes.
-function BaoConfig.spendDormancyCharge(player)
-	local rune = BaoConfig.findDormancyRune(player)
-	if not rune then
+-- Spends one charge from THIS rune, removing it when its last charge goes.
+-- False if it had none to spend. The rune is stackable (2026-09-12) and its
+-- charge count IS its stack count now. ITEM_ATTRIBUTE_CHARGES is kept
+-- mirrored to the new count on every partial spend -- see the migration
+-- comment in rarity_identify.lua for why it is not just dropped.
+function BaoConfig.spendRuneCharge(rune)
+	if not rune or rune:getCount() <= 0 then
 		return false
 	end
-
-	local charges = rune:getAttribute(ITEM_ATTRIBUTE_CHARGES) or 0
-	if charges <= 1 then
+	local remaining = rune:getCount() - 1
+	if remaining <= 0 then
 		rune:remove(1)
-	else
-		rune:setAttribute(ITEM_ATTRIBUTE_CHARGES, charges - 1)
+		return true
 	end
+	rune:transform(rune:getId(), remaining)
+	rune:setAttribute(ITEM_ATTRIBUTE_CHARGES, remaining)
 	return true
 end
 
@@ -495,6 +506,17 @@ function BaoConfig.validateShop()
 		end
 	end
 	return problems
+end
+
+-- Prey is hidden for launch (config.lua preySystemEnabled, 2026-09-16). Bao
+-- cannot sell a slot for a window nobody can open, so his entry is dropped
+-- while the flag is off. Everything downstream follows from the entry being
+-- absent: the shop list is built from pairs(ShopItems), the Profile milestone
+-- loop skips a key with no item, the unlock count drops by one, and a crafted
+-- purchase packet gets "That item is not available." Nothing else to switch --
+-- flip the config flag and his card is back.
+if not configManager.getBoolean(configKeys.PREY_SYSTEM_ENABLED) then
+	BaoConfig.ShopItems.prey_slot = nil
 end
 
 -- Runs at load, like the ladder and bounty checks. An unnamed item or a

@@ -206,8 +206,15 @@ RarityClass.Overrides = {
 	[25735] = 1, -- leaf star (was 3)
 	[25758] = 1, -- spectral bolt (was 5)
 	[32585] = 2, -- burial shroud (was 1)
-	[35901] = 1, -- diamond arrow (was 3)
 	[50267] = 2, -- boots of enlightenment (was 1)
+	[3229] = 6, -- helmet of the ancients (Curse of the Seven reward; armor 8 alone would be Class 3)
+	[3230] = 6, -- full helmet of the ancients
+	[7390] = 4, -- justice seeker (was 3; owner 2026-10-03: Warlord arena reward)
+	[7434] = 4, -- royal axe (was 3; owner 2026-10-03: Warlord arena reward)
+	[7429] = 4, -- blessed sceptre (was 3; owner 2026-10-03: Warlord arena reward)
+	[30323] = 6, -- rainbow necklace (was 5; owner 2026-10-02: the Chieftain arena reward, needs to roll high)
+	[8026] = 4, -- warsinger bow (was 3; owner 2026-10-03: Inquisition reward room, all ten rewards Class 4)
+	[8090] = 4, -- spellbook of dark mysteries (was 3; owner 2026-10-03: Inquisition reward room)
 }
 
 local function classFromLevel(level)

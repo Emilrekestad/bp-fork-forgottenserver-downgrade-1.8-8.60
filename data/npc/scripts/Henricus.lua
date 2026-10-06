@@ -7,186 +7,221 @@ function onCreatureDisappear(cid)		npcHandler:onCreatureDisappear(cid)			end
 function onCreatureSay(cid, type, msg)		npcHandler:onCreatureSay(cid, type, msg)		end
 function onThink()				npcHandler:onThink()					end
 
+-- standard price of one blessing by level (this server has no shared helper for it)
+local function getBlessingsCost(level)
+	if level <= 30 then
+		return 2000
+	elseif level >= 120 then
+		return 20000
+	end
+	return 2000 + 200 * (level - 30)
+end
+
+-- Keys are written out here (not read from the Storage lib) so that /reload scripts is enough.
+local INQUISITION_KEYS = {
+	Questline = 12160, Mission01 = 12161, Mission02 = 12162, Mission03 = 12163, Mission04 = 12164,
+	EnterTeleport = 12176, CountTry = 12179, UngreezKilled = 12180,
+	SealUshuriel = 12190, SealZugurosh = 12191, SealMadareth = 12192, SealVats = 12193,
+	SealAnnihilon = 12194, SealHellgorak = 12195, LatrivanKilled = 12196, GolgordanKilled = 12197,
+	RewardAccess = 12198, CrystalCaves = 12199, BloodHalls = 12200,
+}
+
+-- Mission 4: every seal starts as "still holds" (1) in the quest log; a broken seal (2) stays broken.
+local SEAL_KEYS = { 12190, 12191, 12192, 12193, 12194, 12195 }
+
+local function openSeals(player)
+	for _, key in ipairs(SEAL_KEYS) do
+		if player:getStorageValue(key) < 1 then
+			player:setStorageValue(key, 1)
+		end
+	end
+end
+
 local function creatureSayCallback(cid, type, msg)
 	if not npcHandler:isFocused(cid) then
 		return false
 	end
 	local player = Player(cid)
-	local totalBlessPrice = getBlessingsCost(player:getLevel()) * 5 * 1.1
+	local totalBlessPrice = math.floor(getBlessingsCost(player:getLevel()) * 5 * 1.1)
+
+	local S = INQUISITION_KEYS
+	local m1, m2, m3, m4 = player:getStorageValue(S.Mission01), player:getStorageValue(S.Mission02), player:getStorageValue(S.Mission03), player:getStorageValue(S.Mission04)
 
 	if msgcontains(msg, "inquisitor") then
 		npcHandler:say("The churches of the gods entrusted me with the enormous and responsible task to lead the inquisition. I leave the field work to inquisitors who I recruit from fitting people that cross my way.", cid)
 	elseif msgcontains(msg, "join") then
-		if player:getStorageValue(Storage.TheInquisition.Questline) < 1 then
+		if player:getStorageValue(S.Questline) < 1 then
 			npcHandler:say("Do you want to join the inquisition?", cid)
 			npcHandler.topic[cid] = 2
 		end
 	elseif msgcontains(msg, "blessing") or msgcontains(msg, "bless") then
-		if player:getStorageValue(Storage.TheInquisition.Questline) == 25 then --if quest is done
+		if player:getStorageValue(S.RewardAccess) >= 1 then
 			npcHandler:say("Do you want to receive the blessing of the inquisition - which means all five available blessings - for " .. totalBlessPrice .. " gold?", cid)
 			npcHandler.topic[cid] = 7
 		else
-			npcHandler:say("You cannot get this blessing unless you have completed The Inquisition Quest.", cid)
+			npcHandler:say("You cannot get this blessing until you have faced the inquisition and reported to me.", cid)
 			npcHandler.topic[cid] = 0
 		end
-	elseif msgcontains(msg, "mission") or msgcontains(msg, "report") then
-		if player:getStorageValue(Storage.TheInquisition.Questline) < 1 then
+	elseif msgcontains(msg, "count") then
+		if m2 == 2 then
+			if player:getStorageValue(S.CountTry) == 1 then
+				npcHandler:say("You may still wake him. Press the buried coffin in the crypt, and he will rise.", cid)
+			else
+				npcHandler:say("He bested you? Then try again. The crypt will answer once more. Press the coffin when you are ready.", cid)
+				player:setStorageValue(S.CountTry, 1)
+			end
+		else
+			npcHandler:say("The Count is a vampire lord. I have no use for him unless the inquisition sends you after him.", cid)
+		end
+		npcHandler.topic[cid] = 0
+	elseif msgcontains(msg, "holy water") or msgcontains(msg, "vial") or msgcontains(msg, "flask") then
+		if m3 == 2 then
+			if player:getItemCount(133) < 1 then
+				npcHandler:say("You lost the holy water? Careless. Here is another. Do not lose this one.", cid)
+				player:addItem(133, 1)
+			else
+				npcHandler:say("You still carry it. Use it on the cauldron on the island.", cid)
+			end
+		else
+			npcHandler:say("Holy water is for those on a mission against the unholy.", cid)
+		end
+		npcHandler.topic[cid] = 0
+	elseif msgcontains(msg, "mission") or msgcontains(msg, "report") or msgcontains(msg, "quest") then
+		if player:getStorageValue(S.Questline) < 1 then
 			npcHandler:say("Do you want to join the inquisition?", cid)
 			npcHandler.topic[cid] = 2
-		elseif player:getStorageValue(Storage.TheInquisition.Questline) == 1 then
+		elseif m1 == 1 then
+			npcHandler:say("Have you been to {Bender Shun}? He must tell us that the world is ready before the inquisition can march. Go and see him.", cid)
+		elseif m1 == 2 then
 			npcHandler:say({
-				"Let's see if you are worthy. Take an inquisitor's field guide from the box in the back room. ...",
-				"Follow the instructions in the guide to talk to the Thaian guards that protect the walls and gates of the city and test their loyalty. Then report to me about your {mission}."
+				"Bender Shun says the world is ready? Then the time has come. ...",
+				"Your first test is simple. Bring me 20 vampire dusts. Come back with them and I will tell you more."
 			}, cid)
-			player:setStorageValue(Storage.TheInquisition.Questline, 2)
-			player:setStorageValue(Storage.TheInquisition.Mission01, 1) -- The Inquisition Questlog- "Mission 1: Interrogation"
-			npcHandler.topic[cid] = 0
-		elseif player:getStorageValue(Storage.TheInquisition.Questline) == 2 then
-			npcHandler:say("Your current mission is to investigate the reliability of certain guards. Are you done with that mission?", cid)
-			npcHandler.topic[cid] = 3
-		elseif player:getStorageValue(Storage.TheInquisition.Questline) == 3 then
-			npcHandler:say({
-				"Listen, we have information about a heretic coven that hides in a mountain called the Big Old One. The witches reach this cursed place on flying brooms and think they are safe there. ...",
-				"I've arranged a flying carpet that will bring you to their hideout. Travel to Femor Hills and tell the carpet pilot the codeword 'eclipse' ...",
-				"He'll bring you to your destination. At their meeting place, you'll find a cauldron in which they cook some forbidden brew ...",
-				"Use this vial of holy water to destroy the brew. Also steal their grimoire and bring it to me."
-			}, cid)
-			player:setStorageValue(Storage.TheInquisition.Questline, 4)
-			player:setStorageValue(Storage.TheInquisition.Mission02, 1) -- The Inquisition Questlog- "Mission 2: Eclipse"
-			player:addItem(7494, 1)
-			npcHandler.topic[cid] = 0
-		elseif player:getStorageValue(Storage.TheInquisition.Questline) == 5 then
-			if player:removeItem(8702, 1) then
-				npcHandler:say({
-					"I think it's time to truly test your abilities. One of our allies has requested assistance. I think you are just the right person to help him ...",
-					"Storkus is an old and grumpy dwarf who works as a vampire hunter since many, many decades. He's quite successful but even hehas his limits. ...",
-					"So occasionally, we send him help. In return he trains and tests our recruits. It's an advantageous agreement for both sides ...",
-					"You'll find him in his cave at the mountain outside of Kazordoon. He'll tell you about your next mission."
-				}, cid)
-				player:setStorageValue(Storage.TheInquisition.Questline, 6)
-				player:setStorageValue(Storage.TheInquisition.Mission02, 3) -- The Inquisition Questlog- "Mission 2: Eclipse"
-				player:setStorageValue(Storage.TheInquisition.Mission03, 1) -- The Inquisition Questlog- "Mission 3: Vampire Hunt"
-			else
-				npcHandler:say("You need bring me the witches' grimoire.", cid)
-			end
-			npcHandler.topic[cid] = 0
-		elseif player:getStorageValue(Storage.TheInquisition.Questline) > 5 and player:getStorageValue(Storage.TheInquisition.Questline) < 11 then
-			npcHandler:say("Your current mission is to help the vampire hunter Storkus. Are you done with that mission? ", cid)
+			player:setStorageValue(S.Mission01, 3)
+			player:setStorageValue(S.Mission02, 1)
+		elseif m2 == 1 then
+			npcHandler:say("I need 20 vampire dusts. Do you have them with you?", cid)
 			npcHandler.topic[cid] = 4
-		elseif player:getStorageValue(Storage.TheInquisition.Questline) == 11 then
-			npcHandler:say({
-				"We've got a report about an abandoned and haunted house in Liberty Bay. I want you to examine this house. It's the only ruin in Liberty Bay so you should have no trouble finding it. ...",
-				"There's an evil being somewhere. I assume that it will be easier to find the right spot at night. Use this vial of holy water on that spot to drive out the evil being."
-			}, cid)
-			player:setStorageValue(Storage.TheInquisition.Questline, 12)
-			player:setStorageValue(Storage.TheInquisition.Mission04, 1) -- The Inquisition Questlog- "Mission 4: The Haunted Ruin"
-			player:addItem(7494, 1)
-			npcHandler.topic[cid] = 0
-		elseif player:getStorageValue(Storage.TheInquisition.Questline) == 12 or player:getStorageValue(Storage.TheInquisition.Questline) == 13 then
-			npcHandler:say("Your current mission is to exorcise an evil being from a house in Liberty Bay. Are you done with that mission? ", cid)
-			npcHandler.topic[cid] = 5
-		elseif player:getStorageValue(Storage.TheInquisition.Questline) == 14 then
-			npcHandler:say({
-				"You've handled heretics, witches, vampires and ghosts. Now be prepared to face the most evil creatures we are fighting - demons. Your new task is extremely simple, though far from easy. ...",
-				"Go and slay demonic creatures wherever you find them. Bring me 20 of their essences as a proof of your accomplishments."
-			}, cid)
-			player:setStorageValue(Storage.TheInquisition.Questline, 15)
-			player:setStorageValue(Storage.TheInquisition.Mission05, 1) -- The Inquisition Questlog- "Mission 5: Essential Gathering"
-			npcHandler.topic[cid] = 0
-		elseif player:getStorageValue(Storage.TheInquisition.Questline) == 15 then
-			if player:removeItem(6500, 20) then
-				npcHandler:say({
-					"You're indeed a dedicated protector of the true believers. Don't stop now. Kill as many of these creatures as you can. ...",
-					"I also have a reward for your great efforts. Talk to me about your {demon hunter outfit} anytime from now on. Afterwards, let's talk about the next mission that's awaiting you."
-				}, cid)
-				player:setStorageValue(Storage.TheInquisition.Questline, 16)
-				player:setStorageValue(Storage.TheInquisition.Mission05, 2) -- The Inquisition Questlog- "Mission 5: Essential Gathering"
+		elseif m2 == 2 then
+			if player:getItemCount(7924) > 0 then
+				npcHandler:say("You have the Count's ring? Give it to me. Do you hand over the ring?", cid)
+				npcHandler.topic[cid] = 5
 			else
-				npcHandler:say("You need 20 of them.", cid)
+				npcHandler:say("Bring me the ring of the Count. Press the buried coffin in the crypt to wake him. If he bests you, say {the Count} to me and I will let you try again.", cid)
 			end
-			npcHandler.topic[cid] = 0
-		elseif player:getStorageValue(Storage.TheInquisition.Questline) == 17 then
+		elseif m2 >= 3 and m3 < 1 then
 			npcHandler:say({
-				"We've got information about something very dangerous going on on the isle of Edron. The demons are preparing something there ...",
-				"Something that is a threat to all of us. Our investigators were able to acquire vital information before some of them were slain by a demon named Ungreez. ...",
-				"It'll be your task to take revenge and to kill that demon. You'll find him in the depths of Edron. Good luck."
+				"Your next test: bring me 30 demonic essences. Demons are the greatest servants of evil, and I need proof you can face them. ...",
+				"Come back when you have them."
 			}, cid)
-			player:setStorageValue(Storage.TheInquisition.Questline, 18)
-			player:setStorageValue(Storage.TheInquisition.Mission06, 1) -- The Inquisition Questlog- "Mission 6: The Demon Ungreez"
-			npcHandler.topic[cid] = 0
-		elseif player:getStorageValue(Storage.TheInquisition.Questline) == 19 then
-			npcHandler:say({
-				"So the beast is finally dead! Thank the gods. At least some things work out in our favour ...",
-				"Our other operatives were not that lucky, though. But you will learn more about that in your next {mission}."
-			}, cid)
-			player:setStorageValue(Storage.TheInquisition.Questline, 20)
-			player:setStorageValue(Storage.TheInquisition.Mission06, 3) -- The Inquisition Questlog- "Mission 6: The Demon Ungreez"
-			player:addOutfitAddon(288, 1)
-			player:addOutfitAddon(289, 1)
-			player:getPosition():sendMagicEffect(CONST_ME_MAGIC_BLUE)
-			npcHandler.topic[cid] = 0
-		elseif player:getStorageValue(Storage.TheInquisition.Questline) == 20 then
-			npcHandler:say("Destroy the shadow nexus using this vial of holy water and kill all demon lords.", cid)
-			player:setStorageValue(Storage.TheInquisition.Questline, 21)
-			player:setStorageValue(Storage.TheInquisition.Mission07, 1) -- The Inquisition Questlog- "Mission 7: The Shadow Nexus"
-			player:addItem(7494, 1)
-			npcHandler.topic[cid] = 0
-		elseif player:getStorageValue(Storage.TheInquisition.Questline) == 21 or player:getStorageValue(Storage.TheInquisition.Questline) == 22 then
-			npcHandler:say("Your current mission is to destroy the shadow nexus in the Demon Forge. Are you done with that mission?", cid)
+			player:setStorageValue(S.Mission03, 1)
+		elseif m3 == 1 then
+			npcHandler:say("I need 30 demonic essences. Do you have them with you?", cid)
 			npcHandler.topic[cid] = 6
+		elseif m3 == 2 or m3 == 3 then
+			npcHandler:say("You know your task. Fly to {Eclipse}, pour the holy water into the cauldron, help kill Ungreez and bring me the witches' grimoire. If you lose the holy water, ask me for a {vial}.", cid)
+		elseif m3 == 4 then
+			npcHandler:say("Do you have the witches' grimoire?", cid)
+			npcHandler.topic[cid] = 8
+		elseif m3 >= 5 and m4 < 1 then
+			npcHandler:say({
+				"I am impressed with you. The time has come to face the inquisition's true enemies. ...",
+				"Below lie the realms of the seven. Break their seals one by one: Ushuriel, Zugurosh, Madareth, Latrivan and Golgordan, Annihilon, and last Hellgorak. ...",
+				"Only when Hellgorak is dead can you leave through the final teleport. Then report to me. Go, and good luck. You will need it."
+			}, cid)
+			player:setStorageValue(S.Mission04, 1)
+			player:setStorageValue(S.EnterTeleport, 1)
+			openSeals(player)
+		elseif m4 == 1 then
+			openSeals(player)
+			npcHandler:say("Your mission is to face the inquisition: break every seal, boss by boss. Hellgorak is the last. Check your quest log for the seals that still hold. Come back when Hellgorak is dead.", cid)
+		elseif m4 >= 2 and player:getStorageValue(S.RewardAccess) < 1 then
+			npcHandler:say({
+				"You faced the inquisition and Hellgorak is dead! The gods will remember this day. ...",
+				"I grant you both addons of the Hand of the Inquisition outfit. The reward room of the inquisition is open to you too: take one chest, and choose wisely."
+			}, cid)
+			player:setStorageValue(S.Mission04, 3)
+			player:setStorageValue(S.RewardAccess, 1)
+			player:setStorageValue(12204, 1)
+			for _, lookType in ipairs({ 1243, 1244 }) do
+				player:addOutfitAddon(lookType, 1)
+				player:addOutfitAddon(lookType, 2)
+			end
+			player:getPosition():sendMagicEffect(CONST_ME_HOLYAREA)
+		elseif m4 >= 3 then
+			npcHandler:say("You faced the inquisition and won. The reward room is open to you. May the gods go with you.", cid)
+		end
+	elseif msgcontains(msg, "eclipse") then
+		if m3 == 2 or m3 == 3 then
+			npcHandler:say("Go to Femor Hills and tell the carpet pilot the codeword {eclipse}. He will take you there.", cid)
+		end
+	elseif msgcontains(msg, "bender shun") or msgcontains(msg, "shun") then
+		if m1 == 1 then
+			npcHandler:say("Bender Shun knows the state of the world better than anyone. Ask him about the {inquisition}. If he says the world is ready, return to me.", cid)
+		else
+			npcHandler:say("Bender Shun is a strange man, but his word about the world is to be trusted.", cid)
+		end
+	elseif msgcontains(msg, "outfit") then
+		if m3 >= 5 then
+			npcHandler:say("The outfit of the Hand of the Inquisition is yours. Wear it with pride.", cid)
+		else
+			npcHandler:say("An outfit must be earned.", cid)
 		end
 	elseif msgcontains(msg, "yes") then
 		if npcHandler.topic[cid] == 2 then
-			npcHandler:say("So be it. Now you are a member of the inquisition. You might ask me for a {mission} to raise in my esteem.", cid)
-			player:setStorageValue(Storage.TheInquisition.Questline, 1)
-			npcHandler.topic[cid] = 0
-		elseif npcHandler.topic[cid] == 3 then
-			if player:getStorageValue(Storage.TheInquisition.WalterGuard) == 1 and player:getStorageValue(Storage.TheInquisition.KulagGuard) == 1 and player:getStorageValue(Storage.TheInquisition.GrofGuard) == 1 and player:getStorageValue(Storage.TheInquisition.MilesGuard) == 1 and player:getStorageValue(Storage.TheInquisition.TimGuard) == 1 then
-				npcHandler:say({
-					"Indeed, this is exactly what my other sources told me. Of course I knew the outcome of this investigation in advance. This was just a test. ...",
-					"Well, now that you've proven yourself as useful, you can ask me for another mission. Let's see if you can handle some field duty, too."
-				}, cid)
-				player:setStorageValue(Storage.TheInquisition.Questline, 3)
-				player:setStorageValue(Storage.TheInquisition.Mission01, 7) -- The Inquisition Questlog- "Mission 1: Interrogation"
-			else
-				npcHandler:say("You haven't done your mission yet.", cid)
-			end
-			npcHandler.topic[cid] = 0
+			npcHandler:say({
+				"So be it. Now you are a member of the inquisition. ...",
+				"Before anything starts, the world must be ready. Go to {Bender Shun} and ask him about the {inquisition}. When he confirms it, report back to me."
+			}, cid)
+			player:setStorageValue(S.Questline, 1)
+			player:setStorageValue(S.Mission01, 1)
 		elseif npcHandler.topic[cid] == 4 then
-			if player:getStorageValue(Storage.TheInquisition.Questline) == 10 then
-				npcHandler:say("Good, you've returned. Your skill in practical matters seems to be useful. If you're ready for a further mission, just ask. ", cid)
-				player:setStorageValue(Storage.TheInquisition.Questline, 11)
-				player:setStorageValue(Storage.TheInquisition.Mission03, 6) -- The Inquisition Questlog- "Mission 3: Vampire Hunt"
-			else
-				npcHandler:say("You haven't done your mission with {Storkus} yet.", cid)
-			end
-			npcHandler.topic[cid] = 0
-		elseif npcHandler.topic[cid] == 5 then
-			if player:getStorageValue(Storage.TheInquisition.Questline) == 13 then
-				npcHandler:say("Well, this was an easy task, but your next mission will be much more challenging. ", cid)
-				player:setStorageValue(Storage.TheInquisition.Questline, 14)
-				player:setStorageValue(Storage.TheInquisition.Mission04, 3) -- The Inquisition Questlog- "Mission 4: The Haunted Ruin"
-			else
-				npcHandler:say("You haven't done your mission with {Storkus} yet.", cid)
-			end
-			npcHandler.topic[cid] = 0
-		elseif npcHandler.topic[cid] == 6 then
-			if player:getStorageValue(Storage.TheInquisition.Questline) == 22 then
+			if player:removeItem(5905, 20) then
 				npcHandler:say({
-					"Incredible! You're a true defender of faith! I grant you the title of a High Inquisitor for your noble deeds. From now on you can obtain the blessing of the inquisition which makes the pilgrimage of ashes obsolete ...",
-					"The blessing of the inquisition will bestow upon you all available blessings for the price of 60000 gold. Also, don't forget to ask me about your {outfit} to receive the final addon as demon hunter."
+					"Good. Now to the test. The Count, a vampire lord, hides in a crypt in the Green Claw Swamp. ...",
+					"Press the buried coffin in the crypt to wake him. Bring me his ring. If he bests you, say {the Count} to me and you may try again."
 				}, cid)
-				player:setStorageValue(Storage.TheInquisition.Questline, 23)
-				player:setStorageValue(Storage.TheInquisition.Mission07, 3) -- The Inquisition Questlog- "Mission 7: The Shadow Nexus"
-				player:addAchievement('High Inquisitor')
+				player:setStorageValue(S.Mission02, 2)
+				player:setStorageValue(S.CountTry, 1)
 			else
-				npcHandler:say("Come back when you have destroyed the shadow nexus.", cid)
+				npcHandler:say("You do not have 20 vampire dusts.", cid)
 			end
-			npcHandler.topic[cid] = 0
+		elseif npcHandler.topic[cid] == 5 then
+			if player:removeItem(7924, 1) then
+				npcHandler:say("Excellent. The Count is no more. Ask me for the next {mission}.", cid)
+				player:setStorageValue(S.Mission02, 3)
+				player:getPosition():sendMagicEffect(CONST_ME_MAGIC_BLUE)
+			else
+				npcHandler:say("You do not have the ring.", cid)
+			end
+		elseif npcHandler.topic[cid] == 6 then
+			if player:removeItem(6499, 30) then
+				npcHandler:say({
+					"Good. Now the real work begins. A coven of witches hides on an island called {Eclipse}. ...",
+					"Travel to Femor Hills and tell the carpet pilot the codeword eclipse. Use this vial of holy water on the cauldron there. A demon named Ungreez watches the island. Help kill him, then take the witches' grimoire from the chest and bring it to me."
+				}, cid)
+				player:setStorageValue(S.Mission03, 2)
+				player:addItem(133, 1)
+			else
+				npcHandler:say("You do not have 30 demonic essences.", cid)
+			end
+		elseif npcHandler.topic[cid] == 8 then
+			if player:removeItem(7874, 1) then
+				npcHandler:say({
+					"The grimoire! With this we will find the rest of the coven. You have done well. ...",
+					"As a reward, I give you the outfit of the Hand of the Inquisition. The addons must be earned later."
+				}, cid)
+				player:setStorageValue(S.Mission03, 5)
+				player:addOutfit(1243)
+				player:addOutfit(1244)
+				player:getPosition():sendMagicEffect(CONST_ME_MAGIC_BLUE)
+			else
+				npcHandler:say("You do not have the grimoire.", cid)
+			end
 		elseif npcHandler.topic[cid] == 7 then
 			if player:getBlessings() == 5 then
 				npcHandler:say("You already have been blessed!", cid)
-			elseif player:removeMoney(totalBlessPrice) then
+			elseif player:removeTotalMoney(totalBlessPrice) then
 				npcHandler:say("You have been blessed by all of five gods!, |PLAYERNAME|.", cid)
 				for b = 1, 5 do
 					player:addBlessing(b)
@@ -200,27 +235,6 @@ local function creatureSayCallback(cid, type, msg)
 	elseif msgcontains(msg, "no") then
 		if npcHandler.topic[cid] > 0 then
 			npcHandler:say("Then no.", cid)
-			npcHandler.topic[cid] = 0
-		end
-	elseif msgcontains(msg, "outfit") then
-		if player:getStorageValue(Storage.TheInquisition.Questline) == 16 then
-			npcHandler:say("Here is your demon hunter outfit. You deserve it. Unlock more addons by completing more missions.", cid)
-			player:setStorageValue(Storage.TheInquisition.Questline, 17)
-			player:setStorageValue(Storage.TheInquisition.Mission05, 3) -- The Inquisition Questlog- "Mission 5: Essential Gathering"
-			player:addOutfit(288, 0)
-			player:addOutfit(289, 0)
-			player:getPosition():sendMagicEffect(CONST_ME_MAGIC_BLUE)
-			npcHandler.topic[cid] = 0
-		elseif player:getStorageValue(Storage.TheInquisition.Questline) == 23 then
-			npcHandler:say("Here is the final addon for your demon hunter outfit. Congratulations!", cid)
-			player:setStorageValue(Storage.TheInquisition.Questline, 24)
-			player:setStorageValue(Storage.TheInquisition.Mission07, 4) -- The Inquisition Questlog- "Mission 7: The Shadow Nexus"
-			player:addOutfitAddon(288, 1)
-			player:addOutfitAddon(289, 1)
-			player:addOutfitAddon(288, 2)
-			player:addOutfitAddon(289, 2)
-			player:getPosition():sendMagicEffect(CONST_ME_MAGIC_BLUE)
-			player:addAchievement('Demonbane')
 			npcHandler.topic[cid] = 0
 		end
 	elseif msgcontains(msg, 'dark') then

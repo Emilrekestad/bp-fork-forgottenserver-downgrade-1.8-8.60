@@ -156,7 +156,7 @@ WorldMissions.Missions["roshamuul"] = {
 	},
 	appliedStorage = 96030,
 	statusMessage = "HAH, WORK FOR ME MINIONS! I don't need your pity supplies. Stones move, because I tell them to. Demons and Rocks bow to my pointing.",
-	completeMessage = "The ground trembles beneath every living thing. Bender Shun has called upon the stone — and something far worse has answered with it.",
+	completeMessage = "The ground trembles beneath every living thing. Bender Shun has called upon the stone, and something far worse has answered with it.",
 	-- Same as Oramond -- the payoff is a live isApplied("roshamuul") check
 	-- in Captain Bluebear.lua's travel keyword, not a tile edit here.
 	onComplete = function() end,

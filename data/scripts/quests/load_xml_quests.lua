@@ -4,7 +4,10 @@
 -- from Lua. If this does not run, every player's quest log is silently empty.
 local xmlQuest = GlobalEvent("Load XML Quests")
 
-function xmlQuest.onStartup()
+-- A global function, not just the startup body: /reload scripts empties the quest
+-- registry (Game.clearQuests) and a startup event does not run again on a reload,
+-- so the reload command calls this to fill the quest log back in.
+function loadXmlQuests()
 	local questDoc = XMLDocument("data/XML/quests.xml")
 	if not questDoc then
 		logError("[Quests] Could not load data/XML/quests.xml - quest log will be EMPTY.")
@@ -63,6 +66,36 @@ function xmlQuest.onStartup()
 						end
 
 						mission.description = description
+
+						-- A state text may show another storage as a number with |COUNTER:<key>|
+						-- (the Wrath of the Emperor draken tally). Such a mission gets a function
+						-- description that picks the state and fills the number in.
+						local hasCounter = false
+						for _, text in pairs(description) do
+							if text:find("|COUNTER:", 1, true) then
+								hasCounter = true
+							end
+						end
+						if hasCounter then
+							local states, key, first, last = description, storageId, startValue, endValue
+							mission.description = function(player)
+								local value = player:getStorageValue(key, 0)
+								local text
+								for current = last, first, -1 do
+									if value == current and states[current] then
+										text = states[current]
+										break
+									end
+								end
+								if not text then
+									return "An error has occurred, please contact a gamemaster."
+								end
+								text = text:gsub("|COUNTER:(%d+)|", function(counterKey)
+									return tostring(math.max(player:getStorageValue(tonumber(counterKey), 0), 0))
+								end)
+								return (text:gsub("\\n", "\n"))
+							end
+						end
 					end
 
 					missions[#missions + 1] = mission
@@ -91,6 +124,10 @@ function xmlQuest.onStartup()
 	print(string.format(">> Quests loaded: %d quests, %d missions%s", questCount, missionCount,
 		skipped > 0 and string.format(" (%d skipped)", skipped) or ""))
 	return true
+end
+
+function xmlQuest.onStartup()
+	return loadXmlQuests()
 end
 
 xmlQuest:register()

@@ -19,16 +19,16 @@ monster.bosstiary = {
 	bossRace = RARITY_BANE,
 }
 
-monster.health = 25850
-monster.maxHealth = 25850
+monster.health = 400000
+monster.maxHealth = 400000
 monster.race = "blood"
 monster.corpse = 6068
-monster.speed = 165
+monster.speed = 330
 monster.manaCost = 0
 
 monster.changeTarget = {
 	interval = 5000,
-	chance = 8,
+	chance = 15,
 }
 
 monster.strategiesTarget = {
@@ -122,30 +122,35 @@ monster.loot = {
 }
 
 monster.attacks = {
-	{ name = "melee", interval = 2000, chance = 100, minDamage = 0, maxDamage = -910 },
-	{ name = "combat", interval = 1000, chance = 11, type = COMBAT_ENERGYDAMAGE, minDamage = -250, maxDamage = -819, length = 8, spread = 3, effect = CONST_ME_PURPLEENERGY, target = false },
-	{ name = "combat", interval = 2000, chance = 14, type = COMBAT_MANADRAIN, minDamage = -90, maxDamage = -500, radius = 5, effect = CONST_ME_STUN, target = false },
-	{ name = "combat", interval = 1000, chance = 11, type = COMBAT_FIREDAMAGE, minDamage = -50, maxDamage = -520, radius = 5, effect = CONST_ME_FIREAREA, target = true },
-	{ name = "combat", interval = 2000, chance = 5, type = COMBAT_LIFEDRAIN, minDamage = 0, maxDamage = -150, radius = 7, effect = CONST_ME_POFF, target = false },
+	{ name = "melee", interval = 2000, chance = 100, minDamage = 0, maxDamage = -2400 },
+	{ name = "combat", interval = 2000, chance = 10, type = COMBAT_LIFEDRAIN, minDamage = 0, maxDamage = -1500, range = 4, effect = CONST_ME_MAGIC_RED, target = true },
+	{ name = "combat", interval = 2000, chance = 15, type = COMBAT_DEATHDAMAGE, minDamage = 0, maxDamage = -1500, length = 7, spread = 3, effect = CONST_ME_MORTAREA, target = false },
+	{ name = "combat", interval = 2000, chance = 15, type = COMBAT_DEATHDAMAGE, minDamage = 0, maxDamage = -300, radius = 4, effect = CONST_ME_SMALLCLOUDS, target = false },
+	-- fire
+	{ name = "condition", interval = 3000, chance = 20, target = true, condition =
+	{ type = CONDITION_FIRE, minDamage = -30, maxDamage = -30, radius = 4, effect = CONST_ME_EXPLOSIONHIT } },
+	{ name = "combat", interval = 1000, chance = 13, type = COMBAT_MANADRAIN, minDamage = -180, maxDamage = -600, radius = 5, effect = CONST_ME_WATERSPLASH, target = false },
 }
 
 monster.defenses = {
-	defense = 65,
-	armor = 70,
-	{ name = "combat", interval = 1000, chance = 11, type = COMBAT_HEALING, minDamage = 400, maxDamage = 900, effect = CONST_ME_MAGIC_GREEN, target = false },
+	defense = 90,
+	armor = 90,
+	{ name = "combat", interval = 2000, chance = 50, type = COMBAT_HEALING, minDamage = 40, maxDamage = 60, effect = CONST_ME_MAGIC_GREEN, target = false },
+	{ name = "combat", interval = 2000, chance = 50, type = COMBAT_HEALING, minDamage = 400, maxDamage = 600, effect = CONST_ME_MAGIC_GREEN, target = false },
+	{ name = "invisible", interval = 1000, chance = 5, effect = CONST_ME_MAGIC_BLUE },
 }
 
 monster.elements = {
-	{ type = COMBAT_PHYSICALDAMAGE, percent = 98 },
-	{ type = COMBAT_ENERGYDAMAGE, percent = 98 },
-	{ type = COMBAT_EARTHDAMAGE, percent = 98 },
-	{ type = COMBAT_FIREDAMAGE, percent = 98 },
-	{ type = COMBAT_LIFEDRAIN, percent = 100 },
+	{ type = COMBAT_PHYSICALDAMAGE, percent = 0 },
+	{ type = COMBAT_ENERGYDAMAGE, percent = 0 },
+	{ type = COMBAT_EARTHDAMAGE, percent = 0 },
+	{ type = COMBAT_FIREDAMAGE, percent = 0 },
+	{ type = COMBAT_LIFEDRAIN, percent = 0 },
 	{ type = COMBAT_MANADRAIN, percent = 0 },
-	{ type = COMBAT_DROWNDAMAGE, percent = -205 },
-	{ type = COMBAT_ICEDAMAGE, percent = 98 },
-	{ type = COMBAT_HOLYDAMAGE, percent = 95 },
-	{ type = COMBAT_DEATHDAMAGE, percent = 98 },
+	{ type = COMBAT_DROWNDAMAGE, percent = 0 },
+	{ type = COMBAT_ICEDAMAGE, percent = 0 },
+	{ type = COMBAT_HOLYDAMAGE, percent = 0 },
+	{ type = COMBAT_DEATHDAMAGE, percent = 0 },
 }
 
 monster.immunities = {
@@ -154,5 +159,7 @@ monster.immunities = {
 	{ type = "invisible", condition = true },
 	{ type = "bleed", condition = false },
 }
+
+monster.events = { "InquisitionBossDeath" }
 
 mType:register(monster)

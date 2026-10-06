@@ -246,7 +246,7 @@ Storages:
 		grade = 1,
 		points = 1,
 		secret = true,
-		description = "Ah, the smell of the sea! Standing at the shore and casting a line is one of your favourite activities. For you, fishingis relaxing - and at the same time, providing easy food. Perfect!"
+		description = "Ah, the smell of the sea! Standing at the shore and casting a line is one of your favourite activities. For you, fishing is relaxing - and at the same time, providing easy food. Perfect!"
 	},
 	[37] = {
 		name = "High-Flyer",
@@ -1303,7 +1303,7 @@ Storages:
 		grade = 1,
 		points = 2,
 		secret = true,
-		description = "You have sailed the nether seas with the Ghost Captain several times. The dangers of the nether have become familiar to you and unexperienced travelers turn to you for advice."
+		description = "You have sailed the nether seas with the Ghost Captain several times. The dangers of the nether have become familiar to you and inexperienced travelers turn to you for advice."
 	},
 	[200] = {
 		name = "True Colours",
@@ -1465,7 +1465,7 @@ Storages:
 		name = "Hissing Downfall",
 		grade = 1,
 		points = 2,
-		description = "You've vansquished the Noxious Spawn and his serpentine heart."
+		description = "You've vanquished the Noxious Spawn and his serpentine heart."
 	},
 	[224] = {
 		name = "Just Cracked Me Up!",
@@ -1514,7 +1514,7 @@ Storages:
 		name = "Something Smells",
 		grade = 1,
 		points = 1,
-		description = "You've exinguished the Sulphur Scuttler's gas clouds and made the air in his cave a little better... at least for a while."
+		description = "You've extinguished the Sulphur Scuttler's gas clouds and made the air in his cave a little better... at least for a while."
 	},
 	[232] = {
 		name = "Spareribs for Dinner",
@@ -1582,7 +1582,7 @@ Storages:
 		name = "Death Song",
 		grade = 1,
 		points = 3,
-		description = "You hushed the songs of war in the black depths by sliencing more than three hundred Deepling Spellsingers."
+		description = "You hushed the songs of war in the black depths by silencing more than three hundred Deepling Spellsingers."
 	},
 	[243] = {
 		name = "Depth Dwellers",
@@ -2018,7 +2018,7 @@ Storages:
 		grade = 1,
 		points = 2,
 		secret = true,
-		description = "Helping a poor, stupid goblin to feed his starving children and wifes feels good ... if you'd only get rid of the strange feeling that you're missing something."
+		description = "Helping a poor, stupid goblin to feed his starving children and wives feels good ... if you'd only get rid of the strange feeling that you're missing something."
 	},
 	[315] = {
 		name = "True Dedication",
@@ -2048,7 +2048,7 @@ Storages:
 		name = "Cave Completionist",
 		grade = 1,
 		points = 2,
-		description = "	You have helped the gnomes of the spike in securing the caves and explored enough of the lightles depths to earn you a complete cave explorers outfit. Well done!"
+		description = "	You have helped the gnomes of the spike in securing the caves and explored enough of the lightless depths to earn you a complete cave explorers outfit. Well done!"
 	},
 
 	-- 10.3
@@ -2099,7 +2099,7 @@ Storages:
 		name = "Prison Break",
 		grade = 3,
 		points = 8,
-		description = "Gaz'haragoth... a day to remember! Your world accomplished someting really big - and you have been part of it!"
+		description = "Gaz'haragoth... a day to remember! Your world accomplished something really big - and you have been part of it!"
 	},
 	[327] = {
 		name = "Sleepwalking",
@@ -2279,7 +2279,7 @@ Storages:
 		name = "The Professor's Nut",
 		grade = 1,
 		points = 3,
-		description = "He seriously stored away a wallnut? That was a nutty professor indeed."
+		description = "He seriously stored away a walnut? That was a nutty professor indeed."
 	},
 	[355] = {
 		name = "Wail of the Banshee",
@@ -2520,7 +2520,7 @@ Storages:
 		name = "Hat Hunter",
 		grade = 2,
 		points = 5,
-		description = "You sucessfully fought against all odds to protect your world from an ascending god! – You weren't there for the hat only after all?"
+		description = "You successfully fought against all odds to protect your world from an ascending god! – You weren't there for the hat only after all?"
 	},
 	[394] = {
 		name = "Ogre Chef",
@@ -2546,14 +2546,214 @@ Storages:
 		name = "Ender of the End",
 		grade = 2,
 		points = 5,
-		description = "You have entered the heart of destruction and valiantly defeated the world devourer. By your actions you have postponed the end of the world — at least for a while."
+		description = "You have entered the heart of destruction and valiantly defeated the world devourer. By your actions you have postponed the end of the world, at least for a while."
 	},
 	[398] = {
 		name = "Vortex Tamer",
 		grade = 2,
 		points = 5,
 		description = "After a long journey and dedication you were favoured by fortune and have tamed all three elusive beasts of the vortex. Unless the Vortexion decides you're a tasty morsel you can enjoy your small stable of ravaging beasts from beyond."
-	}
+	},
+	-- Milestones -- BackpackOT
+	-- Everything above this line is quest-, item- or NPC-driven, which meant a
+	-- character could play for hours and earn nothing at all. These are granted
+	-- by data/scripts/creaturescripts/achievements/achievements_advance.lua on
+	-- onAdvance, and retroactively on login for characters that passed the mark
+	-- before this existed.
+	-- (!) Ids must stay contiguous: ACHIEVEMENT_LAST is #achievements, and a
+	-- gap would truncate the list.
+	[399] = {
+		name = "Out of the Shallows",
+		grade = 1,
+		points = 1,
+		description = "Level 20. The part of the world that was trying to kill you at level 5 has stopped paying attention, and you have started looking further out than the next screen."
+	},
+	[400] = {
+		name = "Standing on Fifty",
+		grade = 1,
+		points = 2,
+		description = "Level 50. One more and the Talent Compass opens, and every level after this one is also a point. You are standing on the edge of the long half of a character."
+	},
+	[401] = {
+		name = "Century",
+		grade = 2,
+		points = 3,
+		description = "Level 100. Three digits. Nobody arrives here by accident, and nobody arrives here quickly."
+	},
+	[402] = {
+		name = "The Long Road",
+		grade = 2,
+		points = 4,
+		description = "Level 150. The road stopped having landmarks a while ago. You kept walking anyway."
+	},
+	[403] = {
+		name = "Two Hundred Deep",
+		grade = 2,
+		points = 5,
+		description = "Level 200. There is very little left in this world that can be described as a surprise."
+	},
+	[404] = {
+		name = "Veteran of the Long Climb",
+		grade = 3,
+		points = 6,
+		description = "Level 300. Most characters are a season. You are a habit."
+	},
+	[405] = {
+		name = "Written in the Ledger",
+		grade = 3,
+		points = 8,
+		description = "Level 500. Old Man Bao keeps a ledger of the ones who kept going. You are in it, and there is room on that page for very few."
+	},
+	[406] = {
+		name = "First Spark",
+		grade = 1,
+		points = 2,
+		description = "Magic level 20. The words have stopped being words you are reading and started being words you are saying."
+	},
+	[407] = {
+		name = "Conduit",
+		grade = 2,
+		points = 4,
+		description = "Magic level 50. Power no longer passes through you so much as it waits in you, which is a different and more useful thing."
+	},
+	[408] = {
+		name = "Storm in a Skull",
+		grade = 2,
+		points = 5,
+		description = "Magic level 80. There is weather in your head now. You have learned to point it."
+	},
+	[409] = {
+		name = "Archmagus",
+		grade = 3,
+		points = 6,
+		description = "Magic level 100. There is no longer a spell you cannot afford, only spells nobody has written down yet."
+	},
+	[410] = {
+		name = "Bare Knuckle",
+		grade = 1,
+		points = 2,
+		description = "Fist fighting 40. You have won an argument with nothing in your hands, and then you did it again until it stopped being luck."
+	},
+	[411] = {
+		name = "Hands Like Anvils",
+		grade = 2,
+		points = 4,
+		description = "Fist fighting 80. Somewhere along the way your hands stopped being the soft part."
+	},
+	[412] = {
+		name = "Unarmed and Unbothered",
+		grade = 3,
+		points = 6,
+		description = "Fist fighting 110. You are carrying a weapon out of politeness."
+	},
+	[413] = {
+		name = "Blunt Instrument",
+		grade = 1,
+		points = 2,
+		description = "Club fighting 40. No edge, no finesse, no argument."
+	},
+	[414] = {
+		name = "Concussion Specialist",
+		grade = 2,
+		points = 4,
+		description = "Club fighting 80. A club solves a narrow range of problems extremely well, and you have found all of them."
+	},
+	[415] = {
+		name = "The Whole Point of a Club",
+		grade = 3,
+		points = 6,
+		description = "Club fighting 110. It has no point. That has never once slowed you down."
+	},
+	[416] = {
+		name = "Edge Work",
+		grade = 1,
+		points = 2,
+		description = "Sword fighting 40. The blade goes where you meant it to more often than it does not, which is where everyone starts."
+	},
+	[417] = {
+		name = "Swordsman",
+		grade = 2,
+		points = 4,
+		description = "Sword fighting 80. You have stopped swinging and started cutting."
+	},
+	[418] = {
+		name = "Nothing Left to Parry",
+		grade = 3,
+		points = 6,
+		description = "Sword fighting 110. There is a version of this fight where you lose, and it is not one anybody here can arrange."
+	},
+	[419] = {
+		name = "Splitter",
+		grade = 1,
+		points = 2,
+		description = "Axe fighting 40. An axe asks one question and you have learned to ask it loudly."
+	},
+	[420] = {
+		name = "Axeman",
+		grade = 2,
+		points = 4,
+		description = "Axe fighting 80. Weight, arc, follow through. There was never anything else to it."
+	},
+	[421] = {
+		name = "Timber",
+		grade = 3,
+		points = 6,
+		description = "Axe fighting 110. Things fall over when you arrive. Some of them were not even in the way."
+	},
+	[422] = {
+		name = "Steady Hand",
+		grade = 1,
+		points = 2,
+		description = "Distance fighting 40. The shot lands where you looked, and you have stopped being surprised by it."
+	},
+	[423] = {
+		name = "Dead Eye",
+		grade = 2,
+		points = 4,
+		description = "Distance fighting 80. Range has quietly become a wall between you and everything that wants to reach you."
+	},
+	[424] = {
+		name = "Never Saw It Coming",
+		grade = 3,
+		points = 6,
+		description = "Distance fighting 110. Most of what you kill never learns which direction you were standing in."
+	},
+	[425] = {
+		name = "Behind the Wall",
+		grade = 1,
+		points = 2,
+		description = "Shielding 40. You have worked out that the fight you survive is worth more than the fight you win fast."
+	},
+	[426] = {
+		name = "Immovable",
+		grade = 2,
+		points = 4,
+		description = "Shielding 80. Things bounce. That is the entire strategy and it is a very good one."
+	},
+	[427] = {
+		name = "The Wall Itself",
+		grade = 3,
+		points = 6,
+		description = "Shielding 110. Your party has stopped checking whether you are still standing. That is trust, and you earned it one blocked hit at a time."
+	},
+	[428] = {
+		name = "Patience",
+		grade = 1,
+		points = 2,
+		description = "Fishing 40. Hours of nothing, on purpose, repeatedly. There is a kind of person who can do that, and it turns out to be you."
+	},
+	[429] = {
+		name = "Master of the Slow Hour",
+		grade = 2,
+		points = 4,
+		description = "Fishing 80. Everyone else went to fight something. You stayed by the water and got better at waiting than they will ever be at anything."
+	},
+	[430] = {
+		name = "Curse of the Seven",
+		grade = 3,
+		points = 8,
+		description = "You brought down all seven pharaohs and carried their marks, then Ashmunrah himself. Seshat lifted the curse and gave you the Helmet of the Ancients."
+	},
 }
 
 ACHIEVEMENT_FIRST = 1

@@ -163,6 +163,54 @@ local function roshamuulCallback(cid, message, keywords, parameters, node)
 end
 keywordHandler:addKeyword({ "roshamuul" }, roshamuulCallback, {})
 
+-- The Inquisition: Henricus sends every recruit here first. Shun clears the
+-- world once a million monsters have fallen in total (the kill ledger the
+-- console keeps in monster_kills_daily, flushed every 30 seconds).
+local INQUISITION_KILLS_NEEDED = 1000000
+
+local function worldKillTotal()
+	local resultId = db.storeQuery("SELECT COALESCE(SUM(`kills`), 0) AS `total` FROM `monster_kills_daily`")
+	if not resultId then
+		return 0
+	end
+	local total = result.getNumber(resultId, "total")
+	result.free(resultId)
+	return total
+end
+
+local function inquisitionCallback(cid, message, keywords, parameters, node)
+	local player = Player(cid)
+	if not player then
+		return true
+	end
+
+	local S = Storage.TheInquisition
+	local state = player:getStorageValue(S.Mission01)
+	if state < 1 then
+		npcHandler:say("The inquisition? Henricus and his little crusade. If he wants my opinion, he can send someone worth sending. Speak to him.", cid)
+	elseif state >= 2 then
+		npcHandler:say("I have already told you. The world is ready. Go and tell Henricus, and let him play at war.", cid)
+	else
+		local total = worldKillTotal()
+		if total >= INQUISITION_KILLS_NEEDED then
+			npcHandler:say({
+				"Henricus wants to know if the world is ready for his holy war? Hm. I have counted. More than a million creatures have fallen. The world is tired of killing, and ready for what comes next. ...",
+				"Tell Henricus that the world is ready. Run along."
+			}, cid)
+			player:setStorageValue(S.Mission01, 2)
+		else
+			npcHandler:say(string.format(
+				"Henricus wants to know if the world is ready? Not yet. The world has seen %s creatures fall, and I want a million before I let the inquisition march. Come back when more blood has soaked the ground.",
+				string.format("%d", total):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", "")
+			), cid)
+		end
+	end
+	return true
+end
+
+keywordHandler:addKeyword({ "inquisition" }, inquisitionCallback, {})
+keywordHandler:addKeyword({ "henricus" }, inquisitionCallback, {})
+
 -- Ambient voice lines -- calm, philosophical, arrogant, sinister without
 -- threatening, contrasting temporary things (creatures, kings, gold) against
 -- permanent ones (mountains, stone, the world itself). Same tone as the

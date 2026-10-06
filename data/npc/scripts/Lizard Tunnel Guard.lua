@@ -1,3 +1,6 @@
+-- Lizard Tunnel Guard: the old New Frontier / Children of the Revolution / Wrath of the Emperor dialogue was
+-- removed on 2026-10-04. This NPC now only chats. (The new Wrath of the Emperor starts with Zlak
+-- in Lizard City.)
 local keywordHandler = KeywordHandler:new()
 local npcHandler = NpcHandler:new(keywordHandler)
 NpcSystem.parseParameters(npcHandler)
@@ -5,18 +8,15 @@ NpcSystem.parseParameters(npcHandler)
 function onCreatureAppear(cid)			npcHandler:onCreatureAppear(cid)			end
 function onCreatureDisappear(cid)		npcHandler:onCreatureDisappear(cid)			end
 function onCreatureSay(cid, type, msg)		npcHandler:onCreatureSay(cid, type, msg)		end
-function onThink()		npcHandler:onThink()		end
+function onThink()				npcHandler:onThink()					end
 
-local function greetCallback(cid)
-	local player = Player(cid)
-	if player:getStorageValue(Storage.WrathoftheEmperor.Questline) >= 2 then
-		player:setStorageValue(Storage.WrathoftheEmperor.GuardcaughtYou, 1)
-		player:setStorageValue(Storage.WrathoftheEmperor.CrateStatus, 0)
-		player:teleportTo(Position(33361, 31206, 8))
-		player:say("The guards have spotted you. You were forcibly dragged into a small cell. It looks like you need to build another disguise.", TALKTYPE_MONSTER_SAY)
-	end
-	return true
-end
+keywordHandler:addKeyword({ "job" }, StdModule.say, { npcHandler = npcHandler, text = "I guard ze tunnel." })
+keywordHandler:addKeyword({ "name" }, StdModule.say, { npcHandler = npcHandler, text = "I am Lizard Tunnel Guard." })
+keywordHandler:addKeyword({ "mission" }, StdModule.say, { npcHandler = npcHandler, text = "I have no work for you. Zlak in Lizard City might." })
+keywordHandler:addKeyword({ "quest" }, StdModule.say, { npcHandler = npcHandler, text = "I have no work for you. Zlak in Lizard City might." })
 
-npcHandler:setCallback(CALLBACK_GREET, greetCallback)
+npcHandler:setMessage(MESSAGE_GREET, "Zzz. Move along.")
+npcHandler:setMessage(MESSAGE_FAREWELL, "Farewell.")
+npcHandler:setMessage(MESSAGE_WALKAWAY, "Farewell.")
+
 npcHandler:addModule(FocusModule:new())

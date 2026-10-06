@@ -6481,246 +6481,291 @@
 	</item>
 	<item id="3148" article="a" name="destroy field rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adito grav" />
 		<attribute key="charges" value="3" />
 		<attribute key="weight" value="70" />
 	</item>
 	<item id="3149" article="an" name="energy bomb rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adevo mas vis" />
 		<attribute key="charges" value="2" />
 		<attribute key="weight" value="105" />
 	</item>
 	<item fromid="3150" toid="3151" article="a" name="spell rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="3152" article="an" name="intense healing rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adura gran" />
 		<attribute key="charges" value="1" />
 		<attribute key="weight" value="210" />
 	</item>
 	<item id="3153" article="a" name="cure poison rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adana pox" />
 		<attribute key="charges" value="1" />
 		<attribute key="weight" value="210" />
 	</item>
 	<item id="3154" article="a" name="spell rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="3155" article="a" name="sudden death rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adori gran mort" />
 		<attribute key="charges" value="3" />
 		<attribute key="weight" value="70" />
 	</item>
 	<item id="3156" article="a" name="wild growth rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adevo grav vita" />
 		<attribute key="charges" value="2" />
 		<attribute key="weight" value="105" />
 	</item>
 	<item id="3157" article="a" name="spell rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="3158" article="an" name="icicle rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adori frigo" />
 		<attribute key="charges" value="5" />
 		<attribute key="weight" value="42" />
 	</item>
 	<item id="3159" article="a" name="spell rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="3160" article="an" name="ultimate healing rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adura vita" />
 		<attribute key="charges" value="1" />
 		<attribute key="weight" value="210" />
 	</item>
 	<item id="3161" article="an" name="avalanche rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adori mas frigo" />
 		<attribute key="charges" value="4" />
 		<attribute key="weight" value="52" />
 	</item>
 	<item fromid="3162" toid="3163" article="a" name="spell rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="3164" article="an" name="energy field rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adevo grav vis" />
 		<attribute key="charges" value="3" />
 		<attribute key="weight" value="70" />
 	</item>
 	<item id="3165" article="a" name="paralyse rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adana ani" />
 		<attribute key="charges" value="1" />
 		<attribute key="weight" value="210" />
 	</item>
 	<item id="3166" article="an" name="energy wall rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adevo mas grav vis" />
 		<attribute key="charges" value="4" />
 		<attribute key="weight" value="52" />
 	</item>
 	<item fromid="3167" toid="3171" article="a" name="spell rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="3172" article="a" name="poison field rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adevo grav pox" />
 		<attribute key="charges" value="3" />
 		<attribute key="weight" value="70" />
 	</item>
 	<item id="3173" article="a" name="poison bomb rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adevo mas pox" />
 		<attribute key="charges" value="2" />
 		<attribute key="weight" value="105" />
 	</item>
 	<item id="3174" article="a" name="light magic missile rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adori min vis" />
 		<attribute key="charges" value="10" />
 		<attribute key="weight" value="21" />
 	</item>
 	<item id="3175" article="a" name="stone shower rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adori mas tera" />
 		<attribute key="charges" value="4" />
 		<attribute key="weight" value="52" />
 	</item>
 	<item id="3176" article="a" name="poison wall rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adevo mas grav pox" />
 		<attribute key="charges" value="4" />
 		<attribute key="weight" value="52" />
 	</item>
 	<item id="3177" article="a" name="convince creature rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adeta sio" />
 		<attribute key="charges" value="1" />
 		<attribute key="weight" value="210" />
 	</item>
 	<item id="3178" article="a" name="chameleon rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adevo ina" />
 		<attribute key="charges" value="1" />
 		<attribute key="weight" value="210" />
 	</item>
 	<item id="3179" article="a" name="stalagmite rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adori tera" />
 		<attribute key="charges" value="10" />
 		<attribute key="weight" value="21" />
 	</item>
 	<item id="3180" article="a" name="magic wall rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adevo grav tera" />
 		<attribute key="charges" value="3" />
 		<attribute key="weight" value="70" />
 	</item>
 	<item id="3181" article="a" name="spell rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="3182" article="a" name="holy missile rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adori san" />
 		<attribute key="charges" value="5" />
 		<attribute key="weight" value="42" />
 	</item>
 	<item fromid="3183" toid="3187" article="a" name="spell rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="3188" article="a" name="fire field rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adevo grav flam" />
 		<attribute key="charges" value="3" />
 		<attribute key="weight" value="70" />
 	</item>
 	<item id="3189" article="a" name="fireball rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adori flam" />
 		<attribute key="charges" value="5" />
 		<attribute key="weight" value="42" />
 	</item>
 	<item id="3190" article="a" name="fire wall rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adevo mas grav flam" />
 		<attribute key="charges" value="4" />
 		<attribute key="weight" value="52" />
 	</item>
 	<item id="3191" article="a" name="great fireball rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adori mas flam" />
 		<attribute key="charges" value="4" />
 		<attribute key="weight" value="52" />
 	</item>
 	<item id="3192" article="a" name="fire bomb rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adevo mas flam" />
 		<attribute key="charges" value="2" />
 		<attribute key="weight" value="105" />
 	</item>
 	<item fromid="3193" toid="3194" article="a" name="spell rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="3195" article="a" name="soulfire rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adevo res flam" />
 		<attribute key="charges" value="3" />
 		<attribute key="weight" value="70" />
 	</item>
 	<item id="3196" article="a" name="spell rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="3197" article="a" name="disintegrate rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adito tera" />
 		<attribute key="charges" value="3" />
 		<attribute key="weight" value="70" />
 	</item>
 	<item id="3198" article="a" name="heavy magic missile rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adori vis" />
 		<attribute key="charges" value="10" />
 		<attribute key="weight" value="21" />
 	</item>
 	<item id="3199" article="a" name="spell rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="3200" article="an" name="explosion rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adevo mas hur" />
 		<attribute key="charges" value="6" />
 		<attribute key="weight" value="35" />
 	</item>
 	<item id="3201" article="a" name="spell rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="3202" article="a" name="thunderstorm rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adori mas vis" />
 		<attribute key="charges" value="4" />
 		<attribute key="weight" value="52" />
 	</item>
 	<item id="3203" article="an" name="animate dead rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adana mort" />
 		<attribute key="charges" value="1" />
 		<attribute key="weight" value="210" />
@@ -6849,7 +6894,7 @@
 	</item>
 	<item id="3230" article="a" name="full helmet of the ancients">
 		<attribute key="description" value="The gem is glowing with power" />
-		<attribute key="duration" value="1800" />
+		<attribute key="duration" value="43200" />
 		<attribute key="decayTo" value="3229" />
 		<attribute key="armor" value="11" />
 		<attribute key="weight" value="2760" />
@@ -6878,11 +6923,9 @@
 		<attribute key="decayTo" value="0" />
 		<attribute key="weight" value="300" />
 	</item>
-	<item id="3236" article="a" name="blue note">
-		<attribute key="description" value="The blue crystal is softly humming a ghostly melody. It seems to be rotting rapidly" />
-		<attribute key="duration" value="86400" />
-		<attribute key="decayTo" value="0" />
-		<attribute key="weight" value="250" />
+	<item id="3236" article="a" name="rune crafter's contract">
+		<attribute key="description" value="A hireling who reads this will learn to bake runes to order. Use it on your hireling." />
+		<attribute key="weight" value="200" />
 	</item>
 	<item id="3237" article="a" name="sword hilt">
 		<attribute key="description" value="This was once part of a formidable two handed weapon. It seems to be rotting rapidly" />
@@ -26956,7 +26999,7 @@
 	<item id="12368" name="magic wolf trap">
 	</item>
 	<item id="12369" article="a" name="captured wolf">
-		<attribute key="description" value="The trap has imobilized and shrunken the wolf" />
+		<attribute key="description" value="The trap has immobilized and shrunken the wolf" />
 		<attribute key="weight" value="5000" />
 	</item>
 	<item fromid="12379" toid="12386" name="rocky floor" />
@@ -31505,10 +31548,12 @@
 	</item>
 	<item id="17112" article="a" name="sorc and druid attack rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="weight" value="21" />
 	</item>
 	<item id="17113" article="a" name="healing rune for druids">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="weight" value="210" />
 	</item>
 	<item id="17114" name="RESERVED SPRITE" />
@@ -31900,10 +31945,12 @@
 	</item>
 	<item id="17511" article="a" name="tiny healing rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="weight" value="210" />
 	</item>
 	<item id="17512" article="a" name="lightest magic missile rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adori dis min vis" />
 		<attribute key="charges" value="10" />
 		<attribute key="weight" value="21" />
@@ -35424,7 +35471,7 @@
 		<attribute key="containersize" value="32" />
 	</item>
 	<item id="19251" article="a" name="smoking coal">
-		<attribute key="description" value="This coal is smoking and emmits quite a stench" />
+		<attribute key="description" value="This coal is smoking and emits quite a stench" />
 		<attribute key="weight" value="1000" />
 	</item>
 	<item fromid="19252" toid="19270" article="a" name="smoke">
@@ -38178,12 +38225,14 @@
 	</item>
 	<item id="21351" article="a" name="light stone shower rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adori infir mas tera" />
 		<attribute key="charges" value="4" />
 		<attribute key="weight" value="210" />
 	</item>
 	<item id="21352" article="a" name="lightest missile rune">
 		<attribute key="type" value="rune" />
+		<attribute key="stacksize" value="20" />
 		<attribute key="runespellname" value="adori infir vis" />
 		<attribute key="charges" value="4" />
 		<attribute key="weight" value="210" />
@@ -38884,7 +38933,7 @@
 		<attribute key="weight" value="500" />
 	</item>
 	<item id="21869" article="a" name="soft piece of cloth">
-		<attribute key="description" value="Though beatuifully woven, it seems rather thin and airy" />
+		<attribute key="description" value="Though beautifully woven, it seems rather thin and airy" />
 		<attribute key="weight" value="500" />
 	</item>
 	<item id="21870" article="an" name="airtight cloth">
@@ -42302,7 +42351,7 @@
 		<attribute key="weight" value="850" />
 	</item>
 	<item id="23686" article="a" name="devourer core">
-		<attribute key="description" value="The core of the devourer has the power to provide you with a powerful charge that allows you to challenge him again imediately" />
+		<attribute key="description" value="The core of the devourer has the power to provide you with a powerful charge that allows you to challenge him again immediately" />
 		<attribute key="weight" value="560" />
 	</item>
 	<item id="23687" article="a" name="burnt out devourer core">
@@ -42390,7 +42439,7 @@
 		</item>
 	<item id="23709" article="a" name="dog house">
 		<attribute key="wrapableto" value="23398" />
-		<attribute key="description" value="This dog is waiting qutite eagerly for attention" />
+		<attribute key="description" value="This dog is waiting quite eagerly for attention" />
 		<attribute key="duration" value="2" />
 		<attribute key="decayTo" value="23697" />
 		</item>
@@ -42508,9 +42557,17 @@
 		<attribute key="description" value="This birdcage is empty. It seems uniquely prepared to host a specific species of birds" />
 		<attribute key="weight" value="1000" />
 	</item>
-	<item id="23813" article="an" name="occupied birdcage">
-		<attribute key="description" value="This birdcage is currently the home of a confused parrot" />
+	<!-- Was "occupied birdcage", unused by loot, shops, scripts and the map.
+	     One id for every species: which animal is inside is a custom attribute
+	     stamped on the item when the store delivers it, the same way a hireling
+	     lamp carries the id of the hireling it holds. movable="0" for the same
+	     reason the lamp is: a pet cannot be traded away.
+	     Flags in items.otb are 96 (PICKUPABLE|MOVEABLE), identical to the
+	     lamp's, which is the proof that a plain "use" works on it. -->
+	<item id="23813" article="a" name="pet basket">
+		<attribute key="description" value="Something is sleeping in here. Open it inside your own house." />
 		<attribute key="weight" value="1500" />
+		<attribute key="movable" value="0" />
 	</item>
 	<item id="23814" article="a" name="fertile soil">
 		<attribute key="description" value="This soil looks moist and fertile." />
@@ -43126,17 +43183,25 @@
 	<item fromid="24954" toid="24959" article="a" name="part of a rune">
 		<attribute key="weight" value="850" />
 	</item>
-	<!-- Repurposed from "astral shaper rune" for Old Man Bao's Dormant trade.
+	<!-- Repurposed from "astral shaper rune" for Old Man Bao's rarity trade.
 	     Nothing else referenced this id. The Astral Shaper quest (Albinius)
 	     now grants the Stone Rhino mount directly instead of handing over this
 	     rune to be used for taming, so that chain is one step shorter and
 	     otherwise unchanged. showcharges makes the remaining uses visible in
-	     the item's name, which is the whole point of a charge carrier. -->
-	<item id="24960" article="a" name="dormancy rune" plural="dormancy runes">
-		<attribute key="description" value="Use its charge at a Dormant Shrine or with a Dormant Waker to put eligible equipment to sleep. What wakes up is anyone's guess." />
+	     the item's name, which is the whole point of a charge carrier.
+	     Renamed from "dormancy rune" on 2026-09-11, when Dormant became
+	     Unrevealed; it is now used directly on the equipment. -->
+	<item id="24960" article="a" name="rune of mystery" plural="runes of mystery">
+		<attribute key="description" value="Use it on a piece of equipment that has no rarity yet and the item becomes Unrevealed. Reveal it with a Revealer Torch or at a revealer shrine." />
 		<attribute key="weight" value="120" />
 		<attribute key="charges" value="1" />
 		<attribute key="showcharges" value="1" />
+		<!-- Stackable as of 2026-09-12 (items.otb FLAG_STACKABLE + Tibia.dat
+		     ThingAttrStackable patched to match) so the client draws the charge
+		     count as a corner badge, same as a real spell rune -- previously
+		     charges only ever showed in the look text. Server flips this bit
+		     from a binary edit, not from an xml key; stacksize is real here. -->
+		<attribute key="stacksize" value="100" />
 	</item>
 	<item id="24961" article="a" name="tiger eye" plural="tiger eyes">
 		<attribute key="weight" value="120" />
@@ -43251,7 +43316,12 @@
 		<attribute key="description" value="The rune has become inert and will need some hours to regain full strength" />
 		<attribute key="weight" value="850" />
 	</item>
-	<item fromid="25060" toid="25061" article="a" name="dormant shrine">
+	<!-- The temple shrines. "dormant shrine", then "imbuing shrine", until 2026-09-11; now named for
+	     what they are, like the house shrines below, and every one of them does
+	     the same single job as the Revealer Torch: reveal an Unrevealed item
+	     (data/scripts/actions/systems/imbuing_shrine_open.lua). -->
+	<item fromid="25060" toid="25061" article="a" name="revealer shrine">
+		<attribute key="description" value="Use it to reveal the rarity of an Unrevealed item you are carrying." />
 	</item>
 	<item id="25062" article="a" name="Pinata Dragon">
 		<attribute key="weight" value="3800" />
@@ -43392,13 +43462,16 @@
 	<item fromid="25091" toid="25100" article="a" name="time machine">
 		<attribute key="description" value="A strange mechanism designed to travel outside the boundaries of time." />
 	</item>
-	<item fromid="25101" toid="25102" article="an" name="imbuing shrine">
+	<item fromid="25101" toid="25102" article="a" name="revealer shrine">
+		<attribute key="description" value="Use it to reveal the rarity of an Unrevealed item you are carrying." />
 	</item>
-	<item id="25103" article="an" name="imbuing shrine">
+	<item id="25103" article="a" name="revealer shrine">
+		<attribute key="description" value="Use it to reveal the rarity of an Unrevealed item you are carrying." />
 		<attribute key="wrapableto" value="23398" />
 		<attribute key="rotateto" value="25104" />
 		</item>
-	<item id="25104" article="an" name="imbuing shrine">
+	<item id="25104" article="a" name="revealer shrine">
+		<attribute key="description" value="Use it to reveal the rarity of an Unrevealed item you are carrying." />
 		<attribute key="wrapableto" value="23398" />
 		<attribute key="rotateto" value="25103" />
 		</item>
@@ -43440,19 +43513,23 @@
 	<item fromid="25156" toid="25160" article="a" name="small lava pool" />
 	<item fromid="25161" toid="25165" article="a" name="small lava pillar" />
 	<item fromid="25166" toid="25173" article="a" name="dragon lair wall" />
-	<item id="25174" article="an" name="imbuing shrine">
+	<item id="25174" article="a" name="revealer shrine">
+		<attribute key="description" value="Use it to reveal the rarity of an Unrevealed item you are carrying." />
 		<attribute key="wrapableto" value="23398" />
 		<attribute key="rotateto" value="25175" />
 		</item>
-	<item id="25175" article="an" name="imbuing shrine">
+	<item id="25175" article="a" name="revealer shrine">
+		<attribute key="description" value="Use it to reveal the rarity of an Unrevealed item you are carrying." />
 		<attribute key="wrapableto" value="23398" />
 		<attribute key="rotateto" value="25174" />
 		</item>
-	<item id="25182" article="a" name="gilded imbuing shrine">
+	<item id="25182" article="a" name="gilded revealer shrine">
+		<attribute key="description" value="Use it to reveal the rarity of an Unrevealed item you are carrying." />
 		<attribute key="wrapableto" value="23398" />
 		<attribute key="rotateto" value="25183" />
 		</item>
-	<item id="25183" article="a" name="gilded imbuing shrine">
+	<item id="25183" article="a" name="gilded revealer shrine">
+		<attribute key="description" value="Use it to reveal the rarity of an Unrevealed item you are carrying." />
 		<attribute key="wrapableto" value="23398" />
 		<attribute key="rotateto" value="25182" />
 		</item>
@@ -44078,30 +44155,11 @@
 	</item>
 	<item id="25755" name="RESERVED SPRITE" />
 	<item id="25756" article="an" name="energized tile" />
-	<item id="25757" article="a" name="diamond arrow">
-		<attribute key="ammotype" value="arrow" />
-		<attribute key="attack" value="37" />
-		<attribute key="decayTo" value="0" />
-		<attribute key="duration" value="3600" />
-		<attribute key="maxhitchance" value="100" />
-		<attribute key="ammotype" value="arrow" />
-		<attribute key="shootType" value="diamondarrow" />
-		<attribute key="stopduration" value="0" />
-		<attribute key="showduration" value="1" />
-		<attribute key="maxhitchance" value="100" />
-		<attribute key="duration" value="3600" />
-		<attribute key="decayTo" value="0" />
-		<attribute key="attack" value="37" />
-		<attribute key="weight" value="80" />
-	</item>
 	<item id="25758" article="a" name="spectral bolt">
 		<attribute key="weaponType" value="ammunition" />
 		<attribute key="ammotype" value="bolt" />
 		<attribute key="shootType" value="spectralbolt" />
-		<attribute key="stopduration" value="0" />
-		<attribute key="showduration" value="1" />
 		<attribute key="maxhitchance" value="100" />
-		<attribute key="duration" value="3600" />
 		<attribute key="attack" value="78" />
 		<attribute key="weight" value="90" />
 		<attribute key="script" value="moveevent;weapon">
@@ -47772,7 +47830,7 @@
 	</item>
 	<item fromid="27728" toid="27834" name="RESERVED SPRITE" />
 	<item fromid="27835" toid="27838" article="a" name="painted stone floor">
-		<attribute key="description" value="A large white symbol has been painted accross the floor." />
+		<attribute key="description" value="A large white symbol has been painted across the floor." />
 	</item>
 	<item id="27839" article="a" name="joss stick">
 		<attribute key="description" value="An occult joss stick. Strangely it's still smoking." />
@@ -47845,7 +47903,7 @@
 		<attribute key="weight" value="1500" />
 	</item>
 	<item id="27934" article="a" name="knowledgeable book">
-		<attribute key="writeable" value="1" />
+		<attribute key="readable" value="1" />
 		<attribute key="maxtextlen" value="1500" />
 		<attribute key="weight" value="2000" />
 	</item>
@@ -48051,6 +48109,10 @@
 		<attribute key="weight" value="280" />
 	</item>
 	<item id="28487" name="RESERVED SPRITE" />
+	<!-- Was "parchment of dark knowledge": referenced nowhere by id OR by name,
+	     absent from the map, and already carrying FLAG_USEABLE in items.otb and
+	     ThingAttrMultiUse in both copies of Tibia.dat. The fourth supply
+	     contract; the other three are at 50979. -->
 	<item id="28488" article="a" name="parchment of dark knowledge">
 		<attribute key="description" value="Its power seems to seek a book to attach to" />
 		<attribute key="weight" value="200" />
@@ -49303,6 +49365,11 @@
 		<attribute key="containersize" value="20" />
 	</item>
 	<item fromid="28787" toid="28790" name="RESERVED SPRITE" />
+	<!-- (!) NOT free, despite carrying both usable-on-creature flags and being
+	     referenced nowhere BY ID: the Scourge of Oblivion drops it by NAME
+	     (data/monsters/quests/the_secret_library/bosses/). Repurposing it broke
+	     that drop with one "Unknown loot item" warning at boot and nothing
+	     else. The postal contract moved to 28488. Check names as well as ids. -->
 	<item id="28791" article="a" name="library ticket">
 		<attribute key="description" value="The initials are beautifully decorated and it is sealed with red wax" />
 		<attribute key="weight" value="850" />
@@ -51623,7 +51690,7 @@
 		<attribute key="armor" value="2" />
 		<attribute key="weight" value="490" />
 		<attribute key="script" value="moveevent">
-			<attribute key="level" value="220" />
+			<attribute key="level" value="200" />
 			<attribute key="slot" value="necklace" />
 		</attribute>
 	</item>
@@ -54369,7 +54436,7 @@
 		</attribute>
 	</item>
 	<item id="32098" article="a" name="traditional leather shoes">
-		<attribute key="description" value="Soled with sturdy orc hides, these tranditional Orcsoberfest leather shoes are robust and useful" />
+		<attribute key="description" value="Soled with sturdy orc hides, these traditional Orcsoberfest leather shoes are robust and useful" />
 		<attribute key="weight" value="500" />
 		<attribute key="script" value="moveevent">
 			<attribute key="slot" value="feet" />
@@ -60140,14 +60207,6 @@
 		<attribute key="wrapableto" value="23398" />
 		<attribute key="type" value="carpet" />
 		</item>
-	<item id="35901" article="a" name="diamond arrow">
-		<attribute key="weaponType" value="ammunition" />
-		<attribute key="ammotype" value="arrow" />
-		<attribute key="shootType" value="diamondarrow" />
-		<attribute key="maxhitchance" value="100" />
-		<attribute key="attack" value="37" />
-		<attribute key="weight" value="80" />
-	</item>
 	<item id="35902" article="a" name="spectral bolt">
 		<attribute key="weaponType" value="ammunition" />
 		<attribute key="ammotype" value="bolt" />
@@ -62824,23 +62883,32 @@
 		<attribute key="description" value="The album is completed and full of pictures, some of them drawn by yourself" />
 		<attribute key="weight" value="1300" />
 	</item>
-	<item id="37312" article="a" name="picture of a falcon banner">
+	<!-- Name signs. Eight framed plaques, one per theme: repurposed ids that
+	     were free by id AND by name, absent from the map, and already carrying
+	     FLAG_USEABLE in items.otb plus ThingAttrMultiUse in BOTH copies of
+	     Tibia.dat. Bought in the store, then used on the hireling that should
+	     be allowed to wear the sign; exactly how a job contract works. -->
+	<item id="37312" article="an" name="emberstone name plaque">
+		<attribute key="description" value="Dark stone with heat still in its seams. Use it on one of your hirelings and he may hang his name on it." />
 		<attribute key="weight" value="100" />
 	</item>
 	<item id="37313" article="a" name="palette and brushes">
 		<attribute key="weight" value="350" />
 	</item>
 	<item id="37317" article="a" name="Bp Coin" />
-	<item id="37321" article="a" name="Halls of Hope picture">
+	<item id="37321" article="a" name="royal velvet name plaque">
+		<attribute key="description" value="Purple velvet in a gilt frame. Use it on one of your hirelings and he may hang his name on it." />
 		<attribute key="weight" value="100" />
 	</item>
 	<item fromid="37331" toid="37332" article="a" name="time-particle extractor">
 		<attribute key="weight" value="900" />
 	</item>
-	<item id="37333" article="an" name="Adventurers' Guild picture">
+	<item id="37333" article="a" name="rose marble name plaque">
+		<attribute key="description" value="Veined rose marble. Use it on one of your hirelings and he may hang his name on it." />
 		<attribute key="weight" value="100" />
 	</item>
-	<item id="37334" article="a" name="picture of the Colossus">
+	<item id="37334" article="a" name="frost name slab">
+		<attribute key="description" value="A slab of clear ice that never melts. Use it on one of your hirelings and he may hang his name on it." />
 		<attribute key="weight" value="100" />
 	</item>
 	<item id="37335" article="a" name="black skull">
@@ -63064,16 +63132,20 @@
 	</item>
 	<item id="37399" article="a" name="painter" />
 	<item fromid="37400" toid="37405" article="a" name="painting booth" />
-	<item id="37406" article="a" name="picture of the Carlin bank">
-		<attribute key="weight" value="20" />
-	</item>
-	<item id="37407" article="a" name="picture of an elven house">
+	<item id="37406" article="an" name="iron name plate">
+		<attribute key="description" value="A riveted iron plate. Use it on one of your hirelings and he may hang his name on it." />
 		<attribute key="weight" value="100" />
 	</item>
-	<item id="37408" article="a" name="picture of Calcanea">
+	<item id="37407" article="an" name="oak name board">
+		<attribute key="description" value="A carved oak board. Use it on one of your hirelings and he may hang his name on it." />
 		<attribute key="weight" value="100" />
 	</item>
-	<item id="37409" article="a" name="picture of Venore's Statue">
+	<item id="37408" article="a" name="verdant name board">
+		<attribute key="description" value="Living wood, bound in green leaf. Use it on one of your hirelings and he may hang his name on it." />
+		<attribute key="weight" value="100" />
+	</item>
+	<item id="37409" article="a" name="brass name plaque">
+		<attribute key="description" value="A polished brass plaque. Use it on one of your hirelings and he may hang his name on it." />
 		<attribute key="weight" value="100" />
 	</item>
 	<item id="37410" article="a" name="commemorative platinum coin" />
@@ -65010,9 +65082,9 @@
 	<item id="39240" article="a" name="foam stalker spume">
 		<attribute key="weight" value="180" />
 	</item>
-	<item id="39241" article="a" name="dormant waker">
+	<item id="39241" article="a" name="revealer torch">
 		<attribute key="weight" value="95" />
-		<attribute key="description" value="A permanent tool for dormancy rituals anywhere. It replaces the need to return to a Dormant Shrine." />
+		<attribute key="description" value="Use it on an Unrevealed item you are carrying to reveal its rarity. It works exactly like a revealer shrine and is never used up." />
 	</item>
 	<item id="39242" article="an" name="empty bucket" editorsuffix="Timira">
 		<attribute key="weight" value="2000" />
@@ -66622,6 +66694,10 @@
 			<attribute key="vocation" value="Druid;true, Elder Druid" />
 		</attribute>
 		<attribute key="classification" value="4" />
+	</item>
+	<item id="40599" article="a" name="dormant stone">
+		<attribute key="description" value="Use it on a revealed item to empty one filled open slot, picked at random. It always works." />
+		<attribute key="weight" value="50" />
 	</item>
 	<item id="42050" article="a" name="dead iks">
 		<attribute key="decayTo" value="0" />
@@ -68845,52 +68921,52 @@
 		<attribute key="duration" value="10" />
 		<attribute key="decayTo" value="44529" />
 	</item>
-	<item id="44602" article="a" name="lesser guardian gem" plural="lesser guardian gems">
-		<attribute key="description" value="Shines with the strength of knights" />
+	<item id="44602" article="a" name="small knight gem" plural="small knight gems">
+		<attribute key="description" value="Reveal it in your Gems window. Only a knight can use it." />
 		<attribute key="weight" value="20" />
 	</item>
-	<item id="44603" article="a" name="guardian gem" plural="guardian gems">
-		<attribute key="description" value="Shines with the strength of knights" />
+	<item id="44603" article="a" name="medium knight gem" plural="medium knight gems">
+		<attribute key="description" value="Reveal it in your Gems window. Only a knight can use it." />
 		<attribute key="weight" value="20" />
 	</item>
-	<item id="44604" article="a" name="greater guardian gem" plural="greater guardian gems">
-		<attribute key="description" value="Shines with the strength of knights" />
+	<item id="44604" article="a" name="large knight gem" plural="large knight gems">
+		<attribute key="description" value="Reveal it in your Gems window. Only a knight can use it." />
 		<attribute key="weight" value="120" />
 	</item>
-	<item id="44605" article="a" name="lesser marksman gem" plural="lesser marksman gems">
-		<attribute key="description" value="Shines with the accuracy of paladins" />
+	<item id="44605" article="a" name="small paladin gem" plural="small paladin gems">
+		<attribute key="description" value="Reveal it in your Gems window. Only a paladin can use it." />
 		<attribute key="weight" value="20" />
 	</item>
-	<item id="44606" article="a" name="marksman gem" plural="marksman gems">
-		<attribute key="description" value="Shines with the accuracy of paladins" />
+	<item id="44606" article="a" name="medium paladin gem" plural="medium paladin gems">
+		<attribute key="description" value="Reveal it in your Gems window. Only a paladin can use it." />
 		<attribute key="weight" value="20" />
 	</item>
-	<item id="44607" article="a" name="greater marksman gem" plural="greater marksman gems">
-		<attribute key="description" value="Shines with the accuracy of paladins" />
+	<item id="44607" article="a" name="large paladin gem" plural="large paladin gems">
+		<attribute key="description" value="Reveal it in your Gems window. Only a paladin can use it." />
 		<attribute key="weight" value="120" />
 	</item>
-	<item id="44608" article="a" name="lesser sage gem" plural="lesser sage gems">
-		<attribute key="description" value="Shines with the power of sorcerers" />
+	<item id="44608" article="a" name="small sorcerer gem" plural="small sorcerer gems">
+		<attribute key="description" value="Reveal it in your Gems window. Only a sorcerer can use it." />
 		<attribute key="weight" value="20" />
 	</item>
-	<item id="44609" article="a" name="sage gem" plural="sage gems">
-		<attribute key="description" value="Shines with the power of sorcerers" />
+	<item id="44609" article="a" name="medium sorcerer gem" plural="medium sorcerer gems">
+		<attribute key="description" value="Reveal it in your Gems window. Only a sorcerer can use it." />
 		<attribute key="weight" value="50" />
 	</item>
-	<item id="44610" article="a" name="greater sage gem" plural="greater sage gems">
-		<attribute key="description" value="Shines with the power of sorcerers" />
+	<item id="44610" article="a" name="large sorcerer gem" plural="large sorcerer gems">
+		<attribute key="description" value="Reveal it in your Gems window. Only a sorcerer can use it." />
 		<attribute key="weight" value="120" />
 	</item>
-	<item id="44611" article="a" name="lesser mystic gem" plural="lesser mystic gems">
-		<attribute key="description" value="Shines with the wisdom of druids" />
+	<item id="44611" article="a" name="small druid gem" plural="small druid gems">
+		<attribute key="description" value="Reveal it in your Gems window. Only a druid can use it." />
 		<attribute key="weight" value="20" />
 	</item>
-	<item id="44612" article="a" name="mystic gem" plural="mystic gems">
-		<attribute key="description" value="Shines with the wisdom of druids" />
+	<item id="44612" article="a" name="medium druid gem" plural="medium druid gems">
+		<attribute key="description" value="Reveal it in your Gems window. Only a druid can use it." />
 		<attribute key="weight" value="50" />
 	</item>
-	<item id="44613" article="a" name="greater mystic gem" plural="greater mystic gems">
-		<attribute key="description" value="Shines with the wisdom of druids" />
+	<item id="44613" article="a" name="large druid gem" plural="large druid gems">
+		<attribute key="description" value="Reveal it in your Gems window. Only a druid can use it." />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="44619" name="stoic iks cuirass">
@@ -72962,16 +73038,16 @@
 		<attribute key="weight" value="290" />
 	</item>
 	<item toid="49282" fromid="49329" article="a" name="brick wall" />
-	<item id="49371" article="a" name="lesser spiritualist gem" plural="lesser spiritualist gems">
-		<attribute key="description" value="Shines with the strength of monks." />
+	<item id="49371" article="a" name="small monk gem" plural="small monk gems">
+		<attribute key="description" value="Reveal it in your Gems window. Only a monk can use it." />
 		<attribute key="weight" value="20" />
 	</item>
-	<item id="49372" article="a" name="spiritualist gem" plural="spiritualist gems">
-		<attribute key="description" value="Shines with the strength of monks." />
+	<item id="49372" article="a" name="medium monk gem" plural="medium monk gems">
+		<attribute key="description" value="Reveal it in your Gems window. Only a monk can use it." />
 		<attribute key="weight" value="20" />
 	</item>
-	<item id="49373" article="a" name="greater spiritualist gem" plural="greater spiritualist gems">
-		<attribute key="description" value="Shines with the strength of monks." />
+	<item id="49373" article="a" name="large monk gem" plural="large monk gems">
+		<attribute key="description" value="Reveal it in your Gems window. Only a monk can use it." />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="49407" article="a" name="sacrificial altar">
@@ -75961,7 +76037,7 @@
 	<item id="50309" article="a" name="monk pedestal">
 	</item>
 	<item id="50310" article="an" name="enhanced guarded crystal sphere">
-		<attribute key="description" value="This sphere is guarded by the serene spirits of the Merudri. It has been enchanged to allow access to the Blue Valley." />
+		<attribute key="description" value="This sphere is guarded by the serene spirits of the Merudri. It has been enchanted to allow access to the Blue Valley." />
 	</item>
 	<item id="50311" article="a" name="good remains of a merudri">
 	</item>
@@ -76188,9 +76264,9 @@
 	<item id="51237" article="a" name="voodoo mask">
 		<attribute key="wrapableto" value="23398" />
 		</item>
-	<item id="51259" article="a" name="reality splinter">
-		<attribute key="description" value="Split from an alternative reality, frozen in time and space" />
-		<attribute key="weight" value="250" />
+	<item id="51259" article="a" name="shaping stone">
+		<attribute key="description" value="Use it on a revealed item to fill one open slot with a random bonus. It always works." />
+		<attribute key="weight" value="50" />
 	</item>
 	<item id="51260" name="norcferatu skullguard">
 		<attribute key="armor" value="9" />
@@ -77125,23 +77201,23 @@
 	     blank-named items and could not sensibly be sold or described.
 	     Named here so the feature is actually usable. -->
 	<item id="43946" article="an" name="abridged promotion scroll" plural="abridged promotion scrolls">
-		<attribute key="description" value="Reading this grants 3 permanent Wheel of Destiny points." />
+		<attribute key="description" value="Reading this grants 10 permanent Talent Compass points." />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="43947" article="a" name="basic promotion scroll" plural="basic promotion scrolls">
-		<attribute key="description" value="Reading this grants 5 permanent Wheel of Destiny points." />
+		<attribute key="description" value="Reading this grants 15 permanent Talent Compass points." />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="43948" article="a" name="revised promotion scroll" plural="revised promotion scrolls">
-		<attribute key="description" value="Reading this grants 9 permanent Wheel of Destiny points." />
+		<attribute key="description" value="Reading this grants 25 permanent Talent Compass points." />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="43949" article="an" name="extended promotion scroll" plural="extended promotion scrolls">
-		<attribute key="description" value="Reading this grants 13 permanent Wheel of Destiny points." />
+		<attribute key="description" value="Reading this grants 40 permanent Talent Compass points." />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="43950" article="an" name="advanced promotion scroll" plural="advanced promotion scrolls">
-		<attribute key="description" value="Reading this grants 20 permanent Wheel of Destiny points." />
+		<attribute key="description" value="Reading this grants 60 permanent Talent Compass points." />
 		<attribute key="weight" value="120" />
 	</item>
 	<item id="65000" name="QA non-stackable test item">

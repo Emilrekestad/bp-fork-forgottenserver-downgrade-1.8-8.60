@@ -109,4 +109,6 @@ monster.immunities = {
 	{ type = "bleed", condition = false },
 }
 
+monster.events = { "WrathBossDeath" }
+
 mType:register(monster)

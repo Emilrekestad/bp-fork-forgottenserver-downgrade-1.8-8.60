@@ -45,6 +45,11 @@ if Modules == nil then
         if not npcHandler:isFocused(cid) and onlyFocus then return false end
 
         local parseInfo = {[TAG_PLAYERNAME] = Player(cid):getName(), ["|TIME|"] = Game.getFormattedWorldTime()}
+        -- ship captains and carpets write "for |TRAVELCOST|?": fill in the price
+        if parameters.cost then
+            local cost = type(parameters.cost) == "function" and parameters.cost(Player(cid)) or parameters.cost
+            parseInfo["|TRAVELCOST|"] = tostring(cost) .. " gold"
+        end
         npcHandler:say(npcHandler:parseMessage(parameters.text or
                                                    parameters.message, parseInfo),
                        cid, parameters.publicize and true)
@@ -177,7 +182,14 @@ if Modules == nil then
                 npcHandler:say(parameters.msg or "Set the sails!", cid)
                 npcHandler:releaseFocus(cid)
 
-                local destination = Position(parameters.destination)
+                -- A destination may be a function that picks one (Darashia: 1 in 10
+                -- lands at the ghost ship). Position(<function>) is an invalid
+                -- position, which sent the player back to the temple.
+                local destination = parameters.destination
+                if type(destination) == "function" then
+                    destination = destination(player)
+                end
+                destination = Position(destination)
                 local position = player:getPosition()
                 player:teleportTo(destination)
 
@@ -697,6 +709,21 @@ if Modules == nil then
                             "[Warning : " .. tostring(Npc():getName()) .. "] NpcSystem:",
                             "SubType missing for parameter item:", item)
                     else
+                        -- A fluid container is told apart by what is in it, so the
+                        -- window must say so ("Vial of Blood"), not just "vial".
+                        -- Trade mode ignores the first field, so use it here.
+                        if not realName and it:isFluidContainer() and name
+                            and name:lower() ~= it:getName():lower() then
+                            local label = name:lower()
+                            if not label:find(" of ", 1, true) then
+                                label = it:getName():lower() .. " of " .. label
+                            end
+                            realName = label:gsub("(%a)([%w']*)", function(a, b)
+                                local word = a .. b
+                                if word == "of" then return word end
+                                return a:upper() .. b
+                            end)
+                        end
                         self:addBuyableItem(nil, itemid, cost, subType, realName)
                     end
                 else
@@ -1080,6 +1107,21 @@ if Modules == nil then
         return true
     end
 
+    -- Name of the NPC running the current shop callback, for the npc.trade
+    -- event rows. Nil when the old NPC system's context is unavailable.
+    local function shopNpcName()
+        if Npc and getNpcCid then
+            local ok, name = pcall(function()
+                local npc = Npc(getNpcCid())
+                return npc and npc:getName() or nil
+            end)
+            if ok then
+                return name
+            end
+        end
+        return nil
+    end
+
     -- Callback onBuy() function. If you wish, you can change certain Npc to use your onBuy().
     function ShopModule:callbackOnBuy(cid, itemid, subType, amount, ignoreCap,
                                       inBackpacks)
@@ -1143,9 +1185,21 @@ if Modules == nil then
             self.npcHandler.talkStart[cid] = os.time()
 
             if a > 0 then
-                if not player:removeTotalMoney((a * shopItem.buy) + (b * 20)) then
+                local partialCost = (a * shopItem.buy) + (b * 20)
+                if not player:removeTotalMoney(partialCost) then
+                    GameEvents.emitForPlayer("npc.trade", player, {
+                        action = "buy", item = itemid, requested = amount,
+                        delivered = a, cost = 0, unit_price = shopItem.buy,
+                        unpaid = true, npc = shopNpcName(),
+                    })
                     return false
                 end
+                player:saveOnTransfer("npc.buy")
+                GameEvents.emitForPlayer("npc.trade", player, {
+                    action = "buy", item = itemid, requested = amount,
+                    delivered = a, cost = partialCost, unit_price = shopItem.buy,
+                    npc = shopNpcName(),
+                })
                 return true
             end
 
@@ -1155,9 +1209,23 @@ if Modules == nil then
             msg = self.npcHandler:parseMessage(msg, parseInfo)
             player:sendTextMessage(MESSAGE_INFO_DESCR, msg)
             if not player:removeTotalMoney(totalCost) then
+                -- Items were already delivered by doNpcSellItem. This branch
+                -- should be unreachable (getTotalMoney was checked above);
+                -- if it ever fires, the event row is the evidence.
+                GameEvents.emitForPlayer("npc.trade", player, {
+                    action = "buy", item = itemid, requested = amount,
+                    delivered = amount, cost = 0, unit_price = shopItem.buy,
+                    unpaid = true, npc = shopNpcName(),
+                })
                 return false
             end
             self.npcHandler.talkStart[cid] = os.time()
+            player:saveOnTransfer("npc.buy")
+            GameEvents.emitForPlayer("npc.trade", player, {
+                action = "buy", item = itemid, requested = amount,
+                delivered = amount, cost = totalCost, unit_price = shopItem.buy,
+                npc = shopNpcName(),
+            })
             return true
         end
     end
@@ -1186,12 +1254,19 @@ if Modules == nil then
 
         if not ItemType(itemid):isFluidContainer() then subType = -1 end
 
-        if player:removeItem(itemid, amount, subType, ignoreEquipped) then
+        -- Never a quest token (data/lib/quests/access_quest_tokens.lua).
+        if QuestTokens.removeForSale(player, itemid, amount, subType, ignoreEquipped) then
             local msg = self.npcHandler:getMessage(MESSAGE_SOLD)
             msg = self.npcHandler:parseMessage(msg, parseInfo)
             player:sendTextMessage(MESSAGE_INFO_DESCR, msg)
             player:addMoney(amount * shopItem.sell)
             self.npcHandler.talkStart[cid] = os.time()
+            player:saveOnTransfer("npc.sell")
+            GameEvents.emitForPlayer("npc.trade", player, {
+                action = "sell", item = itemid, amount = amount,
+                gold = amount * shopItem.sell, unit_price = shopItem.sell,
+                npc = shopNpcName(),
+            })
             return true
         else
             local msg = self.npcHandler:getMessage(MESSAGE_NEEDITEM)
@@ -1227,6 +1302,10 @@ if Modules == nil then
         local msg = module.npcHandler:parseMessage(
                         module.npcHandler:getMessage(MESSAGE_SENDTRADE),
                         parseInfo)
+        -- Title Case names in the window only (ShopWindowItems is in npc.lua).
+        if ShopWindowItems then
+            itemWindow = ShopWindowItems(itemWindow, cid)
+        end
         openShopWindow(cid, itemWindow,
                        function(cid, itemid, subType, amount, ignoreCap,
                                 inBackpacks)
