@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <zones>
-	<zone name="" id="1" zoneid="1">
+	<zone name="Zone 1" id="1" zoneid="1">
 		<position x="32850" y="31959" z="7" />
 		<position x="32851" y="31959" z="7" />
 		<position x="32852" y="31959" z="7" />

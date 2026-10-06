@@ -45,6 +45,28 @@ FreeDummies = {5787, 5788, 28558, 28559, 28560, 28561, 28562, 28563, 28564, 2856
 HouseDummies = {5787, 5788, 28558, 28559, 28560, 28561, 28562, 28563, 28564, 28565}
 MaxAllowedOnADummy = configManager.getNumber(configKeys.MAX_ALLOWED_ON_A_DUMMY)
 
+-- The three dummies the Store sells -- Demon, Ferumbras and Monk -- plus the
+-- twin id each one becomes when a player rotates it (items.xml `rotateto`:
+-- 28559<->28560, 28561<->28562, 28563<->28564). Both ids of a pair belong
+-- here, or turning a dummy around would quietly cost its bonus.
+--
+-- Everything else trains at the city rate, including the public dummies
+-- (28558, 28565, 5787, 5788) placed around the towns.
+StoreDummies = {28559, 28560, 28561, 28562, 28563, 28564}
+
+-- What one training tick is worth.
+--
+-- (!) These are per-tick TOTALS, not multipliers, because addSkillTries and
+-- addManaSpent take integers: the old `7 * 1.5` was 10.5 and was cast down to
+-- 10 on every tick, so a 5% edge expressed as a multiplier would have landed
+-- on 11 -- a 10% buff, not 5%. The city numbers below are exactly what every
+-- dummy gives today (10 tries, 750 mana) and the Store's three sit 5% above
+-- them. ExerciseEvent carries the fraction between ticks instead of losing it.
+DummySkillTriesCity = 10
+DummySkillTriesStore = 10.5
+DummyManaSpentCity = 750
+DummyManaSpentStore = 787.5
+
 local magicLevelRate = configManager.getNumber(configKeys.RATE_MAGIC)
 local skillLevelRate = configManager.getNumber(configKeys.RATE_SKILL)
 
@@ -163,16 +185,29 @@ function ExerciseEvent(playerId, tilePosition, weaponId, dummyId)
 		return false
 	end
 
-	local bonusDummy = 1
-
-	if table.contains(HouseDummies, dummyId) then
-		bonusDummy = 1.5
-	end
+	-- The Store's three dummies are 5% better than every other one. The
+	-- fraction that leaves (10.5 tries, 787.5 mana) is kept in the training
+	-- session and spent on a later tick, because both engine calls take
+	-- integers and would drop it -- which is where the old 10.5 lost its half
+	-- every single tick.
+	local onStoreDummy = table.contains(StoreDummies, dummyId)
 
 	if weaponConfig.skill == SKILL_MAGLEVEL then
-		player:addManaSpent(500 * bonusDummy)
+		training.manaCarry = (training.manaCarry or 0) +
+			(onStoreDummy and DummyManaSpentStore or DummyManaSpentCity)
+		local whole = math.floor(training.manaCarry)
+		training.manaCarry = training.manaCarry - whole
+		if whole > 0 then
+			player:addManaSpent(whole)
+		end
 	else
-		player:addSkillTries(weaponConfig.skill, 7 * bonusDummy)
+		training.skillCarry = (training.skillCarry or 0) +
+			(onStoreDummy and DummySkillTriesStore or DummySkillTriesCity)
+		local whole = math.floor(training.skillCarry)
+		training.skillCarry = training.skillCarry - whole
+		if whole > 0 then
+			player:addSkillTries(weaponConfig.skill, whole)
+		end
 	end
 
 	weapon:setAttribute(ITEM_ATTRIBUTE_CHARGES, weaponCharges - 1)

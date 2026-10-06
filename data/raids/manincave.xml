@@ -10,11 +10,14 @@
 	Re-probe before moving any coordinate in this file.
 -->
 <raid>
+	<!-- 2026-10-05: escort radius 10 -> 5. Probed on the map deployed that day
+	(tools/binary/otbm_raid_probe.js): radius 10 was 79/441 usable tiles (18%,
+	mostly cave rock), radius 5 is 47/121 (39%). The boss tile is unchanged. -->
 	<announce delay="1000" type="event" message="Man in the Cave has been sighted in the caves near Svargrond!" />
 
 	<singlespawn delay="4000" name="Man in the Cave" x="32108" y="31125" z="10" />
 
-	<areaspawn delay="6000" radius="10" centerx="32108" centery="31125" centerz="10">
+	<areaspawn delay="6000" radius="5" centerx="32108" centery="31125" centerz="10">
 		<monster name="Stalker" amount="8" />
 	</areaspawn>
 </raid>

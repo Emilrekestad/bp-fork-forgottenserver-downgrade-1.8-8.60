@@ -54,8 +54,29 @@ local RETIRED_OFFERS = {
 	[14303] = true, -- Daily Reward Shrine (Shiny Daily Reward Shrine, 14311)
 }
 
+-- Prey is hidden for launch (config.lua preySystemEnabled, 2026-09-16). While
+-- it is off its two offers are treated exactly like a retired one: filtered
+-- out of the catalogue AND refused by the buy handler, which is what the
+-- retired path already does at both ends. Nothing is deleted -- flip the
+-- config flag and both tiles come back.
+local PREY_SLOT_UNLOCK_ID = 5170
+
+local function preySystemEnabled()
+	return configManager.getBoolean(configKeys.PREY_SYSTEM_ENABLED)
+end
+
+local function isPreyOffer(offer)
+	return tostring(offer.oftype or ""):lower() == "prey_wildcard" or offer.id == PREY_SLOT_UNLOCK_ID
+end
+
 local function isRetiredOffer(offer)
-	return offer ~= nil and RETIRED_OFFERS[offer.id] == true
+	if offer == nil then
+		return false
+	end
+	if isPreyOffer(offer) and not preySystemEnabled() then
+		return true
+	end
+	return RETIRED_OFFERS[offer.id] == true
 end
 
 local STORE_ACTION_DELAY = 2
@@ -111,7 +132,11 @@ end
 
 local function isHirelingOfferType(oftype)
 	oftype = tostring(oftype or ""):lower()
-	return oftype == "hireling" or oftype == "hireling_skill" or oftype == "hireling_outfit"
+	-- Signs are NOT here: a sign is a plain "item" offer, delivered to the
+	-- Store Inbox and used on a hireling. Its whole category is gated by
+	-- `when` in ADDED_CATEGORIES instead.
+	return oftype == "hireling" or oftype == "hireling_skill" or
+		oftype == "hireling_outfit" or oftype == "hireling_pet"
 end
 
 -- Retired: the lamp is a quest reward handed over by an NPC, and jobs arrive
@@ -152,6 +177,33 @@ local function isGlobalBoostOfferType(offerType)
 	return tostring(offerType or ""):lower() == "globalboost"
 end
 
+-- The Charm Reset is the one offer here that needs a binary newer than the
+-- Lua: Game.resetBestiaryCharms was added in the same change. A server on an
+-- older build must not SHOW a tile it cannot deliver, so this filters it out of
+-- the catalogue; deliverOffer keeps its own guard for the race where a
+-- catalogue was sent and the offer bought across a downgrade.
+local function isCharmResetOfferType(offerType)
+	return tostring(offerType or ""):lower() == "charmreset"
+end
+
+local function supportsCharmReset()
+	return Game.resetBestiaryCharms ~= nil
+end
+
+local function isLedgerResetOfferType(offerType)
+	return tostring(offerType or ""):lower() == "ledgerreset"
+end
+
+-- The same guard as the charm reset, for the same reason. BaoLedger.reset
+-- ships with the Ground Level pass (data/lib/bao/bao_ledger.lua, which also
+-- retires BaoLedger.potionMultiplier -- so it cannot go out ahead of the
+-- potion scripts that stop calling it). Until then the tile is HIDDEN, not
+-- shown and refused on every purchase. Added 2026-09-11, when the store went
+-- live ahead of that pass.
+local function supportsLedgerReset()
+	return BaoLedger ~= nil and BaoLedger.reset ~= nil
+end
+
 local function parseOfferItemList(value)
 	local items = {}
 	for itemId in tostring(value or ""):gmatch("%d+") do
@@ -181,8 +233,14 @@ end
 -- Dresses are ordinary unlocks written to kv and applied through the
 -- hireling's own dialogue, so the system being enabled is the whole
 -- requirement.
+-- Boot-time, player-independent: the catalogue overlay uses this to decide
+-- whether the Hireling tab exists at all.
+local function hirelingStoreEnabled()
+	return configManager.getBoolean(configKeys.HIRELING_SYSTEM_ENABLED)
+end
+
 local function supportsHirelingStore(player)
-	return configManager.getBoolean(configKeys.HIRELING_SYSTEM_ENABLED) and player ~= nil
+	return hirelingStoreEnabled() and player ~= nil
 end
 
 local function playerOwnsMount(player, mountId)
@@ -278,7 +336,21 @@ local forbiddenNameWords = {
 	administrator = true,
 	senior = true,
 	xangel = true,
-	["x-angel"] = true
+	["x-angel"] = true,
+	-- Reserved words that tooling (YAML/JSON coercion, SQL, PHP) may treat
+	-- specially. Nothing in the server does, but a name that is also a
+	-- keyword is a bug waiting for the next parser.
+	null = true,
+	["nil"] = true,
+	none = true,
+	undefined = true,
+	["true"] = true,
+	["false"] = true,
+	nan = true,
+	inf = true,
+	system = true,
+	server = true,
+	backpackot = true,
 }
 
 local function trim(value)
@@ -610,10 +682,252 @@ local function cosmeticBackpackOffers()
 	return offers
 end
 
+-- ─────────────────────────── the Hireling tab ───────────────────────────
+--
+-- Everything a hireling can be given used to live in two categories buried
+-- under House. One of them ("Hirelings") is empty now that the lamp is a quest
+-- reward and jobs are contract items; the other was just dresses. A hireling
+-- is a thing you own and dress and equip, not a piece of furniture, so it gets
+-- a tab of its own beside House with one section per kind of thing.
+
+-- A sign is a plaque the world hangs over one hireling's head, with his name
+-- written on it. It belongs to THAT hireling: use one on him and it is his,
+-- and a hireling holding several picks between them in his own wardrobe.
+--
+-- The catalogue itself is HIRELING_SIGNS in data/scripts/lib/hireling.lua --
+-- offer ids and item ids are read from there so the two cannot drift. The
+-- pictures are generated by tools/gen_hireling_plaques.js.
+local HIRELING_SIGN_PRICE = 120
+local HIRELING_SIGN_TEXT = {
+	oak = "A carved oak board, his name burnt into it in pale cream. Delivered " ..
+		"to your Store Inbox; use it on the hireling who should hang it.",
+	iron = "A riveted iron plate, his name in cold steel. Delivered to your " ..
+		"Store Inbox; use it on the hireling who should hang it.",
+	frost = "A slab of clear ice that never melts, his name in pale blue. " ..
+		"Delivered to your Store Inbox; use it on the hireling who should hang it.",
+	brass = "A polished brass plaque, his name in warm gold -- the plate a real " ..
+		"shop hangs. Delivered to your Store Inbox; use it on the hireling who " ..
+		"should hang it.",
+	marble = "Veined rose marble, his name in soft white. Delivered to your " ..
+		"Store Inbox; use it on the hireling who should hang it.",
+	ember = "Dark stone with heat still in its seams, his name glowing orange. " ..
+		"Delivered to your Store Inbox; use it on the hireling who should hang it.",
+	verdant = "Living wood bound in green leaf, his name in bright sap. " ..
+		"Delivered to your Store Inbox; use it on the hireling who should hang it.",
+	velvet = "Purple velvet in a gilt frame, his name in pale violet -- the " ..
+		"grandest of the eight. Delivered to your Store Inbox; use it on the " ..
+		"hireling who should hang it.",
+}
+
+-- Plain "item" offers: a sign is a thing you carry to a hireling and use on
+-- him, so the store's job ends at the Store Inbox and there is no bespoke
+-- delivery path to keep working. eid draws the card, itemid creates the item.
+--
+-- (!) `icon` is what makes the CARD show the plaque itself rather than the
+-- item sprite. It is already a per-offer string on the store wire, so packing
+-- the material and its ink into it needs no protocol change and keeps this
+-- table the single source of both -- the client parses the "hplaque:" prefix
+-- in modules/game_store/game_store.lua and draws the real picture with the
+-- word "Hireling" on it, so what you see on the card is what will hang over
+-- your hireling's head.
+local function hirelingSignOffers()
+	local offers = {}
+	for _, sign in ipairs(HIRELING_SIGNS) do
+		if sign.offer ~= 0 then
+			offers[#offers + 1] = makeOffer({
+				id = sign.offer,
+				name = sign.name,
+				price = HIRELING_SIGN_PRICE,
+				icon = string.format("hplaque:%s:%06x", sign.plaque, sign.colour),
+				eid = sign.item,
+				itemid = sign.item,
+				description = HIRELING_SIGN_TEXT[sign.key] or "A name plaque for one of your hirelings.",
+			})
+		end
+	end
+	return offers
+end
+
+-- Job contracts -- the ONLY way a hireling learns a trade, and until now
+-- there was no way to get one at all.
+--
+-- (!) This is not a convenience. Items 128 / 22706 / 23547 / 3236 are consumed
+-- by data/scripts/actions/items/hireling_contracts.lua and appear NOWHERE else
+-- in the data tree: no NPC hands one over, no monster drops one, no quest
+-- rewards one, and the old store offers that sold them were retired when jobs
+-- became per-hireling contract items (see isRetiredHirelingOfferType above).
+-- The result was that every hireling was permanently a hireling with no trade,
+-- and the window's Goods, Kitchen, Banking and Workshop sections could never
+-- be unlocked by anyone.
+--
+-- Plain "item" offers, the same shape as the plaques: the store's job ends at
+-- the Store Inbox and the item is used on ONE hireling.
+--
+-- Prices are the ones the retired hireling_skill offers carried, so nothing
+-- changed price on the way through. The rune crafter never had an offer and
+-- 500 is a judgement call -- it opens the workshop, which earns gold back.
+local HIRELING_JOBS = {
+	{ item = 128,   name = "Trader's Contract",       price = 400,
+	  text = "Teaches one hireling to trade. He opens his whole stock -- all " ..
+	         "thirteen sections -- in his Goods list." },
+	{ item = 22706, name = "Banker's Contract",       price = 400,
+	  text = "Teaches one hireling to bank. Deposit, withdraw and transfer " ..
+	         "gold without walking to a bank." },
+	{ item = 23547, name = "Cook's Contract",         price = 400,
+	  text = "Teaches one hireling to cook. Eight named dishes and a surprise, " ..
+	         "delivered to your Store Inbox." },
+	{ item = 3236,  name = "Rune Crafter's Contract", price = 200,
+	  text = "Teaches one hireling to bake runes. He works his bench while you " ..
+	         "are offline and fills backpacks you collect and sell." },
+}
+
+-- Offer ids: the overlay owns 5100-5199, and 5101-5110 are the cosmetic
+-- backpacks, 5130-5137 the plaques, 5140-5147 the pets, 5150-5153 these four
+-- jobs, 5160-5162 the resets and 5170-5172 the unlocks Bao also sells. tools/test_hireling_store.lua fails on a
+-- collision between the first three; a collision anywhere in the pool is
+-- silent apart from one line at boot, and the loser is simply unbuyable -- its
+-- tile charges for and delivers whatever else claimed the id. It has happened
+-- once already (5150, see the resets block).
+local HIRELING_JOB_FIRST_ID = 5150
+
+local function hirelingJobOffers()
+	local offers = {}
+	for index, job in ipairs(HIRELING_JOBS) do
+		offers[#offers + 1] = makeOffer({
+			id = HIRELING_JOB_FIRST_ID + index - 1,
+			name = job.name,
+			price = job.price,
+			eid = job.item,
+			itemid = job.item,
+			description = job.text .. " Delivered to your Store Inbox; use it " ..
+				"on the hireling who should learn it.",
+		})
+	end
+	return offers
+end
+
+-- House pets. The store sells a basket; opening it inside your own house is
+-- what creates the animal, because a new NPC type can only be registered from
+-- the Scripts interface and this handler is not one. See
+-- data/scripts/actions/items/hireling_pet_basket.lua.
+--
+-- eid carries the LOOKTYPE, not an item: the client draws these cards through
+-- the same path it draws dresses, so the card shows the actual animal.
+local function hirelingPetOffers()
+	local offers = {}
+	for _, species in ipairs(HIRELING_PET_SPECIES) do
+		offers[#offers + 1] = makeOffer({
+			id = species.offer,
+			name = species.name,
+			price = species.price,
+			oftype = "hireling_pet",
+			eid = species.lookType,
+			description = species.text,
+		})
+	end
+	return offers
+end
+
 -- `after` names the category this one is inserted behind, because the array
 -- order IS the tab order and the section order -- the client walks it as it
 -- comes off the wire. Backpacks lands between Quality of Life's last child and
 -- House; its own two children follow it, the way every other parent's do.
+-- ───────────────────────────── the Resets ──────────────────────────────
+--
+-- Three systems let a character spend points that cannot otherwise be taken
+-- back: charms, the Wheel of Destiny and Bao's Ledger. Each has one reset here
+-- (owner: 2026-09-11, priced by how much is being unwound), and each hands
+-- back that system's OWN currency and nothing else.
+--
+-- (!) The scope rule, which every one of these must state on its own tile:
+-- a reset returns points that were INVESTED in a system's progression. It
+-- never refunds goods. Bao's supplies, his one-time access unlocks, promotion
+-- scrolls, extra hunt/charm/prey slots, outfits, mounts and trophies are
+-- purchases and stay bought; so does everything from this store. Items,
+-- levels, skills, reputation, rank and hunt progress are not touched.
+--
+--   Charm Reset   250  relocks every charm, refunds the charm points, restores
+--                      echoes. Waives the gold fee the charm window's own
+--                      Reset button charges (100k + 11k per level over 100),
+--                      which is the whole product: Game.resetBestiaryCharms.
+--   Wheel Reset   200  one token in the buyer's wheel KV, consumed by the
+--                      wheel's save handler the first time a save lowers any
+--                      slot. One token covers a save that empties every slot
+--                      at once, so it is a full reset as well as a nudge.
+--   Ledger Reset  400  clears every Ledger rank and refunds every Mark they
+--                      cost: BaoLedger.reset.
+--
+-- (!) The Wheel offer's oftype is still `wheelrespec` and its token still
+-- lives in kv wheel/respec. Only the shop-facing name changed (owner asked for
+-- "Wheel Reset"); renaming the type or the KV scope would orphan every token
+-- already bought and unspent.
+--
+-- The cards draw item sprites rather than bespoke art -- an offer image would
+-- need a new PNG in the client package, and none of this needs a client
+-- release to work.
+-- (!) 5160-5162, NOT 5150-5152. The wheel offer shipped on 5150 on 2026-09-09
+-- and that id was already the Trader's Contract (HIRELING_JOB_FIRST_ID): both
+-- write storeItemsById[5150] and the later one wins, so the contract tile has
+-- been charging for and delivering a wheel respec ever since. Fixed here by
+-- moving the resets, which also freed 5151-5152 before they collided with the
+-- Banker's and Cook's Contracts the same way. Check the pool comment above
+-- hirelingJobOffers() before taking an id in this range.
+local WHEEL_RESET_OFFER_ID = 5160
+local WHEEL_RESET_PRICE = 200
+local WHEEL_RESET_SCROLL_ITEM = 43950 -- advanced promotion scroll
+
+local CHARM_RESET_OFFER_ID = 5161
+local CHARM_RESET_PRICE = 250
+local CHARM_RESET_ART_ITEM = 7289 -- frost charm
+
+local LEDGER_RESET_OFFER_ID = 5162
+local LEDGER_RESET_PRICE = 400
+local LEDGER_RESET_ART_ITEM = 2821 -- a book, for the ledger itself
+
+-- ── Unlocks Old Man Bao also sells (owner, 2026-09-15) ──────────────────
+-- Three one-time unlocks that Bao sells for Hunter Marks are sold here too,
+-- all at one price. Each writes the very storage key its system reads and
+-- Bao's own grant writes, so a purchase from either side is the same unlock.
+-- Bao's shop counts the key as owned (BaoConfig.ownsShopItem), and this store
+-- hides and refuses an unlock the character already has, so neither side ever
+-- takes payment twice. Keys are literal on purpose: prey_system.lua,
+-- proficiency.lua and wheel.lua read them as literals too, and the store must
+-- keep working if Bao is not loaded.
+local UNLOCK_PRICE = 500
+local UNLOCK_OFFERS = {
+	-- Hidden while prey is off (isRetiredOffer), so this id lives in one place.
+	{ id = PREY_SLOT_UNLOCK_ID, name = "Third Prey Slot", key = 780200, art = 10302,
+	  message = "Your third Prey slot is now open.",
+	  text = "A third Prey slot for this character, for good. No Premium " ..
+	         "needed. Old Man Bao sells it too, for Hunter Marks." },
+	{ id = 5171, name = "Weapon Proficiency", key = 990600, art = 6109,
+	  message = "The Weapon Proficiency window is now open to you.",
+	  text = "Opens the Weapon Proficiency window for this character. Old " ..
+	         "Man Bao teaches it too, for Hunter Marks." },
+	{ id = 5172, name = "Talent Compass", key = 990601, art = 8775,
+	  message = "The Talent Compass is now open to you.",
+	  text = "Opens the Talent Compass for this character. You still need " ..
+	         "level 51, a promotion and Premium Time to use it. Old Man Bao " ..
+	         "teaches it too, for Hunter Marks." },
+}
+
+local function unlockOffers()
+	local offers = {}
+	for _, entry in ipairs(UNLOCK_OFFERS) do
+		offers[#offers + 1] = makeOffer({
+			id = entry.id,
+			name = entry.name,
+			price = UNLOCK_PRICE,
+			oftype = "unlock",
+			value = entry.key,
+			eid = entry.art,
+			description = entry.text,
+			unlockMessage = entry.message,
+		})
+	end
+	return offers
+end
+
 local ADDED_CATEGORIES = {
 	{
 		name = "Backpacks", icon = "store_backpacks", parent = "",
@@ -633,11 +947,146 @@ local ADDED_CATEGORIES = {
 			"holds. Bought for the look.",
 		offers = cosmeticBackpackOffers(),
 	},
+
+	-- (!) Anchored after "Hireling Dresses", NOT after "House". House's own
+	-- children follow it in the array, so `after = "House"` would drop this
+	-- tab in between House and its decorations. "Hireling Dresses" is the last
+	-- of them, and it is emptied by the move below and dropped at send time.
+	--
+	-- `when` keeps the whole subtree out of the catalogue when the hireling
+	-- system is switched off in config.lua. The per-offer filter in
+	-- sendStoreCatalog cannot do this on its own: a parent with no offers of
+	-- its own is a shell and survives every filter, so switching hirelings off
+	-- would otherwise leave one empty tab behind.
+	{
+		name = "Hireling", icon = "store_hirelings", parent = "",
+		after = "Hireling Dresses",
+		when = hirelingStoreEnabled,
+		description = "Everything for the hireling in your house: what he " ..
+			"wears, what he keeps in stock, how his name is shown and what " ..
+			"lives alongside him.",
+	},
+	-- Four sections, in the owner's own order: Pets, Jobs, Dresses, Name
+	-- Signs. Three of the four are a thing you carry to ONE hireling and use
+	-- on him; only Dresses is bought once for the whole character.
+	--
+	-- (!) These are sub-TABS, not headings on one page. The client turns a
+	-- small top-level section into a single scrolling "section page" instead
+	-- (isSectionPage, SECTION_PAGE_MAX = 48), and this tab's 29 offers fall
+	-- well under that. modules/game_store/game_store.lua names Hireling in
+	-- ALWAYS_SUBTABS to opt out: these four are four different KINDS of
+	-- thing, and one continuous scroll loses that.
+	{
+		name = "Pets", icon = "store_hireling_pets", parent = "Hireling",
+		after = "Hireling", when = hirelingStoreEnabled,
+		description = "A named animal that lives in your house. It wanders, " ..
+			"it cannot be attacked and it cannot leave. Delivered as a basket " ..
+			"to open inside your own house.",
+		offers = hirelingPetOffers(),
+	},
+	{
+		name = "Jobs", icon = "store_qol", parent = "Hireling",
+		after = "Pets", when = hirelingStoreEnabled,
+		description = "A trade, taught to one hireling. Each contract opens a " ..
+			"whole section of his window. Delivered to your Store Inbox and " ..
+			"used on the hireling who should learn it.",
+		offers = hirelingJobOffers(),
+	},
+	{
+		name = "Dresses", icon = "store_hireling_dresses", parent = "Hireling",
+		after = "Jobs", when = hirelingStoreEnabled,
+		description = "Bought once and worn by any hireling this character " ..
+			"owns. Colours are chosen in the hireling's own wardrobe.",
+	},
+	{
+		name = "Name Signs", icon = "store_hireling_signs", parent = "Hireling",
+		after = "Dresses", when = hirelingStoreEnabled,
+		description = "A plaque hung over one hireling's head with his name " ..
+			"written on it. Delivered to your Store Inbox and used on the " ..
+			"hireling who should hang it; he swaps between the ones he has.",
+		offers = hirelingSignOffers(),
+	},
+
+	{
+		name = "Resets", icon = "store_qol",
+		-- A child of Account, NOT of Character Services: that is itself a child of
+		-- Account, and the client draws only two levels, so a third-level Resets
+		-- had no tab and could only be reached from the landing index (2026-09-11).
+		parent = "Account",
+		after = "Character Services",
+		description = "Second chances, one per system. A reset hands back the " ..
+			"points that system's own progression cost and locks it all again, " ..
+			"so this character can be built a different way. Nothing else " ..
+			"moves: goods you have bought stay bought, and items, levels, " ..
+			"skills and hunt progress are not touched. Each reset applies only " ..
+			"to the character that buys it.",
+		offers = {
+			makeOffer({
+				id = CHARM_RESET_OFFER_ID,
+				name = "Charm Reset",
+				price = CHARM_RESET_PRICE,
+				oftype = "charmreset",
+				value = 1,
+				eid = CHARM_RESET_ART_ITEM,
+				description = "Relocks every charm and hands back all the " ..
+					"charm points they cost, for a new set of runes. Echoes " ..
+					"come back too. No gold, unlike the charm window's own " ..
+					"Reset button.",
+			}),
+			makeOffer({
+				id = WHEEL_RESET_OFFER_ID,
+				name = "Talent Compass Reset",
+				price = WHEEL_RESET_PRICE,
+				oftype = "wheelrespec",
+				value = 1,
+				eid = WHEEL_RESET_SCROLL_ITEM,
+				description = "One rearrangement of your Talent Compass: a " ..
+					"single save may take points out of any number of slots, " ..
+					"so it empties the whole Talent Compass if you want. Adding points " ..
+					"is always free.",
+			}),
+			makeOffer({
+				id = LEDGER_RESET_OFFER_ID,
+				name = "Ledger Reset",
+				price = LEDGER_RESET_PRICE,
+				oftype = "ledgerreset",
+				value = 1,
+				eid = LEDGER_RESET_ART_ITEM,
+				description = "Clears every rank in Bao's Ledger and refunds " ..
+					"every Mark they cost, so you can specialise again. Ledger " ..
+					"ranks ONLY -- supplies, unlocks, scrolls, slots and " ..
+					"outfits stay bought.",
+			}),
+		},
+	},
+	{
+		name = "Unlocks", icon = "store_qol",
+		parent = "Account",
+		after = "Resets",
+		description = "Windows and slots that Old Man Bao also opens, for " ..
+			"Hunter Marks. Bought here, they open at once, with no rank " ..
+			"needed. Each one is for the character that buys it.",
+		offers = unlockOffers(),
+	},
 }
 
 local MOVED_OFFERS = {
 	[5001] = "Utility", -- the Feedbag, out of the old Equipment category
 }
+
+-- The nine dresses, out of the old "Hireling Dresses" category under House and
+-- into the Hireling tab's "Dresses" section. Their ids and their offer type do
+-- not change, so nothing a player already owns is affected.
+--
+-- Guarded, because a move whose destination does not exist LOSES the offers:
+-- they are lifted out of their old category first and only then appended. With
+-- hirelings switched off there is no Dress section to land in, so they stay
+-- where the XML put them and the existing filter hides them there.
+if hirelingStoreEnabled() then
+	for id = 12001, 12009 do
+		MOVED_OFFERS[id] = "Dresses"
+	end
+end
 
 local CATEGORY_TEXT = {
 	-- Was "Premium Time, the Battle Pass and character services". The Battle
@@ -702,6 +1151,24 @@ for days, id in pairs({[30] = 1001, [90] = 1002, [180] = 1003, [360] = 1004}) do
 		"creation, offline training and a larger depot.", days)
 end
 
+-- Offer NAMES, re-applied after every load for the same reason as OFFER_TEXT:
+-- gamestore.xml does not stay edited.
+local OFFER_NAME = {
+	-- "Dormant" became "Unrevealed" on 2026-09-11, a plainer word for players
+	-- who do not have English as a first language, and the tool was renamed
+	-- with it. Same item (39241), and it now does exactly what a shrine does.
+	[4601] = "Revealer Torch",
+	-- The shrines were renamed "revealer shrine" the same day: they no longer
+	-- imbue anything, they reveal.
+	[14306] = "Gilded Revealer Shrine",
+}
+OFFER_TEXT[4601] = "Use it on an Unrevealed item you are carrying to reveal its " ..
+	"rarity, wherever you are. It does exactly what a revealer shrine does " ..
+	"and is never used up."
+OFFER_TEXT[14306] = "Delivered as a decoration kit to your Store Inbox. Unwrap it " ..
+	"inside your house. Like every revealer shrine, use it on an Unrevealed " ..
+	"item to reveal its rarity."
+
 local function findCategoryIndex(name)
 	for index, category in ipairs(storeCategories) do
 		if category.name == name then
@@ -727,16 +1194,26 @@ local function applyCatalogOverlay()
 		-- A name the XML has taken back is not something to merge into
 		-- silently: the overlay would be adding a second category the client
 		-- keys by the same title. Say so and skip.
-		if findCategoryIndex(entry.name) then
+		if entry.when and not entry.when() then
+			-- The feature behind this category is switched off. Skipping the
+			-- whole entry, offers included, is what keeps a disabled system
+			-- from leaving an empty tab in the rail.
+		elseif findCategoryIndex(entry.name) then
 			logError(string.format(
 				"[GameStore] overlay: category '%s' already exists in gamestore.xml, not added",
 				entry.name))
 		else
 			local offers = entry.offers or {}
 			for _, offer in ipairs(offers) do
+				-- The id may come from gamestore.xml or from an overlay
+				-- category added earlier in this same loop. Either way the
+				-- later one silently wins and the earlier tile becomes a
+				-- wrapper for it, so this line is a defect, not a notice.
 				if storeItemsById[offer.id] then
 					logError(string.format(
-						"[GameStore] overlay: offer id %d is already in gamestore.xml", offer.id))
+						"[GameStore] overlay: offer id %d is already taken ('%s') - '%s' will " ..
+						"overwrite it and BOTH tiles will buy the second one",
+						offer.id, storeItemsById[offer.id].name or "?", offer.name or "?"))
 				end
 				storeItemsById[offer.id] = offer
 			end
@@ -767,6 +1244,15 @@ local function applyCatalogOverlay()
 			offer.description = text
 		else
 			logError(string.format("[GameStore] overlay: no offer %d to re-word", id))
+		end
+	end
+
+	for id, name in pairs(OFFER_NAME) do
+		local offer = storeItemsById[id]
+		if offer then
+			offer.name = name
+		else
+			logError(string.format("[GameStore] overlay: no offer %d to rename", id))
 		end
 	end
 
@@ -822,7 +1308,13 @@ local function sendStoreCatalog(player)
 			local hirelingVisible = not isRetiredHirelingOfferType(offer.oftype) and
 				(not isHirelingOfferType(offer.oftype) or supportsHirelingStore(player))
 			local battlePassVisible = not isBattlePassOfferType(offer.oftype) or supportsBattlePassStore(player)
-			if taskBoardVisible and hirelingVisible and battlePassVisible and not isRetiredOffer(offer) then
+			local charmResetVisible = not isCharmResetOfferType(offer.oftype) or supportsCharmReset()
+			local ledgerResetVisible = not isLedgerResetOfferType(offer.oftype) or supportsLedgerReset()
+			-- An unlock this character already has (from here or from Bao) is
+			-- hidden; the buy handler refuses it too, for a stale catalogue.
+			local unlockVisible = offer.oftype ~= "unlock" or player:getStorageValue(offer.value) ~= 1
+			if taskBoardVisible and hirelingVisible and battlePassVisible and charmResetVisible and
+				ledgerResetVisible and unlockVisible and not isRetiredOffer(offer) then
 				visibleOffers[#visibleOffers + 1] = offer
 			end
 		end
@@ -938,6 +1430,76 @@ local function deliverOffer(player, offer, extra)
 		return nil
 	end
 
+	-- Wheel Reset. Delivers nothing physical: one token in the buyer's own
+	-- wheel KV, which the wheel's save handler consumes the first time a save
+	-- lowers a slot. Nothing to fail, so it cannot half-deliver.
+	if offer.oftype == "wheelrespec" then
+		local store = player:kv():scoped("wheel"):scoped("respec")
+		local tokens = (tonumber(store:get("tokens")) or 0) + math.max(1, offer.value or 1)
+		store:set("tokens", tokens)
+		player:sendTextMessage(MESSAGE_STATUS_SMALL, string.format(
+			"You may now rearrange your Talent Compass (%d reset%s available).",
+			tokens, tokens == 1 and "" or "s"))
+		return nil
+	end
+
+	-- Charm Reset. The relock and the refund both live in C++
+	-- (BestiaryCharmSystem::resetCharms) because the per-tier price table is a
+	-- compile-time array there -- re-deriving it in Lua would be two copies of
+	-- the same economy. This is the charm window's own Reset path with the gold
+	-- fee waived, which is the entire difference between them.
+	if offer.oftype == "charmreset" then
+		if not Game.resetBestiaryCharms then
+			return "Charm resets are not available on this server."
+		end
+
+		-- (!) Refused BEFORE the reset runs rather than after. A reset with
+		-- nothing unlocked SUCCEEDS in C++ -- it relocks nothing and refunds
+		-- zero -- so without this the buyer is simply down the coins. Rows are
+		-- written the moment a charm is unlocked, so SQL is current.
+		local resultId = db.storeQuery(string.format(
+			"SELECT 1 FROM `player_bestiary_charms` WHERE `player_id` = %d AND `unlocked` > 0 LIMIT 1",
+			player:getGuid()))
+		if not resultId then
+			return "You have no unlocked charms to reset."
+		end
+		result.free(resultId)
+
+		-- The reset does not report the refund; it is the difference in the
+		-- balance, which is also the only number the player cares about. Zero
+		-- is legitimate -- minor charms are bought with echoes, so someone who
+		-- unlocked only those gets their echoes back and no points.
+		local before = Game.getBestiaryCharmPoints and Game.getBestiaryCharmPoints(player) or 0
+		local ok, message = Game.resetBestiaryCharms(player)
+		if not ok then
+			return message or "Could not reset your charms."
+		end
+
+		local after = Game.getBestiaryCharmPoints and Game.getBestiaryCharmPoints(player) or 0
+		local refund = math.max(0, after - before)
+		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, string.format(
+			"Every charm is locked again. %d charm point%s and every echo you " ..
+			"have earned are yours to spend on a new set of runes.",
+			refund, refund == 1 and "" or "s"))
+		return nil
+	end
+
+	-- Ledger Reset. BaoLedger.reset owns the scope rule and the refund, and
+	-- sends its own confirmation naming what was NOT refunded -- see the
+	-- comment on that function. It returns a reason when there is nothing
+	-- written in the ledger yet, which reverses the purchase.
+	if offer.oftype == "ledgerreset" then
+		if not BaoLedger or not BaoLedger.reset then
+			return "Bao's Ledger is not available."
+		end
+
+		local ok, reason = BaoLedger.reset(player)
+		if not ok then
+			return type(reason) == "string" and reason or "Could not clear your ledger."
+		end
+		return nil
+	end
+
 	if offer.oftype == "battlepass" then
 		if not BattlePassSystem or not BattlePassSystem.purchasePremium then
 			return "Battle Pass system is not available."
@@ -1047,6 +1609,22 @@ local function deliverOffer(player, offer, extra)
 		if not player:addMount(offer.value) then
 			return "Failed to deliver mount."
 		end
+		return nil
+	end
+
+	-- One of the unlocks Bao also sells: the same storage write his grant
+	-- does, nothing more. Checked again here as well as before charging, so a
+	-- second purchase can never succeed.
+	if offer.oftype == "unlock" then
+		local key = tonumber(offer.value) or 0
+		if key <= 0 then
+			return "Invalid unlock."
+		end
+		if player:getStorageValue(key) == 1 then
+			return "You already have this."
+		end
+		player:setStorageValue(key, 1)
+		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, offer.unlockMessage or (offer.name .. " is now open to you."))
 		return nil
 	end
 
@@ -1238,6 +1816,49 @@ local function deliverOffer(player, offer, extra)
 		return nil
 	end
 
+	if offer.oftype == "hireling_pet" then
+		if not supportsHirelingStore(player) then
+			return "The hireling system is not available."
+		end
+
+		local species = GetHirelingPetSpeciesByOffer(offer.id)
+		if not species then
+			return "Invalid hireling pet."
+		end
+
+		if HirelingPets.countFor(player:getGuid()) >= HIRELING_PET_MAX_PER_PLAYER then
+			return "You already keep as many pets as one house can hold."
+		end
+
+		local inbox = player:getStoreInbox()
+		if not inbox then
+			return "Your store inbox is not available."
+		end
+
+		-- One item id for every species; which animal is inside is stamped on
+		-- the item, the way a hireling lamp carries its hireling's id. Opening
+		-- it in your own house is what creates the pet -- a new NPC type
+		-- cannot be registered from this handler.
+		local basket = Game.createItem(HIRELING_PET_BASKET, 1)
+		if not basket then
+			return "Failed to create item."
+		end
+		basket:setCustomAttribute("HirelingPet", species.key)
+		basket:setAttribute(ITEM_ATTRIBUTE_NAME, species.name:lower() .. " basket")
+		basket:setAttribute(ITEM_ATTRIBUTE_DESCRIPTION, string.format(
+			"A %s is asleep in here.\nThis item cannot be traded.\nOpen it inside your own house.",
+			species.name:lower()))
+
+		if inbox:addItemEx(basket) ~= RETURNVALUE_NOERROR then
+			basket:remove()
+			return "Your store inbox is full."
+		end
+
+		player:sendTextMessage(MESSAGE_STATUS_SMALL,
+			"A " .. species.name:lower() .. " basket was sent to your store inbox. Open it inside your house.")
+		return nil
+	end
+
 	return "Invalid offer type."
 end
 
@@ -1314,6 +1935,12 @@ function buyHandler.onReceive(player, msg)
 		sendStoreError(player, "Battle Pass system is not available.")
 		return
 	end
+	-- Refused before charging: otherwise an unlock the character already has
+	-- is charged and then reversed, two ledger rows for nothing.
+	if offer.oftype == "unlock" and player:getStorageValue(offer.value) == 1 then
+		sendStoreError(player, "You already have this.")
+		return
+	end
 
 	local extra = {}
 	if offer.oftype == "changename" then
@@ -1364,6 +1991,10 @@ function buyHandler.onReceive(player, msg)
 		sendStoreError(player, deliveryError)
 		return
 	end
+
+	-- Coins were debited in the database by Coins.spend; what was delivered
+	-- only exists in memory. Without this a crash takes both from the buyer.
+	player:saveOnTransfer("store.purchase")
 
 	local historyCount = offer.oftype == "item" and offer.count or (offer.oftype == "house" and math.max(#(offer.items or {}), offer.count or 1) or (offer.oftype == "prey_wildcard" and offer.value or 1))
 	addStoreHistory(player:getAccountId(), player:getGuid(), offer.name, -offer.price, historyCount, nil)
