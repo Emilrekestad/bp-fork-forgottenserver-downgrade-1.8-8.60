@@ -269,6 +269,18 @@ void Connection::parsePacket(const asio::error_code& error)
 
 	uint32_t recvChecksum = msg.get<uint32_t>();
 	if (recvChecksum != checksum) {
+		// Security audit 2026-10-05: once a checksummed protocol has enabled
+		// XTEA, every packet carries an adler32 and a mismatch can only be
+		// corruption or a hand-built packet. Stepping back would decrypt from
+		// the wrong offset and hand the dispatcher garbage opcodes, so drop
+		// the connection instead. The pre-login first message keeps the
+		// legacy "maybe it was not a checksum" behaviour.
+		if (receivedFirst && protocol && protocol->encryptionEnabled && protocol->checksumEnabled) {
+			LOG_NETWORK(fmt::format("{} disconnected for a packet with a bad checksum.", convertIPToString(getIPLocked())));
+			closeLocked(FORCE_CLOSE);
+			return;
+		}
+
 		// it might not have been the checksum, step back
 		msg.skipBytes(-NetworkMessage::CHECKSUM_LENGTH);
 	}
@@ -316,6 +328,19 @@ void Connection::send(const OutputMessage_ptr& msg)
 {
 	std::scoped_lock lockClass(connectionLock);
 	if (closed) {
+		return;
+	}
+
+	// Security audit 2026-10-05: a peer that stops reading but keeps the
+	// socket alive makes this queue grow by one 64 KB buffer per message for
+	// up to CONNECTION_WRITE_TIMEOUT seconds. Honest clients drain it within
+	// a few messages; past this many queued messages the peer is treated as
+	// dead and dropped instead of allowed to hold the memory.
+	constexpr size_t MAX_QUEUED_OUTPUT_MESSAGES = 1024;
+	if (messageQueue.size() >= MAX_QUEUED_OUTPUT_MESSAGES) {
+		LOG_NETWORK(fmt::format("{} disconnected: {} output messages queued and not read.",
+		                        convertIPToString(getIPLocked()), messageQueue.size()));
+		closeLocked(FORCE_CLOSE);
 		return;
 	}
 

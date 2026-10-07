@@ -1174,6 +1174,15 @@ function forgeHandler.onReceive(player, msg)
 
 	local action = msg:getByte()
 	debugForge(player, "packet action=" .. tostring(action))
+	-- Per-action throttle (security audit 2026-10-05). Open and refresh walk
+	-- every container the player carries; fusion, transfer and convert each
+	-- write two rows to player_forge_history; history reads fifty. The lock
+	-- in withPlayerLock is synchronous and so never limited the RATE.
+	local cooldown = (action == REQUEST_HISTORY) and 1000 or 300
+	if not NetworkGuard.cooldown(player, "forge:" .. tostring(action), cooldown) then
+		debugForge(player, "packet throttled")
+		return
+	end
 	if action == REQUEST_OPEN then
 		openForge(player)
 	elseif action == REQUEST_CLOSE then

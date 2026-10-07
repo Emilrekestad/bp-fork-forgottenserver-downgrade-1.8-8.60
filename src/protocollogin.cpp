@@ -7,6 +7,7 @@
 
 #include "astraclient.h"
 #include "fonticakclient.h"
+#include "backpackotclient.h"
 #include "ban.h"
 #include "configmanager.h"
 #include "database.h"
@@ -223,6 +224,39 @@ void ProtocolLogin::disconnectClient(std::string_view message)
 	disconnect();
 }
 
+// BackpackOT client gate, login server side (docs/client-launcher/GATE.md). It
+// runs once the password is known to be right, so the warn log only names real
+// accounts. A valid marker is handed on to the game server, which sees no
+// marker of its own until the client marks its game login too (phase 4b).
+// Returns false when the login was refused.
+bool ProtocolLogin::passesClientGate(std::string_view accountName, uint32_t accountId, uint32_t clientIP)
+{
+	if (backpackMarker_.valid && clientIP != 0) {
+		BackpackOTClient::LoginHandoff::getInstance().record(accountId, clientIP, backpackMarker_.release);
+	}
+
+	const auto mode = static_cast<BackpackOTClient::GateMode>(getInteger(ConfigManager::BACKPACK_CLIENT_GATE));
+	if (mode == BackpackOTClient::GateMode::OFF) {
+		return true;
+	}
+
+	const int64_t minRelease = getInteger(ConfigManager::BACKPACK_MIN_CLIENT_RELEASE);
+	const auto verdict = BackpackOTClient::judge(backpackMarker_, minRelease);
+	if (verdict == BackpackOTClient::Verdict::PASS) {
+		return true;
+	}
+
+	const bool enforce = mode == BackpackOTClient::GateMode::ENFORCE;
+	LOG_WARN(BackpackOTClient::describeRefusal(enforce, accountName, convertIPToString(clientIP), verdict,
+	                                           backpackMarker_.release, minRelease));
+	if (!enforce) {
+		return true;
+	}
+
+	disconnectClient(BackpackOTClient::refusalMessage(verdict));
+	return false;
+}
+
 void ProtocolLogin::getCharacterList(std::string_view accountName, std::string_view password, bool isAstraClient)
 {
 	auto connection = getConnection();
@@ -236,6 +270,10 @@ void ProtocolLogin::getCharacterList(std::string_view accountName, std::string_v
 	}
 
 	LoginAttemptLimiter::getInstance().recordSuccess(clientIP);
+
+	if (!passesClientGate(accountName, account.id, clientIP)) {
+		return;
+	}
 
 	auto output = OutputMessagePool::getOutputMessage();
 
@@ -513,18 +551,44 @@ void ProtocolLogin::onRecvFirstMessage(NetworkMessage& msg)
 
 	// Always detect AstraClient and FonticakClient, regardless of astraClientOnly setting.
 	// This allows sending the correct packet format (0x65 vs 0x64) to each client.
+	// The markers follow the password as length-prefixed strings and are read in a
+	// loop, as the game protocol does: "OTCv8" carries a u16 engine version, Astra
+	// and Fonticak a u32 signature, BackpackOT a u32 signature and a u16 release.
+	// An empty or unknown marker ends the list; what follows it is RSA padding.
 	bool isFonticakClient_ = false;
-	if (msg.getBufferPosition() + 2 <= msg.getLength()) {
+	while (msg.getBufferPosition() + 2 <= msg.getLength()) {
 		uint16_t markerLength = msg.get<uint16_t>();
-		if (markerLength > 0 && markerLength <= 64 && msg.getBufferPosition() + markerLength <= msg.getLength()) {
-			const auto marker = msg.getString(markerLength);
-			if (marker == AstraClient::LOGIN_MARKER && msg.getBufferPosition() + sizeof(uint32_t) <= msg.getLength()) {
-				isAstraClient_ =
-				    msg.get<uint32_t>() == AstraClient::generateSignature(operatingSystem, version, key);
-			} else if (marker == FonticakClient::LOGIN_MARKER && msg.getBufferPosition() + sizeof(uint32_t) <= msg.getLength()) {
-				isFonticakClient_ =
-				    msg.get<uint32_t>() == FonticakClient::generateSignature(operatingSystem, version, key);
+		if (markerLength == 0 || markerLength > 64 || msg.getBufferPosition() + markerLength > msg.getLength()) {
+			break;
+		}
+
+		const auto marker = msg.getString(markerLength);
+		if (marker == "OTCv8") {
+			if (msg.getBufferPosition() + sizeof(uint16_t) > msg.getLength()) {
+				break;
 			}
+			msg.get<uint16_t>(); // engine version, not used by the login server
+		} else if (marker == AstraClient::LOGIN_MARKER) {
+			if (msg.getBufferPosition() + sizeof(uint32_t) > msg.getLength()) {
+				break;
+			}
+			isAstraClient_ = msg.get<uint32_t>() == AstraClient::generateSignature(operatingSystem, version, key);
+		} else if (marker == FonticakClient::LOGIN_MARKER) {
+			if (msg.getBufferPosition() + sizeof(uint32_t) > msg.getLength()) {
+				break;
+			}
+			isFonticakClient_ =
+			    msg.get<uint32_t>() == FonticakClient::generateSignature(operatingSystem, version, key);
+		} else if (marker == BackpackOTClient::LOGIN_MARKER) {
+			if (msg.getBufferPosition() + sizeof(uint32_t) + sizeof(uint16_t) > msg.getLength()) {
+				break;
+			}
+			const uint32_t signature = msg.get<uint32_t>();
+			backpackMarker_.present = true;
+			backpackMarker_.release = msg.get<uint16_t>();
+			backpackMarker_.valid = signature == BackpackOTClient::generateSignature(operatingSystem, version, key);
+		} else {
+			break;
 		}
 	}
 

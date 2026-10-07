@@ -4,6 +4,7 @@
 #ifndef FS_PROTOCOLGAME_H
 #define FS_PROTOCOLGAME_H
 
+#include "backpackotclient.h"
 #include "chat.h"
 #include "creature.h"
 #include "packet_backlog.h"
@@ -132,6 +133,7 @@ private:
 	void connect(uint32_t playerId, OperatingSystem_t operatingSystem);
 	void finishLogin(uint32_t reservedGuid, uint32_t accountId, bool loaded, OperatingSystem_t operatingSystem);
 	void disconnectClient(std::string_view message) const;
+	bool passesClientGate(std::string_view accountName, uint32_t accountId);
 	void dispatchCancelMessage(ReturnValue message) const;
 	void writeToOutputBuffer(const NetworkMessage& msg);
 
@@ -195,7 +197,6 @@ private:
 
 	void parseModalWindowAnswer(NetworkMessage& msg);
 	void parseImbuementDurations(NetworkMessage& msg);
-	void parseCharacterBazaar(NetworkMessage& msg);
 
 	// trade methods
 	void parseRequestTrade(NetworkMessage& msg);
@@ -414,6 +415,25 @@ private:
 
 	bool isSpyActive() const { return spyActive_; }
 
+	// ─── Extended view (OTCv8 GameChangeMapAwareRange, feature 30) ──────
+	// Per-connection map box. x/y = tiles known to the left/top of the player;
+	// the client also knows x+1 to the right and y+1 below, so the box is
+	// width() x height(). Defaults equal Map::maxClientViewportX/Y (18x14) and
+	// only grow when the client asks (parseChangeAwareRange), never past
+	// Map::maxClientViewportExtX/Y. Only map-description/canSee code reads
+	// this; game rules keep using the Map:: constants.
+	struct AwareRange {
+		int32_t x = Map::maxClientViewportX;
+		int32_t y = Map::maxClientViewportY;
+		int32_t width() const { return (x * 2) + 2; }
+		int32_t height() const { return (y * 2) + 2; }
+	};
+	AwareRange awareRange;
+	int64_t awareRangeWindowStart = 0;
+	uint8_t awareRangeWindowCount = 0;
+	void parseChangeAwareRange(NetworkMessage& msg);
+	void sendAwareRange();
+
 	std::unordered_set<uint32_t> knownCreatureSet;
 	std::shared_ptr<Player> player;
 	tfs::net::PacketBacklog packetBacklog;
@@ -440,6 +460,11 @@ private:
 	bool isOTC = false;
 	bool isAstraClient = false;
 	bool isFonticakClient = false;
+	// BackpackOT client gate (docs/client-launcher/GATE.md): what the game login's
+	// own marker said, and the verdict that reaches Lua through player:getClient().
+	BackpackOTClient::Marker backpackMarker;
+	bool isBackpackOT = false;
+	uint16_t backpackClientRelease = 0;
 	bool supportsZoneWeather = false;
 	bool supportsDllZoneWeather = false;
 	bool zoneWeatherFeatureEnabled = false;

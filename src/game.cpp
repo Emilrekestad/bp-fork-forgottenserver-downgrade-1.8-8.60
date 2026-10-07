@@ -6548,6 +6548,19 @@ bool Game::combatChangeHealth(Creature* attacker, Creature* target, CombatDamage
 	const Position& targetPos = target->getPosition();
 	if (damage.primary.type == COMBAT_HEALING) {
 		applyResetSystemBonuses(damage, attacker ? attacker->getPlayer() : nullptr, target->getPlayer());
+
+		// Health-change handlers run BEFORE the heal is applied, and their
+		// written-back values are the heal that lands -- the same contract the
+		// damage branch below has always had. Until 2026-09-30 they ran after
+		// gainHealth with the result discarded, so Healing Power (rarity) and
+		// the wheel's healing stars could never change a heal.
+		const auto& healEvents = target->getCreatureEvents(CREATURE_EVENT_HEALTHCHANGE);
+		if (!healEvents.empty()) {
+			for (CreatureEvent* creatureEvent : healEvents) {
+				creatureEvent->executeHealthChange(target, attacker, damage);
+			}
+		}
+
 		int32_t healAmount = damage.primary.value + damage.secondary.value;
 		if (healAmount > 0) {
 			int32_t realHeal = target->getHealth();
@@ -6582,14 +6595,6 @@ bool Game::combatChangeHealth(Creature* attacker, Creature* target, CombatDamage
 				if (auto targetPlayerRef = std::dynamic_pointer_cast<Player>(targetRef)) {
 					targetPlayerRef->updateImpactTracker(0, static_cast<uint32_t>(realHeal), COMBAT_HEALING);
 				}
-			}
-		}
-
-		// Fire onHealthChange creature events for healing
-		const auto& healEvents = target->getCreatureEvents(CREATURE_EVENT_HEALTHCHANGE);
-		if (!healEvents.empty()) {
-			for (CreatureEvent* creatureEvent : healEvents) {
-				creatureEvent->executeHealthChange(target, attacker, damage);
 			}
 		}
 

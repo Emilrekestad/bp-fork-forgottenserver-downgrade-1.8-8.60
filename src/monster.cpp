@@ -3051,8 +3051,10 @@ void Monster::getPathSearchParams(const Creature* creature, FindPathParams& fpp)
 			fpp.fullPathSearch = !canUseAttack(getPosition(), creature);
 		}
 	} else if (isFleeing()) {
-		// Distance should be higher than the client view range (Map::maxClientViewportX/Map::maxClientViewportY)
-		fpp.maxTargetDist = Map::maxViewportX;
+		// Distance should be higher than the client view range (Map::maxClientViewportX/Map::maxClientViewportY).
+		// Pinned to the classic box (+3 = 11, the historical Map::maxViewportX) so the
+		// extended-view broadcast radius does not change how far monsters flee.
+		fpp.maxTargetDist = Map::maxClientViewportX + 3;
 		fpp.clearSight = false;
 		fpp.keepDistance = true;
 		fpp.fullPathSearch = false;

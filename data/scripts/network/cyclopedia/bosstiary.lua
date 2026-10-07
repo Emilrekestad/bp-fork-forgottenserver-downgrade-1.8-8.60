@@ -344,20 +344,32 @@ local function toggleTracker(player, raceId, enabled)
 	sendWindow(player)
 end
 
+-- Every handler below runs three to five synchronous queries against the
+-- player's bosstiary rows. Throttled per player so a crafted client cannot
+-- turn the window into a database flood (security audit 2026-10-05).
 local openHandler = PacketHandler(OPCODE_BOSSTIARY_OPEN)
 function openHandler.onReceive(player, msg)
+	if not supportsCustomNetwork(player) or not NetworkGuard.cooldown(player, "bosstiary-open", 1000) then
+		return
+	end
 	sendWindow(player)
 end
 openHandler:register()
 
 local slotsHandler = PacketHandler(OPCODE_BOSSTIARY_OPEN_SLOTS)
 function slotsHandler.onReceive(player, msg)
+	if not supportsCustomNetwork(player) or not NetworkGuard.cooldown(player, "bosstiary-slots", 1000) then
+		return
+	end
 	sendSlots(player)
 end
 slotsHandler:register()
 
 local slotActionHandler = PacketHandler(OPCODE_BOSSTIARY_SLOT_ACTION)
 function slotActionHandler.onReceive(player, msg)
+	if not supportsCustomNetwork(player) or not NetworkGuard.cooldown(player, "bosstiary-slot-action", 500) then
+		return
+	end
 	if msg:len() - msg:tell() < 5 then
 		return
 	end
@@ -367,6 +379,9 @@ slotActionHandler:register()
 
 local trackerHandler = PacketHandler(OPCODE_BOSSTIARY_TRACKER)
 function trackerHandler.onReceive(player, msg)
+	if not supportsCustomNetwork(player) or not NetworkGuard.cooldown(player, "bosstiary-tracker", 500) then
+		return
+	end
 	if msg:len() - msg:tell() < 5 then
 		return
 	end

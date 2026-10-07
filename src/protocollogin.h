@@ -4,6 +4,7 @@
 #ifndef FS_PROTOCOLLOGIN_H
 #define FS_PROTOCOLLOGIN_H
 
+#include "backpackotclient.h"
 #include "protocol.h"
 
 class NetworkMessage;
@@ -72,8 +73,10 @@ private:
 	void getCharacterList(std::string_view accountName, std::string_view password, bool isAstraClient);
 	void getCastList(const std::string& password);
 	void getAstraCastList();
+	bool passesClientGate(std::string_view accountName, uint32_t accountId, uint32_t clientIP);
 
 	bool isAstraClient_ = false;
+	BackpackOTClient::Marker backpackMarker_;
 };
 
 #endif

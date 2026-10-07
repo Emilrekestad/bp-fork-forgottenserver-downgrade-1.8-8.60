@@ -158,6 +158,18 @@ bool Mailbox::sendItem(Item* item) const
 			return true;
 		}
 	} else {
+		// Refuse while the receiver's save is in flight or their login is still
+		// loading. Loading them from the database now would read a stale copy;
+		// savePlayerSync on that copy would then be queued BEHIND the pending
+		// flush and overwrite the receiver's real state (a session rollback
+		// that restores anything they traded away: a dupe). The parcel stays
+		// on the mailbox tile, so the sender simply tries again.
+		const uint32_t receiverGuid = IOLoginData::getGuidByName(receiver);
+		if (receiverGuid == 0 || g_game.isLoginPending(receiverGuid) ||
+		    g_saveManager.isPlayerFlushPending(receiverGuid)) {
+			return false;
+		}
+
 		// Player is final and offline loads elsewhere in the codebase use this short-lived stack instance.
 		Player tmpPlayer(nullptr);
 		if (!IOLoginData::loadPlayerByName(&tmpPlayer, receiver)) {

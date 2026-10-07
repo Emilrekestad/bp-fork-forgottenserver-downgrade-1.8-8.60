@@ -21,6 +21,7 @@
 #include "npc.h"
 #include "player.h"
 #include "protocolstatus.h"
+#include "save_manager.h"
 #include "scheduler.h"
 #include "script.h"
 #include "scriptmanager.h"
@@ -1676,6 +1677,9 @@ void LuaScriptInterface::registerFunctions()
 
 	// saveServer()
 	lua_register(luaState, "saveServer", LuaScriptInterface::luaSaveServer);
+
+	// saveWorldState()  -- Security audit 2026-10-05 (PERS-1/PERS-2)
+	lua_register(luaState, "saveWorldState", LuaScriptInterface::luaSaveWorldState);
 
 	// cleanMap()
 	lua_register(luaState, "cleanMap", LuaScriptInterface::luaCleanMap);
@@ -4023,6 +4027,15 @@ int LuaScriptInterface::luaSaveServer(lua_State* L)
 	g_globalEvents->save();
 	g_game.saveGameState();
 	Lua::pushBoolean(L, true);
+	return 1;
+}
+
+int LuaScriptInterface::luaSaveWorldState(lua_State* L)
+{
+	// saveWorldState()
+	// Security audit 2026-10-05 (PERS-1/PERS-2): game/account storage, KV store
+	// and houses, without kicking or saving players. Used by the autosave.
+	Lua::pushBoolean(L, g_saveManager.saveWorldState());
 	return 1;
 }
 

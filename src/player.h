@@ -156,6 +156,8 @@ inline constexpr int32_t AVATAR_TIMER_STORAGE = 50099;
 inline constexpr int32_t AVATAR_DAMAGE_REDUCTION_PERCENT = 10;
 inline constexpr int32_t DUAL_WIELD_DAMAGE_BOOST_STORAGE = 50001;
 
+inline constexpr uint8_t MAX_CHARM_EXPANSION = 4;
+
 class Player final : public Creature, public Cylinder
 {
 public:
@@ -343,6 +345,19 @@ public:
 
 	bool hasWeeklyExpansion() const { return m_hasWeeklyExpansion; }
 	void setWeeklyExpansion(bool has) { m_hasWeeklyExpansion = has; }
+
+	// Charm Expansion: extra charm ASSIGNMENT slots, bought from Old Man Bao.
+	// The base allowance stays where it was (premium 6 / free 2) and this is
+	// added on top, so buying one is never worse than not buying one and a
+	// free account that buys two ends up ahead of a bare premium account --
+	// which is the deal Bao's other slot unlocks already make.
+	uint8_t getCharmExpansion() const { return m_charmExpansion; }
+	void setCharmExpansion(uint8_t slots) { m_charmExpansion = std::min<uint8_t>(slots, MAX_CHARM_EXPANSION); }
+	void addCharmExpansion(uint8_t slots)
+	{
+		setCharmExpansion(static_cast<uint8_t>(std::min<uint32_t>(
+		    static_cast<uint32_t>(m_charmExpansion) + slots, MAX_CHARM_EXPANSION)));
+	}
 	float getResetDefenseBonus() const {
 		return resetDefenseBonus;
 	}
@@ -881,6 +896,12 @@ public:
 
 	float getMitigation() const override;
 	void addMitigation(float modifier) { varMitigation += modifier; }
+	// Wheel of Destiny mitigation. The wheel's own tooltip promises a
+	// MULTIPLIER ("0.03% Mitigation Multiplier per point"), not a flat add:
+	// on a full mitigation build the flat reading was worth roughly +24%
+	// damage reduction outright. Kept separate from varMitigation so items
+	// and conditions that add flat mitigation keep doing exactly that.
+	void addMitigationMultiplier(float modifier) { varMitigationMultiplier += modifier; }
 
 	float getAttackFactor() const override;
 	float getDefenseFactor() const override;
@@ -1563,6 +1584,8 @@ public:
 	bool isMehah() const { return client ? client->isMehah : false; }
 	bool isAstraClient() const { return client ? client->isAstraClient : false; }
 	bool isFonticakClient() const { return client ? client->isFonticakClient : false; }
+	bool isBackpackOTClient() const { return client ? client->isBackpackOT : false; }
+	uint16_t getBackpackOTClientRelease() const { return client ? client->backpackClientRelease : 0; }
 	bool isOTC() const
 	{
 		switch (operatingSystem) {
@@ -1799,6 +1822,7 @@ private:
 	int32_t varSkills[SKILL_LAST + 1] = {};
 	int32_t varStats[STAT_LAST + 1] = {};
 	float varMitigation = 0.0f;
+	float varMitigationMultiplier = 0.0f;
 	std::array<int16_t, COMBAT_COUNT> specialMagicLevelSkill = {0};
 	std::array<int32_t, static_cast<size_t>(ExperienceRateType::STAMINA) + 1> experienceRate = {0};
 	int32_t purchaseCallback = -1;
@@ -1868,6 +1892,7 @@ private:
 	bool m_serene = false;
 	uint64_t m_serene_cooldown = 0;
 	bool m_hasWeeklyExpansion = false;
+	uint8_t m_charmExpansion = 0;
 	int64_t rootImmunityEnd = 0;
 	int64_t fearImmunityEnd = 0;
 	VirtueMonk_t m_virtue = VIRTUE_NONE;

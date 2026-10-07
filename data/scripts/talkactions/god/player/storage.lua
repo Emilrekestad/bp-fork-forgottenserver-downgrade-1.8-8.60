@@ -40,4 +40,8 @@ function storage.onSay(player, words, param)
 end
 
 storage:separator(" ")
+-- Security audit 2026-10-05: the in-body checks stay; registering the gates
+-- makes the C++ dispatcher refuse early and log every use (gm.command).
+storage:accountType(ACCOUNT_TYPE_GOD)
+storage:access(true)
 storage:register()

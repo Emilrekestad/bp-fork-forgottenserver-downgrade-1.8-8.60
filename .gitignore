@@ -233,3 +233,16 @@ data/cache/
 # Kept on disk for rollback; far too large for git (world.otbm backups are 184MB).
 *.bak-*
 *.bak_*
+
+# Security audit 2026-10-05 (BackpackOT docs/security/SECRETS_INVENTORY.md).
+# This repository is PUBLIC. config.lua (mysqlPass, adminPassword) is ignored
+# above; these cover everything else that could carry a credential or a dump.
+# key.pem is the well-known public OTServ RSA key and stays tracked.
+.env
+.env.*
+*.key
+*.p12
+*.sql.gz
+local_server_run*.log
+server_run*.log
+data/items/itemid_map.csv

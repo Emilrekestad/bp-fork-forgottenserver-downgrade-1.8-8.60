@@ -67,7 +67,7 @@ local PREY_STORAGE_AUTO_BONUS_BASE = 780000
 local PREY_STORAGE_LOCK_BASE = 780100
 local PREY_STORAGE_PERMANENT_SLOT = 780200
 local PREY_PERMANENT_SLOT = 2
-local PREY_PERMANENT_SLOT_COST = 900
+local PREY_PERMANENT_SLOT_COST = 500 -- owner 2026-09-15: same as the store tile (gamestore.lua 5170)
 local PREY_AUTO_BONUS_COST = 1
 local PREY_LOCK_COST = 5
 local RESOURCE_BANK = 0
@@ -777,8 +777,14 @@ local function initializeEmptySlots(player)
 	return changed
 end
 
+-- Per-player throttles on every prey request (security audit 2026-10-05):
+-- open writes three player_prey rows per call and the actions roll lists and
+-- spend gold/wildcards, so none of them may run 25 times a second.
 local openHandler = PacketHandler(PREY_OPCODE_OPEN)
 function openHandler.onReceive(player, msg)
+	if not NetworkGuard.cooldown(player, "prey-open", 1000) then
+		return
+	end
 	initializeEmptySlots(player)
 	sendFullPrey(player)
 	saveAllSlots(player)
@@ -787,6 +793,9 @@ openHandler:register()
 
 local selectHandler = PacketHandler(PREY_OPCODE_SELECT)
 function selectHandler.onReceive(player, msg)
+	if not NetworkGuard.cooldown(player, "prey-action", 300) then
+		return
+	end
 	if msg:len() - msg:tell() < 2 then
 		return
 	end
@@ -840,6 +849,9 @@ selectHandler:register()
 
 local listRerollHandler = PacketHandler(PREY_OPCODE_LIST_REROLL)
 function listRerollHandler.onReceive(player, msg)
+	if not NetworkGuard.cooldown(player, "prey-action", 300) then
+		return
+	end
 	if msg:len() - msg:tell() < 1 then
 		return
 	end
@@ -893,6 +905,9 @@ listRerollHandler:register()
 
 local bonusRerollHandler = PacketHandler(PREY_OPCODE_BONUS_REROLL)
 function bonusRerollHandler.onReceive(player, msg)
+	if not NetworkGuard.cooldown(player, "prey-action", 300) then
+		return
+	end
 	if msg:len() - msg:tell() < 1 then
 		return
 	end
@@ -903,6 +918,9 @@ bonusRerollHandler:register()
 
 local clearHandler = PacketHandler(PREY_OPCODE_CLEAR)
 function clearHandler.onReceive(player, msg)
+	if not NetworkGuard.cooldown(player, "prey-action", 300) then
+		return
+	end
 	if msg:len() - msg:tell() < 1 then
 		return
 	end
@@ -923,6 +941,9 @@ clearHandler:register()
 
 local autoBonusHandler = PacketHandler(PREY_OPCODE_TOGGLE_AUTO)
 function autoBonusHandler.onReceive(player, msg)
+	if not NetworkGuard.cooldown(player, "prey-action", 300) then
+		return
+	end
 	if msg:len() - msg:tell() < 2 then
 		return
 	end
@@ -946,6 +967,9 @@ autoBonusHandler:register()
 
 local lockPreyHandler = PacketHandler(PREY_OPCODE_TOGGLE_LOCK)
 function lockPreyHandler.onReceive(player, msg)
+	if not NetworkGuard.cooldown(player, "prey-action", 300) then
+		return
+	end
 	if msg:len() - msg:tell() < 2 then
 		return
 	end
@@ -986,6 +1010,7 @@ local function preyTick()
 			local prey = getPlayerPrey(player)
 			if prey then
 				local changed = false
+				local combatDirty = false
 				for slot = 0, PREY_SLOTS - 1 do
 					local slotData = prey.slots[slot]
 					if isPreySlotUnlocked(player, slot) and slotData.state == PREY_STATE_ACTIVE and slotData.time_left > 0 then
@@ -999,6 +1024,7 @@ local function preyTick()
 								autoBonus = false
 							end
 
+							combatDirty = true
 							if locked then
 								if prey.wildcards >= PREY_LOCK_COST then
 									prey.wildcards = setPlayerBonusRerolls(player, prey.wildcards - PREY_LOCK_COST)
@@ -1027,6 +1053,10 @@ local function preyTick()
 							sendPreyTimeLeft(player, slot, slotData.time_left)
 						end
 					end
+				end
+
+				if combatDirty then
+					syncPreyCombatBonuses(player, prey)
 				end
 
 				if changed then
@@ -1271,6 +1301,9 @@ end
 
 local nativeRequestHandler = PacketHandler(PREY_NATIVE_OPCODE_REQUEST)
 function nativeRequestHandler.onReceive(player, msg)
+	if not NetworkGuard.cooldown(player, "prey-open", 1000) then
+		return
+	end
 	initializeEmptySlots(player)
 	sendFullPrey(player)
 	saveAllSlots(player)
@@ -1315,6 +1348,9 @@ end
 
 local nativeActionHandler = PacketHandler(PREY_NATIVE_OPCODE_ACTION)
 function nativeActionHandler.onReceive(player, msg)
+	if not NetworkGuard.cooldown(player, "prey-action", 300) then
+		return
+	end
 	local remaining = msg:len() - msg:tell()
 	if remaining == 1 then
 		return nativeBonusReroll(player, msg:getByte())

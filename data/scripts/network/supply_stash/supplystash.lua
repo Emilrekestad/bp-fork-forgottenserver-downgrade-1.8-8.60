@@ -609,6 +609,14 @@ local function stowAll(player)
 	end
 
 	player:sendTextMessage(MESSAGE_STATUS_SMALL, "Supplies stowed.")
+	-- The stash rows are already in the database; the backpack they came out
+	-- of is only in memory. Save it before a crash can put the items back.
+	player:saveOnTransfer("stash.stow")
+	local stowed = {}
+	for _, entry in pairs(amounts) do
+		stowed[#stowed + 1] = { item = entry.itemId, tier = entry.tier, amount = entry.amount }
+	end
+	GameEvents.emitForPlayer("stash.stow", player, { items = stowed })
 	sendStash(player)
 	return true
 end
@@ -714,6 +722,9 @@ local function withdraw(player, itemId, amount, tier)
 	end
 
 	cleanupEmptyRows(player)
+	-- The stash row was decremented in the database; the items only exist in
+	-- memory until the next save. Without this a crash destroys them.
+	player:saveOnTransfer("stash.withdraw")
 	sendStash(player)
 	return true
 end

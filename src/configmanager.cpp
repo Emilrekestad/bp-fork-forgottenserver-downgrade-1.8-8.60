@@ -6,6 +6,8 @@
 
 #include "configmanager.h"
 
+#include "backpackotclient.h"
+
 #include "game.h"
 #include "logger.h"
 #include "lua.hpp"
@@ -526,6 +528,9 @@ bool ConfigManager::load()
 	    std::max<int64_t>(1, getGlobalInteger(L, "characterBazaarMinDurationHours", 24));
 	integers[Integer::CHARACTER_BAZAAR_MAX_DURATION_DAYS] =
 	    std::max<int64_t>(1, getGlobalInteger(L, "characterBazaarMaxDurationDays", 7));
+	// A bid inside the final N minutes resets the clock to N minutes. 0 disables.
+	integers[Integer::CHARACTER_BAZAAR_ANTI_SNIPE_MINUTES] =
+	    std::clamp<int64_t>(getGlobalInteger(L, "characterBazaarAntiSnipeMinutes", 5), 0, 24 * 60);
 
 	// Item Bazaar (src/item_bazaar.cpp). Centralised here so no magic numbers
 	// live in the domain, the client, or the website.
@@ -547,6 +552,28 @@ bool ConfigManager::load()
 	integers[Integer::ITEM_BAZAAR_ANTI_SNIPE_RESET] =
 	    std::max<int64_t>(1, getGlobalInteger(L, "itemBazaarAntiSnipeResetSeconds", 60));
 	integers[Integer::ITEM_BAZAAR_WORLD_ID] = std::max<int64_t>(1, getGlobalInteger(L, "itemBazaarWorldId", 1));
+
+	// BackpackOT client gate (docs/client-launcher/GATE.md). Outside the load-once
+	// block, so a config reload switches warn to enforce without a restart.
+	const std::string backpackClientGate = asLowerCaseString(getGlobalString(L, "backpackClientGate", "off"));
+	auto backpackGateMode = BackpackOTClient::GateMode::OFF;
+	if (backpackClientGate == "enforce") {
+		backpackGateMode = BackpackOTClient::GateMode::ENFORCE;
+	} else if (backpackClientGate == "warn") {
+		backpackGateMode = BackpackOTClient::GateMode::WARN;
+	} else if (backpackClientGate != "off") {
+		LOG_WARN(fmt::format("[ClientGate] backpackClientGate '{}' is not off, warn or enforce; using warn",
+		                     backpackClientGate));
+		backpackGateMode = BackpackOTClient::GateMode::WARN;
+	}
+	integers[Integer::BACKPACK_CLIENT_GATE] = static_cast<int64_t>(backpackGateMode);
+	integers[Integer::BACKPACK_MIN_CLIENT_RELEASE] = std::clamp<int64_t>(
+	    getGlobalInteger(L, "backpackMinClientRelease", 0), 0, std::numeric_limits<uint16_t>::max());
+	if (backpackGateMode != BackpackOTClient::GateMode::OFF) {
+		LOG_WARN(fmt::format("[ClientGate] mode {}, minimum client release {}",
+		                     backpackGateMode == BackpackOTClient::GateMode::ENFORCE ? "enforce" : "warn",
+		                     integers[Integer::BACKPACK_MIN_CLIENT_RELEASE]));
+	}
 
 	// Admin Config
 	booleans[Boolean::ADMIN_LOCALHOST_ONLY] = getGlobalBoolean(L, "adminLocalhostOnly", true);

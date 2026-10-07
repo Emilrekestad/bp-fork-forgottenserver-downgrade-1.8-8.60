@@ -44,4 +44,7 @@ function dump.onSay(player, words, param)
 end
 
 dump:separator(" ")
+-- Security audit 2026-10-05: writes a file on the server, so the gate is
+-- registered here as well (refused and logged by the C++ dispatcher).
+dump:accountType(ACCOUNT_TYPE_GOD)
 dump:register()

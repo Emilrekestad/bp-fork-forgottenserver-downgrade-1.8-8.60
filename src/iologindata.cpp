@@ -280,7 +280,7 @@ bool IOLoginData::loadPlayerById(Player* player, uint32_t id, bool deferWorldDat
 	return loadPlayer(
 	    player,
 	    db.storeQuery(fmt::format(
-	        "SELECT `id`, `name`, `account_id`, `group_id`, `sex`, `vocation`, `experience`, `level`, `reset`, `maglevel`, `health`, `healthmax`, `blessings`, `blessings1`, `blessings2`, `blessings3`, `blessings4`, `blessings5`, `blessings6`, `blessings7`, `blessings8`, `mana`, `manamax`, `manaspent`, `soul`, `lookbody`, `lookfeet`, `lookhead`, `looklegs`, `looktype`, `lookaddons`, `lookmount`, `currentmount`, `randomizemount`, `posx`, `posy`, `posz`, `cap`, `lastlogin`, `lastlogout`, `lastip`, `conditions`, `skulltime`, `skull`, `town_id`, `balance`, `bonus_rerolls`, `charmpoints`, `task_hunting_points`, `bounty_points`, `soulseals_points`, `has_weekly_expansion`, `xpboost_value`, `xpboost_stamina`, `stamina`, `skill_fist`, `skill_fist_tries`, `skill_club`, `skill_club_tries`, `skill_sword`, `skill_sword_tries`, `skill_axe`, `skill_axe_tries`, `skill_dist`, `skill_dist_tries`, `skill_shielding`, `skill_shielding_tries`, `skill_fishing`, `skill_fishing_tries`, `direction`, `protection_time`, `offlinetraining_time`, `offlinetraining_skill`, `token_protected`, `token_hash`, `save` FROM `players` WHERE `id` = {:d}",
+	        "SELECT `id`, `name`, `account_id`, `group_id`, `sex`, `vocation`, `experience`, `level`, `reset`, `maglevel`, `health`, `healthmax`, `blessings`, `blessings1`, `blessings2`, `blessings3`, `blessings4`, `blessings5`, `blessings6`, `blessings7`, `blessings8`, `mana`, `manamax`, `manaspent`, `soul`, `lookbody`, `lookfeet`, `lookhead`, `looklegs`, `looktype`, `lookaddons`, `lookmount`, `currentmount`, `randomizemount`, `posx`, `posy`, `posz`, `cap`, `lastlogin`, `lastlogout`, `lastip`, `conditions`, `skulltime`, `skull`, `town_id`, `balance`, `bonus_rerolls`, `charmpoints`, `task_hunting_points`, `bounty_points`, `soulseals_points`, `has_weekly_expansion`, `charm_expansion`, `xpboost_value`, `xpboost_stamina`, `stamina`, `skill_fist`, `skill_fist_tries`, `skill_club`, `skill_club_tries`, `skill_sword`, `skill_sword_tries`, `skill_axe`, `skill_axe_tries`, `skill_dist`, `skill_dist_tries`, `skill_shielding`, `skill_shielding_tries`, `skill_fishing`, `skill_fishing_tries`, `direction`, `protection_time`, `offlinetraining_time`, `offlinetraining_skill`, `token_protected`, `token_hash`, `save` FROM `players` WHERE `id` = {:d}",
 	        id)), deferWorldData);
 }
 
@@ -290,7 +290,7 @@ bool IOLoginData::loadPlayerByName(Player* player, std::string_view name)
 	return loadPlayer(
 	    player,
 	    db.storeQuery(fmt::format(
-	        "SELECT `id`, `name`, `account_id`, `group_id`, `sex`, `vocation`, `experience`, `level`, `reset`, `maglevel`, `health`, `healthmax`, `blessings`, `blessings1`, `blessings2`, `blessings3`, `blessings4`, `blessings5`, `blessings6`, `blessings7`, `blessings8`, `mana`, `manamax`, `manaspent`, `soul`, `lookbody`, `lookfeet`, `lookhead`, `looklegs`, `looktype`, `lookaddons`, `lookmount`, `currentmount`, `randomizemount`, `posx`, `posy`, `posz`, `cap`, `lastlogin`, `lastlogout`, `lastip`, `conditions`, `skulltime`, `skull`, `town_id`, `balance`, `bonus_rerolls`, `charmpoints`, `task_hunting_points`, `bounty_points`, `soulseals_points`, `has_weekly_expansion`, `xpboost_value`, `xpboost_stamina`, `stamina`, `skill_fist`, `skill_fist_tries`, `skill_club`, `skill_club_tries`, `skill_sword`, `skill_sword_tries`, `skill_axe`, `skill_axe_tries`, `skill_dist`, `skill_dist_tries`, `skill_shielding`, `skill_shielding_tries`, `skill_fishing`, `skill_fishing_tries`, `direction`, `protection_time`, `offlinetraining_time`, `offlinetraining_skill`, `token_protected`, `token_hash`, `save` FROM `players` WHERE `name` = {:s}",
+	        "SELECT `id`, `name`, `account_id`, `group_id`, `sex`, `vocation`, `experience`, `level`, `reset`, `maglevel`, `health`, `healthmax`, `blessings`, `blessings1`, `blessings2`, `blessings3`, `blessings4`, `blessings5`, `blessings6`, `blessings7`, `blessings8`, `mana`, `manamax`, `manaspent`, `soul`, `lookbody`, `lookfeet`, `lookhead`, `looklegs`, `looktype`, `lookaddons`, `lookmount`, `currentmount`, `randomizemount`, `posx`, `posy`, `posz`, `cap`, `lastlogin`, `lastlogout`, `lastip`, `conditions`, `skulltime`, `skull`, `town_id`, `balance`, `bonus_rerolls`, `charmpoints`, `task_hunting_points`, `bounty_points`, `soulseals_points`, `has_weekly_expansion`, `charm_expansion`, `xpboost_value`, `xpboost_stamina`, `stamina`, `skill_fist`, `skill_fist_tries`, `skill_club`, `skill_club_tries`, `skill_sword`, `skill_sword_tries`, `skill_axe`, `skill_axe_tries`, `skill_dist`, `skill_dist_tries`, `skill_shielding`, `skill_shielding_tries`, `skill_fishing`, `skill_fishing_tries`, `direction`, `protection_time`, `offlinetraining_time`, `offlinetraining_skill`, `token_protected`, `token_hash`, `save` FROM `players` WHERE `name` = {:s}",
 	        db.escapeString(name))));
 }
 
@@ -436,6 +436,7 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result, bool deferWorl
 	player->bountyPoints = result->getNumber<uint64_t>("bounty_points");
 	player->soulsealsPoints = result->getNumber<uint64_t>("soulseals_points");
 	player->m_hasWeeklyExpansion = result->getNumber<uint16_t>("has_weekly_expansion") != 0;
+	player->setCharmExpansion(result->getNumber<uint16_t>("charm_expansion"));
 
 	player->setSex(static_cast<PlayerSex_t>(result->getNumber<uint16_t>("sex")));
 	player->level = std::max<uint32_t>(1, result->getNumber<uint32_t>("level"));
@@ -702,7 +703,7 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result, bool deferWorl
 
 			for (ItemMap::reverse_iterator it = itemMap.rbegin(), end = itemMap.rend(); it != end; ++it) {
 				auto item = std::move(it->second.first);
-				if (!item || (item->getID() >= ITEM_DEPOT_BOX_1 && item->getID() <= ITEM_DEPOT_BOX_17)) {
+				if (!item || (item->getID() >= ITEM_DEPOT_BOX_1 && item->getID() <= ITEM_DEPOT_BOX_LAST)) {
 					continue;
 				}
 
@@ -714,14 +715,13 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result, bool deferWorl
 
 				if (pid < 0) {
 					int32_t depotTownId = ((-pid) - 1) / 20;
-					int32_t boxIndex = ((-pid) - 1) % 20;
-					if (boxIndex >= 0 && boxIndex < 17) {
-						DepotChest* chest = player->getDepotChest(depotTownId, true);
-						for (const auto& boxItem : chest->getItemList()) {
-							if (boxItem->getID() == static_cast<uint16_t>(ITEM_DEPOT_BOX_1 + boxIndex)) {
-								transferLoadedItem(boxItem->getContainer(), item);
-								break;
-							}
+					// rows saved in boxes V-XVII (retired 2026-09-13) load into the last box
+					int32_t boxIndex = std::min<int32_t>(((-pid) - 1) % 20, DEPOT_BOX_COUNT - 1);
+					DepotChest* chest = player->getDepotChest(depotTownId, true);
+					for (const auto& boxItem : chest->getItemList()) {
+						if (boxItem->getID() == static_cast<uint16_t>(ITEM_DEPOT_BOX_1 + boxIndex)) {
+							transferLoadedItem(boxItem->getContainer(), item);
+							break;
 						}
 					}
 					continue;
@@ -1189,6 +1189,7 @@ bool IOLoginData::savePlayerQueries(Player* player, const Player::BestiaryDirtyS
 	query << "`bounty_points` = " << player->bountyPoints << ',';
 	query << "`soulseals_points` = " << player->soulsealsPoints << ',';
 	query << "`has_weekly_expansion` = " << (player->m_hasWeeklyExpansion ? 1 : 0) << ',';
+	query << "`charm_expansion` = " << static_cast<uint32_t>(player->getCharmExpansion()) << ',';
 	query << "`xpboost_value` = " << player->getXpBoostPercent() << ',';
 	query << "`xpboost_stamina` = " << player->getXpBoostTime() << ',';
 	query << "`offlinetraining_time` = " << player->getOfflineTrainingTime() / 1000 << ',';
@@ -1292,7 +1293,7 @@ bool IOLoginData::savePlayerQueries(Player* player, const Player::BestiaryDirtyS
 
 		for (const auto& it : player->depotChests) {
 			for (const auto& item : it.second->getItemList()) {
-				if (item->getID() >= ITEM_DEPOT_BOX_1 && item->getID() <= ITEM_DEPOT_BOX_17) {
+				if (item->getID() >= ITEM_DEPOT_BOX_1 && item->getID() <= ITEM_DEPOT_BOX_LAST) {
 					if (Container* box = item->getContainer()) {
 						int32_t boxIndex = item->getID() - ITEM_DEPOT_BOX_1;
 						int32_t specialPid = -static_cast<int32_t>(it.first * 20 + boxIndex + 1);

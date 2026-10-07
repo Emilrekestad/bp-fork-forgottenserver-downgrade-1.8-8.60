@@ -8,7 +8,7 @@ function gotoInfluenced.onSay(player, words, param)
 
     if #influencedList == 0 then
         player:sendTextMessage(MESSAGE_EVENT_ORANGE,
-            "[GM] Não há criaturas influenciadas ativas no momento.")
+            "[GM] There are no active influenced creatures right now.")
         return false
     end
 
@@ -28,7 +28,7 @@ function gotoInfluenced.onSay(player, words, param)
 
     if not closest then
         player:sendTextMessage(MESSAGE_EVENT_ORANGE,
-            "[GM] Não há criaturas influenciadas ativas no momento.")
+            "[GM] There are no active influenced creatures right now.")
         return false
     end
 
@@ -37,10 +37,15 @@ function gotoInfluenced.onSay(player, words, param)
     destPos:sendMagicEffect(CONST_ME_TELEPORT)
 
     player:sendTextMessage(MESSAGE_EVENT_ORANGE,
-        string.format("[GM] Teleportado para %s (nível %d).",
+        string.format("[GM] Teleported to %s (level %d).",
             closest:getName(), closest:getInfluencedLevel()))
 
     return false
 end
 gotoInfluenced:separator(" ")
+-- Security audit 2026-10-05: duplicate of god/navigation/goto_influenced.lua
+-- (same words; std::map keeps the first registration, which is that file).
+-- Gated here too so load order can never expose an unlogged teleport.
+gotoInfluenced:accountType(ACCOUNT_TYPE_GAMEMASTER)
+gotoInfluenced:access(true)
 gotoInfluenced:register()

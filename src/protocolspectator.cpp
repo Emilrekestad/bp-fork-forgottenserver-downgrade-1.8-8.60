@@ -58,6 +58,12 @@ bool ProtocolSpectator::isBanned(uint32_t ip) const
 
 void ProtocolSpectator::spectatorSay(ProtocolGame_ptr spectator, std::string_view text)
 {
+    // Security audit 2026-10-05: a zero-length say packet reached text[0] on an
+    // empty string_view, which is undefined behaviour.
+    if (text.empty()) {
+        return;
+    }
+
     if (text[0] == '/') {
         auto sv = explodeString(text.substr(1, text.length()), " ", 1);
         // Convert string_view elements to std::string for manipulation

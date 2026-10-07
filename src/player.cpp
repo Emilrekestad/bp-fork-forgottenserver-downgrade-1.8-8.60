@@ -1058,15 +1058,14 @@ float Player::getMitigation() const
 	const Item *shield, *weapon;
 	getShieldAndWeapon(shield, weapon);
 
-	if (shield) {
-		return std::max(0.0f,
-		                ((shieldingSkill * vocation->primaryShieldMultiplier + armor * vocation->mitigationMultiplier) / 100.0f) +
-		                    varMitigation);
-	}
+	const float shieldMultiplier = shield ? vocation->primaryShieldMultiplier : vocation->secondaryShieldMultiplier;
+	const float base = (shieldingSkill * shieldMultiplier + armor * vocation->mitigationMultiplier) / 100.0f;
 
-	return std::max(0.0f,
-	                ((shieldingSkill * vocation->secondaryShieldMultiplier + armor * vocation->mitigationMultiplier) / 100.0f) +
-	                    varMitigation);
+	// varMitigationMultiplier scales the base the gear and skill produce; the
+	// Wheel of Destiny feeds it, and its tooltip has always described a
+	// multiplier. varMitigation stays a flat addition on top, which is what
+	// every other source of mitigation in this fork means.
+	return std::max(0.0f, base * (1.0f + varMitigationMultiplier / 100.0f) + varMitigation);
 }
 
 void Player::getShieldAndWeapon(const Item*& shield, const Item*& weapon) const
@@ -1997,7 +1996,7 @@ void Player::checkDepotBoxes(DepotChest* chest)
 	}
 
 	if (!hasBox) {
-		for (uint16_t i = ITEM_DEPOT_BOX_17; i >= ITEM_DEPOT_BOX_1; --i) {
+		for (uint16_t i = ITEM_DEPOT_BOX_LAST; i >= ITEM_DEPOT_BOX_1; --i) {
 			auto box = Item::CreateItem(i);
 			if (box) {
 				chest->internalAddThing(box.get());
@@ -3427,7 +3426,8 @@ BlockType_t Player::blockHit(const std::shared_ptr<Creature>& attacker, CombatTy
 	    Creature::blockHit(attacker, combatType, damage, checkDefense, checkArmor, field, ignoreResistances, origin);
 
 	if (attacker && combatType != COMBAT_HEALING) {
-		sendCreatureSquare(attacker.get(), SQ_COLOR_YELLOW);
+		// Black like the classic client, not yellow (owner, 2026-10-04).
+		sendCreatureSquare(attacker.get(), SQ_COLOR_BLACK);
 	}
 
 	if (blockType != BLOCK_NONE) {

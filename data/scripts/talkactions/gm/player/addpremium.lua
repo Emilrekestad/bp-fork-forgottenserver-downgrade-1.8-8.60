@@ -49,4 +49,7 @@ function addPremium.onSay(player, words, param)
 end
 
 addPremium:separator(" ")
+-- Security audit 2026-10-05: the in-body getAccess() check stays; registering
+-- the gate here too makes the C++ dispatcher refuse and log (gm.command).
+addPremium:access(true)
 addPremium:register()

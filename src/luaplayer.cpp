@@ -385,7 +385,7 @@ int luaPlayerGetDepotBox(lua_State* L)
 
 	uint32_t depotId = getInteger<uint32_t>(L, 2);
 	uint32_t boxIndex = getInteger<uint32_t>(L, 3);
-	if (boxIndex >= 1 && boxIndex <= 17) {
+	if (boxIndex >= 1 && boxIndex <= DEPOT_BOX_COUNT) {
 		DepotChest* chest = player->getDepotChest(depotId, true);
 		if (chest) {
 			for (const auto& item : chest->getItemList()) {
@@ -1032,6 +1032,24 @@ int luaPlayerAddMitigation(lua_State* L)
 	}
 
 	player->addMitigation(getNumber<float>(L, 2));
+	pushBoolean(L, true);
+	return 1;
+}
+
+int luaPlayerAddMitigationMultiplier(lua_State* L)
+{
+	// player:addMitigationMultiplier(value)
+	//
+	// Percentage points applied to the mitigation the player's skill and gear
+	// already produce, rather than a flat addition -- what the Wheel of
+	// Destiny's own tooltip has always described. Negative values remove.
+	Player* player = getUserdata<Player>(L, 1);
+	if (!player) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	player->addMitigationMultiplier(getNumber<float>(L, 2));
 	pushBoolean(L, true);
 	return 1;
 }
@@ -1859,6 +1877,61 @@ int luaPlayerRemoveSoulsealsPoints(lua_State* L)
 }
 
 // Weekly Expansion
+int luaPlayerGetCharmExpansion(lua_State* L)
+{
+	// player:getCharmExpansion()
+	Player* player = getPlayer(L, 1);
+	if (player) {
+		lua_pushinteger(L, player->getCharmExpansion());
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int luaPlayerSetCharmExpansion(lua_State* L)
+{
+	// player:setCharmExpansion(slots)
+	Player* player = getPlayer(L, 1);
+	if (!player) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	const int64_t slots = getInteger<int64_t>(L, 2);
+	player->setCharmExpansion(static_cast<uint8_t>(std::clamp<int64_t>(slots, 0, MAX_CHARM_EXPANSION)));
+	pushBoolean(L, true);
+	return 1;
+}
+
+int luaPlayerAddCharmExpansion(lua_State* L)
+{
+	// player:addCharmExpansion(slots)
+	Player* player = getPlayer(L, 1);
+	if (!player) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	const int64_t slots = getInteger<int64_t>(L, 2);
+	if (slots <= 0) {
+		pushBoolean(L, false);
+		return 1;
+	}
+
+	// Refuse rather than silently saturate: Bao's shop marks a one-time
+	// purchase as owned when grant() returns true, so a saturating add would
+	// take the player's marks and give nothing back.
+	if (player->getCharmExpansion() >= MAX_CHARM_EXPANSION) {
+		pushBoolean(L, false);
+		return 1;
+	}
+
+	player->addCharmExpansion(static_cast<uint8_t>(std::min<int64_t>(slots, MAX_CHARM_EXPANSION)));
+	pushBoolean(L, true);
+	return 1;
+}
+
 int luaPlayerHasWeeklyExpansion(lua_State* L)
 {
 	// player:hasWeeklyExpansion()
@@ -2970,9 +3043,14 @@ int luaPlayerGetClient(lua_State* L)
 	// player:getClient()
 	const Player* player = getUserdata<const Player>(L, 1);
 	if (player) {
-		lua_createtable(L, 0, 2);
+		lua_createtable(L, 0, 4);
 		setField(L, "version", player->getProtocolVersion());
 		setField(L, "os", player->getOperatingSystem());
+		// BackpackOT client gate (docs/client-launcher/GATE.md). pushBoolean, not
+		// setField: setField pushes a bool as 0/1, and 0 is true in Lua.
+		pushBoolean(L, player->isBackpackOTClient());
+		lua_setfield(L, -2, "isBackpackOT");
+		setField(L, "clientRelease", player->getBackpackOTClientRelease());
 	} else {
 		lua_pushnil(L);
 	}
@@ -4766,6 +4844,7 @@ void LuaScriptInterface::registerPlayer()
 	registerMethod("Player", "getDefense", luaPlayerGetDefense);
 	registerMethod("Player", "getCombatAbsorbPercent", luaPlayerGetCombatAbsorbPercent);
 	registerMethod("Player", "addMitigation", luaPlayerAddMitigation);
+	registerMethod("Player", "addMitigationMultiplier", luaPlayerAddMitigationMultiplier);
 
 	registerMethod("Player", "getItemCount", luaPlayerGetItemCount);
 	registerMethod("Player", "getItemById", luaPlayerGetItemById);
@@ -4832,6 +4911,9 @@ void LuaScriptInterface::registerPlayer()
 	registerMethod("Player", "addSoulsealsPoints", luaPlayerAddSoulsealsPoints);
 	registerMethod("Player", "removeSoulsealsPoints", luaPlayerRemoveSoulsealsPoints);
 
+	registerMethod("Player", "getCharmExpansion", luaPlayerGetCharmExpansion);
+	registerMethod("Player", "setCharmExpansion", luaPlayerSetCharmExpansion);
+	registerMethod("Player", "addCharmExpansion", luaPlayerAddCharmExpansion);
 	registerMethod("Player", "hasWeeklyExpansion", luaPlayerHasWeeklyExpansion);
 	registerMethod("Player", "setWeeklyExpansion", luaPlayerSetWeeklyExpansion);
 

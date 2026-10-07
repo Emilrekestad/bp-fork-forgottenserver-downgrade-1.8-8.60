@@ -6,6 +6,7 @@
 #include "market.h"
 
 #include "database.h"
+#include "iologindata.h"
 #include "item.h"
 
 namespace {
@@ -304,6 +305,15 @@ bool Market::insertInboxItems(uint32_t playerId, uint16_t itemId, uint32_t amoun
 		const uint32_t stackSize = itemType.stackable ? std::max<uint32_t>(1, itemType.stackSize) : 1;
 		const uint32_t rowCount = attributes.empty() ? 1 + ((amount - 1) / stackSize) : 1;
 		if (sid + rowCount > std::numeric_limits<uint32_t>::max()) {
+			return false;
+		}
+
+		// savePlayer drops everything past INBOX_SAVE_LIMIT at the buyer's next
+		// save, so rows written past it would be paid for and then destroyed.
+		// Refusing makes the market accept fail and roll back instead.
+		const DBResult_ptr occupancy = db.storeQuery(fmt::format(
+			"SELECT COUNT(*) AS `total` FROM `player_inboxitems` WHERE `player_id` = {:d}", playerId));
+		if (!occupancy || occupancy->getNumber<uint64_t>("total") + rowCount > IOLoginData::INBOX_SAVE_LIMIT) {
 			return false;
 		}
 

@@ -410,6 +410,7 @@ const uint8_t fluidMap[] = {
 
 enum SquareColor_t : uint8_t
 {
+	SQ_COLOR_BLACK = 0,
 	SQ_COLOR_YELLOW = 210,
 };
 
@@ -720,7 +721,7 @@ enum item_t : uint16_t
 	ITEM_DECORATION_KIT = 23398,
 	ITEM_SUPPLY_STASH = 28750,
 	ITEM_DEPOT_BOX_1 = 22797,
-	ITEM_DEPOT_BOX_17 = 22813,
+	ITEM_DEPOT_BOX_LAST = 22800, // depot box IV; boxes V-XVII retired 2026-09-13
 	ITEM_BROWSEFIELD = 0xFFFF, // internal browse field container
 
 	ITEM_MALE_CORPSE = 4240,

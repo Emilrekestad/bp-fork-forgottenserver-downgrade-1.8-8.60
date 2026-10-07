@@ -186,10 +186,21 @@ enum class MapLoadStatus : uint8_t {
 class Map
 {
 public:
-	static constexpr int32_t maxViewportX = 11; // min value: maxClientViewportX + 1
-	static constexpr int32_t maxViewportY = 11; // min value: maxClientViewportY + 1
+	// Default client box (classic 15x11 view): the player knows 18x14 tiles.
+	// Every GAME RULE (monster sight, spell/action range, talk range) is pinned
+	// to these two - they do not grow when a client asks for a wider view.
 	static constexpr int32_t maxClientViewportX = 8;
 	static constexpr int32_t maxClientViewportY = 6;
+	// Ceiling for the per-connection aware range an OTCv8 client may request
+	// (ProtocolGame::parseChangeAwareRange, feature 30). 11/8 grants a 24x18
+	// box, i.e. the 23x17 that game_interface asks for around its fixed 19x13
+	// game window (+4 tiles of buffer each side, as the classic 15x11 had).
+	static constexpr int32_t maxClientViewportExtX = 11;
+	static constexpr int32_t maxClientViewportExtY = 8;
+	// Spectator/broadcast radius. Must stay >= the largest client box + 1 or
+	// wide-view players stop receiving moves/effects/text at their edges.
+	static constexpr int32_t maxViewportX = maxClientViewportExtX + 1; // 12
+	static constexpr int32_t maxViewportY = 11; // >= maxClientViewportExtY + 1 (9); kept at the historical 11
 
 
 	uint32_t clean() const;

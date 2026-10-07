@@ -248,9 +248,105 @@ function Player.sendFightMode(self)
 	return true
 end
 
+-- ---------------------------------------------------------------------------
+-- Integrity saves (docs/security/dupe-and-crash-audit-2026-09-08.md)
+--
+-- Players used to be written to the database only on logout and at the daily
+-- server save, so a crash rolled everyone back by up to a day. Every transfer
+-- that persists ONE side immediately (mail to an offline player, bank
+-- transfer, guild bank, stash, market, house) duplicated value on the next
+-- crash. Player.saveOnTransfer is the fix: an asynchronous, coalesced save of
+-- the party whose state only lived in memory. It is called from every transfer
+-- path and from the periodic autosave, and it never blocks the dispatcher.
+--
+-- saveAsync() returns false while a flush for the same player is still in
+-- flight (SaveManager::schedulePlayerFlush). The snapshot in that flush
+-- predates the transfer, so a false is retried rather than dropped.
+-- ---------------------------------------------------------------------------
+IntegritySave = IntegritySave or {
+	lastSave = {},   -- guid -> os.mtime() of the last queued save
+	nextAllowed = {}, -- guid -> earliest ms a new save may be queued
+	pending = {},    -- guid -> true while a deferred save is scheduled
+	MIN_INTERVAL_MS = 2500,
+	RETRY_MS = 1000,
+	MAX_RETRIES = 5,
+}
+
+local function integrityQueue(playerId, guid, reason, attempt)
+	IntegritySave.pending[guid] = nil
+	local player = Player(playerId)
+	if not player then
+		-- Logged out in the meantime; logout already saved synchronously.
+		return
+	end
+	if player:saveAsync() then
+		IntegritySave.lastSave[guid] = os.mtime()
+		IntegritySave.nextAllowed[guid] = os.mtime() + IntegritySave.MIN_INTERVAL_MS
+		return
+	end
+	if attempt < IntegritySave.MAX_RETRIES then
+		IntegritySave.pending[guid] = true
+		addEvent(integrityQueue, IntegritySave.RETRY_MS, playerId, guid, reason, attempt + 1)
+	else
+		logger.warn("[IntegritySave] gave up queueing save for %s (%s) after %d attempts",
+			player:getName(), tostring(reason), attempt)
+	end
+end
+
+--- Queue an asynchronous save of this player because value just moved.
+-- Coalesces bursts: at most one queued save per MIN_INTERVAL_MS per player,
+-- with the trailing call deferred rather than dropped, so the final state
+-- after a burst of transfers is always the one that lands on disk.
+function Player.saveOnTransfer(self, reason)
+	if not self or not self.isPlayer or not self:isPlayer() then
+		return false
+	end
+	local guid = self:getGuid()
+	if IntegritySave.pending[guid] then
+		return true
+	end
+	local now = os.mtime()
+	local wait = (IntegritySave.nextAllowed[guid] or 0) - now
+	if wait <= 0 then
+		integrityQueue(self:getId(), guid, reason, 1)
+	else
+		IntegritySave.pending[guid] = true
+		addEvent(integrityQueue, wait, self:getId(), guid, reason, 1)
+	end
+	return true
+end
+
+--- Milliseconds since this player's last queued integrity/autosave save, or
+--- nil when none has happened this session. Used by the autosave sweep.
+function Player.getIntegritySaveAge(self)
+	local last = IntegritySave.lastSave[self:getGuid()]
+	if not last then
+		return nil
+	end
+	return os.mtime() - last
+end
+
+-- Every bank-balance change is a value transfer, so treat the setter itself as
+-- the hook. Found 2026-09-08 during the crash tests: the old XML-system banker
+-- scripts (data/npc/scripts/Naji.lua and about twenty copies) never call the
+-- helpers above. They write the balance straight to the database with
+-- doPlayerSetBalance plus an UPDATE, while the coins they took only left
+-- memory, so a crash after a deposit returned the coins AND kept the balance.
+-- Wrapping the C++ setter covers those and every future caller at once; the
+-- save is coalesced, so a burst of balance changes costs one save.
+do
+	local rawSetBankBalance = Player.setBankBalance
+	function Player.setBankBalance(self, balance)
+		local result = rawSetBankBalance(self, balance)
+		self:saveOnTransfer("balance")
+		return result
+	end
+end
+
 -- Always pass the number through the isValidMoney function first before using the transferMoneyTo
 function Player.transferMoneyTo(self, target, amount)
 	if not target then return false end
+	if isValidMoney and not isValidMoney(amount) then return false end
 
 	-- See if you can afford this transfer
 	local balance = self:getBankBalance()
@@ -261,11 +357,32 @@ function Player.transferMoneyTo(self, target, amount)
 	if targetPlayer then
 		targetPlayer:setBankBalance(targetPlayer:getBankBalance() + amount)
 	else
+		-- Security audit 2026-10-05 (ECON-6 / PERS-6): a direct UPDATE while the
+		-- receiver is logging in, or has a save flush in flight, is overwritten by
+		-- that flush (the gold vanishes while the sender's ledger says it arrived).
+		-- Refuse; the sender simply tries again a moment later.
+		if Game.isPlayerSavePending and Game.isPlayerSavePending(target.guid) then
+			return false
+		end
 		db.query("UPDATE `players` SET `balance` = `balance` + " .. amount .. " WHERE `id` = '" ..
 			         target.guid .. "'")
 	end
 
 	self:setBankBalance(self:getBankBalance() - amount)
+
+	-- The receiver is either saved by their own transfer save (online) or was
+	-- written straight to the database (offline). The sender was neither, and
+	-- a crash would hand the gold back to them.
+	self:saveOnTransfer("bank.transfer")
+	if targetPlayer then
+		targetPlayer:saveOnTransfer("bank.transfer")
+	end
+	GameEvents.emitForPlayer("bank.transfer", self, {
+		amount = amount,
+		to_guid = target.guid,
+		to_name = target.name,
+		to_online = targetPlayer ~= nil,
+	}, "player", tostring(target.guid))
 	return true
 end
 
@@ -308,6 +425,7 @@ function Player.withdrawMoney(self, amount)
 	if amount > balance or not self:addMoney(amount) then return false end
 
 	self:setBankBalance(balance - amount)
+	self:saveOnTransfer("bank.withdraw")
 	return true
 end
 
@@ -315,6 +433,7 @@ function Player.depositMoney(self, amount)
 	if not self:removeMoney(amount) then return false end
 
 	self:setBankBalance(self:getBankBalance() + amount)
+	self:saveOnTransfer("bank.deposit")
 	return true
 end
 
@@ -549,7 +668,7 @@ do
 		local staminaMinutes = self:getStamina()
 		if staminaMinutes > 2400 and self:isPremium() then
 			self:setExperienceRate(ExperienceRateType.STAMINA, 150)
-		elseif staminaMinutes <= 840 then
+		else
 			self:setExperienceRate(ExperienceRateType.STAMINA, 100)
 		end
 		return true
@@ -567,6 +686,12 @@ do
 		end
 
 		guild:setBankBalance(guild:getBankBalance() + amount)
+		-- Guild::setBankBalance writes the guilds row immediately; the
+		-- depositor's inventory only lives in memory until saved.
+		self:saveOnTransfer("guild.deposit")
+		GameEvents.emitForPlayer("bank.transfer", self, {
+			amount = amount, guild_id = guild:getId(), direction = "to_guild",
+		}, "guild", tostring(guild:getId()))
 		return true, "Successfully deposited " .. amount .. " gold to guild bank."
 	end
 
@@ -590,6 +715,10 @@ do
 		end
 
 		guild:setBankBalance(guild:getBankBalance() - amount)
+		self:saveOnTransfer("guild.withdraw")
+		GameEvents.emitForPlayer("bank.transfer", self, {
+			amount = amount, guild_id = guild:getId(), direction = "from_guild",
+		}, "guild", tostring(guild:getId()))
 		return true, "Successfully withdrew " .. amount .. " gold from guild bank."
 	end
 
@@ -615,6 +744,11 @@ do
 
 		guild:setBankBalance(guild:getBankBalance() - amount)
 		target:setBankBalance(target:getBankBalance() + amount)
+		target:saveOnTransfer("guild.transfer")
+		GameEvents.emitForPlayer("bank.transfer", self, {
+			amount = amount, guild_id = guild:getId(), direction = "guild_to_player",
+			to_guid = target:getGuid(), to_name = target:getName(),
+		}, "player", tostring(target:getGuid()))
 		return true, "Successfully transferred " .. amount .. " gold to " .. target:getName() .. "."
 	end
 

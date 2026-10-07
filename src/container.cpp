@@ -52,7 +52,8 @@ Container::Container(uint16_t type) : Container(type, items[type].maxItems) {}
 
 Container::Container(uint16_t type, uint16_t size) : Item(type), maxSize(size)
 {
-	if (getID() == ITEM_GOLD_POUCH || getID() == ITEM_BROWSEFIELD) {
+	if (getID() == ITEM_GOLD_POUCH || getID() == ITEM_BROWSEFIELD ||
+	    (getID() >= ITEM_DEPOT_BOX_1 && getID() <= ITEM_DEPOT_BOX_LAST)) {
 		pagination = true;
 	}
 }
@@ -483,16 +484,28 @@ ReturnValue Container::queryAdd(int32_t index, const Thing& thing, uint32_t coun
 		return item->isStoreItem() ? RETURNVALUE_ITEMCANNOTBEMOVEDTHERE : RETURNVALUE_CANNOTMOVEITEMISNOTSTOREITEM;
 	}
 
+	const DepotChest* depotChest = nullptr;
 	while (cylinder) {
 		if (cylinder == &thing) {
 			return RETURNVALUE_THISISIMPOSSIBLE;
 		}
 
+		if (!depotChest) {
+			depotChest = dynamic_cast<const DepotChest*>(cylinder);
+		}
 		cylinder = cylinder->getParent();
 	}
 
 	if (!hasRoomForItem(item, index, count)) {
 		return RETURNVALUE_CONTAINERNOTENOUGHROOM;
+	}
+
+	// the chest's own queryAdd never sees items put into its boxes or bags
+	if (depotChest && !hasBitSet(FLAG_NOLIMIT, flags)) {
+		const ReturnValue ret = depotChest->queryStoredLimit(*item, count);
+		if (ret != RETURNVALUE_NOERROR) {
+			return ret;
+		}
 	}
 
 	const Cylinder* const topParent = getTopParent();

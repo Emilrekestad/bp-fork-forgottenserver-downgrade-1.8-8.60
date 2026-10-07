@@ -21,9 +21,10 @@
 namespace {
 
 using CharacterBazaar::AUCTION_STATUS_ACTIVE;
+using CharacterBazaar::AUCTION_STATUS_EXPIRED_NO_BIDS;
+using CharacterBazaar::AUCTION_STATUS_FINISHED;
+using CharacterBazaar::AUCTION_STATUS_WITHDRAWN;
 
-constexpr uint8_t AUCTION_STATUS_FINISHED = 2;
-constexpr uint8_t AUCTION_STATUS_CANCELLED = 3;
 constexpr uint32_t FINALIZATION_INTERVAL_MS = 60 * 1000;
 
 uint32_t asUnsignedConfig(ConfigManager::Integer config, uint32_t fallback, uint32_t maximum = UINT32_MAX)
@@ -69,14 +70,24 @@ uint32_t getMaximumDuration()
 	return static_cast<uint32_t>(std::min<uint64_t>(seconds, UINT32_MAX));
 }
 
-bool isEnabled()
+// Anti-snipe window. A bid that lands with less than this left RESETS the
+// clock to exactly this much -- it never adds to it -- so genuine competition
+// keeps an auction alive while a single last-second bid cannot stack time.
+// Character auctions run for days, so the window is minutes rather than the
+// Item Bazaar's single minute: a bidder deserves time to notice.
+uint32_t getAntiSnipeSeconds()
 {
-	return ConfigManager::getBoolean(ConfigManager::CHARACTER_BAZAAR_ENABLED);
+	return asUnsignedConfig(ConfigManager::CHARACTER_BAZAAR_ANTI_SNIPE_MINUTES, 5, 24 * 60) * 60;
 }
 
 bool queryHasRows(const std::string& query)
 {
 	return static_cast<bool>(Database::getInstance().storeQuery(query));
+}
+
+bool affectedExactlyOne(Database& db, const std::string& query)
+{
+	return db.executeQuery(query) && db.getAffectedRows() == 1;
 }
 
 bool hasActiveAuctionForAccount(uint32_t accountId)
@@ -112,6 +123,59 @@ std::string sanitizeDescription(std::string description)
 	return description;
 }
 
+// One locked auction row, read FOR UPDATE at the top of every mutation.
+struct AuctionRecord
+{
+	uint32_t id = 0;
+	uint32_t playerId = 0;
+	uint32_t sellerAccountId = 0;
+	uint32_t currentBidderAccountId = 0;
+	uint32_t startPrice = 0;
+	uint32_t currentBid = 0;
+	// 0 = this listing has no Buy Now. Also the ceiling on bidding: placeBid
+	// refuses any bid that reaches it, which is what keeps a buyout from ever
+	// settling below the standing bid.
+	uint32_t buyoutPrice = 0;
+	uint8_t commissionPercent = 0;
+	uint8_t status = 0;
+	uint32_t endAt = 0;
+	std::string playerName;
+};
+
+bool lockAuction(uint32_t auctionId, AuctionRecord& out)
+{
+	auto result = Database::getInstance().storeQuery(fmt::format(
+	    "SELECT `id`, `player_id`, `player_name`, `seller_account_id`, "
+	    "COALESCE(`current_bidder_account_id`, 0) AS `bidder_account_id`, `start_price`, `current_bid`, "
+	    "COALESCE(`buyout_price`, 0) AS `buyout_price`, "
+	    "`commission_percent`, `status`, `end_at` FROM `character_auctions` WHERE `id` = {:d} FOR UPDATE",
+	    auctionId));
+	if (!result) {
+		return false;
+	}
+	out.id = result->getNumber<uint32_t>("id");
+	out.playerId = result->getNumber<uint32_t>("player_id");
+	out.playerName = std::string(result->getString("player_name"));
+	out.sellerAccountId = result->getNumber<uint32_t>("seller_account_id");
+	out.currentBidderAccountId = result->getNumber<uint32_t>("bidder_account_id");
+	out.startPrice = result->getNumber<uint32_t>("start_price");
+	out.currentBid = result->getNumber<uint32_t>("current_bid");
+	out.buyoutPrice = result->getNumber<uint32_t>("buyout_price");
+	out.commissionPercent = result->getNumber<uint8_t>("commission_percent");
+	out.status = result->getNumber<uint8_t>("status");
+	out.endAt = result->getNumber<uint32_t>("end_at");
+	return true;
+}
+
+// Bid movements reference the BID row, not the auction: an auction has many of
+// them and coin_ledger's (ref_type, ref_id, kind) key is unique. The operation
+// id rides in the metadata so a row can be traced to the request that made it.
+Coins::Movement bidMovement(std::string kind, uint32_t bidId, const std::string& operationId)
+{
+	return Coins::Movement{std::move(kind), "char_auction_bid", std::to_string(bidId),
+	                       fmt::format(R"({{"operation_id":"{:s}"}})", operationId), 0};
+}
+
 bool finalizeAuction(uint32_t auctionId)
 {
 	const time_t currentTime = time(nullptr);
@@ -136,7 +200,7 @@ bool finalizeAuction(uint32_t auctionId)
 			if (!db.executeQuery(fmt::format(
 			        "UPDATE `character_auctions` SET `status` = {:d}, `finished_at` = {:d} WHERE `id` = {:d} "
 			        "AND `status` = {:d}",
-			        AUCTION_STATUS_CANCELLED, currentTime, auctionId, AUCTION_STATUS_ACTIVE))) {
+			        AUCTION_STATUS_EXPIRED_NO_BIDS, currentTime, auctionId, AUCTION_STATUS_ACTIVE))) {
 				return false;
 			}
 			return addHistoryInternal(auctionId, "expired_no_bid", sellerAccountId, playerId, 0,
@@ -167,6 +231,11 @@ bool finalizeAuction(uint32_t auctionId)
 } // namespace
 
 namespace CharacterBazaar {
+
+bool isEnabled()
+{
+	return ConfigManager::getBoolean(ConfigManager::CHARACTER_BAZAAR_ENABLED);
+}
 
 bool isPlayerOnActiveAuction(uint32_t playerId)
 {
@@ -211,6 +280,14 @@ bool addHistory(uint32_t auctionId, const std::string& action, uint32_t accountI
 	            const std::string& message)
 {
 	return addHistoryInternal(auctionId, action, accountId, playerId, amount, message);
+}
+
+uint32_t getMinimumNextBid(uint32_t startPrice, uint32_t currentBid)
+{
+	if (currentBid == 0) {
+		return startPrice;
+	}
+	return currentBid == UINT32_MAX ? UINT32_MAX : currentBid + 1;
 }
 
 bool canCreateAuction(Player* player, std::string& reason)
@@ -272,9 +349,26 @@ bool canCreateAuction(Player* player, std::string& reason)
 	return true;
 }
 
-bool createAuction(Player* player, uint32_t startPrice, uint32_t durationSeconds, const std::string& description,
-	               std::string& reason)
+Rules getRules(Player* player)
 {
+	Rules rules;
+	rules.enabled = isEnabled();
+	rules.eligible = canCreateAuction(player, rules.reason);
+	rules.minLevel = getMinimumLevel();
+	rules.minPrice = getMinimumPrice();
+	rules.minDurationSeconds = getMinimumDuration();
+	rules.maxDurationSeconds = std::max(getMinimumDuration(), getMaximumDuration());
+	rules.fee = getAuctionFee();
+	rules.commissionPercent = static_cast<uint8_t>(getCommissionPercent());
+	rules.antiSnipeSeconds = getAntiSnipeSeconds();
+	rules.balance = player ? getTransferableCoins(player->getAccount()) : 0;
+	return rules;
+}
+
+bool createAuction(Player* player, uint32_t startPrice, uint32_t buyoutPrice, uint32_t durationSeconds,
+                   const std::string& description, std::string& reason, uint32_t& outAuctionId)
+{
+	outAuctionId = 0;
 	if (!canCreateAuction(player, reason)) {
 		return false;
 	}
@@ -282,10 +376,18 @@ bool createAuction(Player* player, uint32_t startPrice, uint32_t durationSeconds
 		reason = fmt::format("The starting price must be at least {:d} coins.", getMinimumPrice());
 		return false;
 	}
+	// Strictly above, never equal: a buyout equal to the start price is a
+	// fixed-price sale, and this system is an auction. Same rule as
+	// ItemBazaar::validateAuctionParameters.
+	if (buyoutPrice != 0 && buyoutPrice <= startPrice) {
+		reason = "The Buy Now price must be higher than the starting price.";
+		return false;
+	}
 	const uint32_t minDuration = getMinimumDuration();
 	const uint32_t maxDuration = std::max(minDuration, getMaximumDuration());
 	if (durationSeconds < minDuration || durationSeconds > maxDuration) {
-		reason = fmt::format("The auction duration must be between {:d} and {:d} seconds.", minDuration, maxDuration);
+		reason = fmt::format("The auction duration must be between {:d} and {:d} hours.", minDuration / 3600,
+		                     maxDuration / 3600);
 		return false;
 	}
 	if (description.size() > MAX_DESCRIPTION_LENGTH) {
@@ -300,26 +402,32 @@ bool createAuction(Player* player, uint32_t startPrice, uint32_t durationSeconds
 	uint32_t auctionId = 0;
 
 	const bool success = DBTransaction::executeWithinTransactionRollbackOnFailure([&]() {
+		reason.clear();
+		auctionId = 0;
 		Database& db = Database::getInstance();
 		if (!lockAccountForAuction(accountId)) {
 			reason = "The account is no longer available.";
 			return false;
 		}
-		if (isPlayerOnActiveAuction(playerId) || hasActiveAuctionForAccount(accountId)) {
-			reason = "This account already has an active character auction.";
+		// Website character/guild edits take this same account lock. Recheck
+		// eligibility here so a completed edit cannot race the initial check.
+		if (!canCreateAuction(player, reason)) {
 			return false;
 		}
-		if (!debitTransferableCoins(accountId, getAuctionFee(), "charbazaar.fee")) {
-			reason = "You do not have enough transferable Bp Coins for the auction fee.";
+		if (!db.storeQuery(fmt::format(
+		        "SELECT `id` FROM `players` WHERE `id` = {:d} AND `account_id` = {:d} AND `deletion` = 0 FOR UPDATE",
+		        playerId, accountId))) {
+			reason = "The character is no longer available.";
 			return false;
 		}
 		const Outfit_t outfit = player->getCurrentOutfit();
 		if (!db.executeQuery(fmt::format(
 		        "INSERT INTO `character_auctions` (`player_id`, `player_name`, `seller_account_id`, `start_price`, "
+		        "`buyout_price`, "
 		        "`current_bid`, `auction_fee`, `commission_percent`, `status`, `created_at`, `end_at`, `description`, "
 		        "`snapshot_level`, `snapshot_vocation`, `vocation`, `level`, `looktype`, `lookaddons`, `lookhead`, "
-		        "`lookbody`, `looklegs`, `lookfeet`) VALUES ({:d}, {:s}, {:d}, {:d}, 0, {:d}, {:d}, {:d}, {:d}, {:d}, {:s}, {:d}, {:d}, {:d}, {:d}, {:d}, {:d}, {:d}, {:d}, {:d}, {:d})",
-		        playerId, db.escapeString(player->getName()), accountId, startPrice, getAuctionFee(), getCommissionPercent(),
+		        "`lookbody`, `looklegs`, `lookfeet`) VALUES ({:d}, {:s}, {:d}, {:d}, {:d}, 0, {:d}, {:d}, {:d}, {:d}, {:d}, {:s}, {:d}, {:d}, {:d}, {:d}, {:d}, {:d}, {:d}, {:d}, {:d}, {:d})",
+		        playerId, db.escapeString(player->getName()), accountId, startPrice, buyoutPrice, getAuctionFee(), getCommissionPercent(),
 		        AUCTION_STATUS_ACTIVE, currentTime, currentTime + durationSeconds, db.escapeString(safeDescription),
 		        player->getLevel(), player->getVocationId(), player->getVocationId(), player->getLevel(),
 		        outfit.lookType, outfit.lookAddons, outfit.lookHead, outfit.lookBody, outfit.lookLegs, outfit.lookFeet))) {
@@ -327,6 +435,12 @@ bool createAuction(Player* player, uint32_t startPrice, uint32_t durationSeconds
 			return false;
 		}
 		auctionId = static_cast<uint32_t>(db.getLastInsertId());
+		// The row and fee share this transaction. Link the fee to its auction
+		// so reconciliation can follow it; any failure rolls both back.
+		if (auctionId == 0 || !debitTransferableCoins(accountId, getAuctionFee(), "charbazaar.fee", auctionId)) {
+			reason = "The auction fee could not be charged.";
+			return false;
+		}
 		if (auctionId == 0 || !addHistoryInternal(auctionId, "created", accountId, playerId, getAuctionFee(),
 		                                          "Character auction created.")) {
 			reason = "The auction history could not be created.";
@@ -342,52 +456,299 @@ bool createAuction(Player* player, uint32_t startPrice, uint32_t durationSeconds
 		return false;
 	}
 
+	outAuctionId = auctionId;
 	reason = fmt::format("Auction #{:d} created. You will now be logged out.", auctionId);
+	// Deferred, so the Player object is still alive when this returns -- which
+	// is what lets the Lua wire layer write the Bao Ledger snapshot for a
+	// character that is about to become permanently unreachable.
 	const uint32_t creatureId = player->getID();
 	g_dispatcher.addTask([creatureId]() { g_game.kickPlayer(creatureId, true); });
 	return true;
 }
 
-void sendRequirements(Player* player)
+bool placeBid(uint32_t accountId, uint32_t auctionId, uint32_t amount, const std::string& operationId,
+              std::string& reason)
 {
-	if (!player) {
-		return;
+	if (!isEnabled()) {
+		reason = "The Character Bazaar is currently disabled.";
+		return false;
 	}
-	std::string reason;
-	const bool canAuction = canCreateAuction(player, reason);
-	NetworkMessage message;
-	message.addByte(SERVER_PACKET);
-	message.addByte(ACTION_REQUEST_REQUIREMENTS);
-	message.addByte(canAuction ? 1 : 0);
-	message.add<uint32_t>(getMinimumLevel());
-	message.add<uint32_t>(getMinimumPrice());
-	message.add<uint32_t>(getMinimumDuration());
-	message.add<uint32_t>(std::max(getMinimumDuration(), getMaximumDuration()));
-	message.add<uint32_t>(getAuctionFee());
-	message.addByte(static_cast<uint8_t>(getCommissionPercent()));
-	message.add<uint32_t>(static_cast<uint32_t>(std::min<uint64_t>(getTransferableCoins(player->getAccount()), UINT32_MAX)));
-	message.addString(reason);
-	player->sendNetworkMessage(message);
+	if (accountId == 0) {
+		reason = "You must be logged in to bid.";
+		return false;
+	}
+	if (amount == 0) {
+		reason = "Enter a bid of at least one Bp Coin.";
+		return false;
+	}
+
+	return DBTransaction::executeWithinTransactionRollbackOnFailure([&]() {
+		Database& db = Database::getInstance();
+		const time_t now = time(nullptr);
+
+		AuctionRecord auction;
+		if (!lockAuction(auctionId, auction)) {
+			reason = "That auction does not exist.";
+			return false;
+		}
+		if (auction.status != AUCTION_STATUS_ACTIVE) {
+			reason = "That auction is no longer active.";
+			return false;
+		}
+		if (static_cast<time_t>(auction.endAt) <= now) {
+			reason = "That auction has already ended.";
+			return false;
+		}
+		// Account-wide: an alt on the seller's account is still the seller.
+		if (auction.sellerAccountId == accountId) {
+			reason = "You cannot bid on your own auction.";
+			return false;
+		}
+		const uint32_t minimum = getMinimumNextBid(auction.startPrice, auction.currentBid);
+		if (auction.currentBid == UINT32_MAX) {
+			reason = "This auction has reached the maximum bid.";
+			return false;
+		}
+		if (amount < minimum) {
+			reason = fmt::format("Your bid must be at least {:d} Bp Coins.", minimum);
+			return false;
+		}
+		// The buyout price is a CEILING on bidding, not a suggestion. Without
+		// this, a bid could climb past the buyout and the next buyer would pay
+		// LESS than the standing bid -- the seller loses coins and the standing
+		// bidder loses the character they were winning. Mirrors the identical
+		// guard in ItemBazaar::placeBid.
+		if (auction.buyoutPrice != 0 && amount >= auction.buyoutPrice) {
+			reason = fmt::format("That amount reaches the Buy Now price of {:d} Bp Coins -- use Buy Now instead.",
+			                     auction.buyoutPrice);
+			return false;
+		}
+
+		// The bid row first: the ledger references it.
+		if (!db.executeQuery(fmt::format(
+		        "INSERT INTO `character_auction_bids` (`auction_id`, `bidder_account_id`, `bid_amount`, `created_at`) "
+		        "VALUES ({:d}, {:d}, {:d}, {:d})",
+		        auctionId, accountId, amount, now))) {
+			reason = "Your bid could not be recorded.";
+			return false;
+		}
+		const uint32_t bidId = static_cast<uint32_t>(db.getLastInsertId());
+		if (bidId == 0) {
+			reason = "Your bid could not be recorded.";
+			return false;
+		}
+
+		// Release the standing bid first -- also when it is this account's own,
+		// so raising one's own bid is the same path and never needs a top-up.
+		if (auction.currentBidderAccountId != 0 && auction.currentBid != 0) {
+			if (!Coins::credit(auction.currentBidderAccountId, auction.currentBid,
+			                   bidMovement("charbazaar.release", bidId, operationId))) {
+				reason = "The previous bid could not be released.";
+				return false;
+			}
+		}
+		if (!Coins::debit(accountId, amount, bidMovement("charbazaar.escrow", bidId, operationId))) {
+			reason = "You do not have enough available Bp Coins for this bid.";
+			return false;
+		}
+
+		time_t endAt = auction.endAt;
+		const uint32_t window = getAntiSnipeSeconds();
+		const bool extended = window > 0 && (endAt - now) < static_cast<time_t>(window);
+		if (extended) {
+			endAt = now + window;
+		}
+
+		// Guarded on the bid we read, so a concurrent bid that slipped past the
+		// row lock (it cannot, but the guard makes that a fact rather than a
+		// belief) fails the whole transaction instead of silently overwriting.
+		if (!affectedExactlyOne(db, fmt::format(
+		                                "UPDATE `character_auctions` SET `current_bid` = {:d}, "
+		                                "`current_bidder_account_id` = {:d}, `end_at` = {:d} WHERE `id` = {:d} "
+		                                "AND `status` = {:d} AND `current_bid` = {:d}",
+		                                amount, accountId, endAt, auctionId, AUCTION_STATUS_ACTIVE, auction.currentBid))) {
+			reason = "That auction changed while you were bidding. Please try again.";
+			return false;
+		}
+
+		if (!addHistoryInternal(auctionId, extended ? "bid_antisnipe" : "bid", accountId, auction.playerId, amount,
+		                        extended ? fmt::format("Bid placed; closing time reset to {:d} minutes.", window / 60)
+		                                 : "Bid placed.")) {
+			reason = "Your bid could not be recorded.";
+			return false;
+		}
+		reason = extended ? fmt::format("Bid placed. The auction now closes in {:d} minutes unless someone outbids you.",
+		                                window / 60)
+		                  : "Bid placed. You are the highest bidder.";
+		return true;
+	});
 }
 
-void sendCreateResult(Player* player, bool success, const std::string& result)
+bool buyNow(uint32_t accountId, uint32_t auctionId, const std::string& operationId, std::string& reason)
 {
-	if (!player) {
-		return;
+	if (!isEnabled()) {
+		reason = "The Character Bazaar is currently disabled.";
+		return false;
 	}
-	NetworkMessage message;
-	message.addByte(SERVER_PACKET);
-	message.addByte(ACTION_CREATE_AUCTION);
-	message.addByte(success ? 1 : 0);
-	message.addString(result);
-	player->sendNetworkMessage(message);
+	if (accountId == 0) {
+		reason = "You must be logged in to buy a character.";
+		return false;
+	}
+
+	const time_t currentTime = time(nullptr);
+	return DBTransaction::executeWithinTransactionRollbackOnFailure([&]() {
+		Database& db = Database::getInstance();
+		const time_t now = time(nullptr);
+
+		AuctionRecord auction;
+		if (!lockAuction(auctionId, auction)) {
+			reason = "That auction does not exist.";
+			return false;
+		}
+		// The row lock plus this status check is what resolves two simultaneous
+		// buyouts to exactly one winner: the loser only sees a non-ACTIVE
+		// status once the winner's transaction has committed. It is also what
+		// serialises a buyout against finalizeAuction, which takes the same
+		// lock with `AND end_at <= now`.
+		if (auction.status != AUCTION_STATUS_ACTIVE) {
+			reason = "That auction is no longer active.";
+			return false;
+		}
+		if (static_cast<time_t>(auction.endAt) <= now) {
+			reason = "That auction has already ended.";
+			return false;
+		}
+		if (auction.buyoutPrice == 0) {
+			reason = "That auction has no Buy Now price.";
+			return false;
+		}
+		// Account-wide: an alt on the seller's account is still the seller.
+		if (auction.sellerAccountId == accountId) {
+			reason = "You cannot buy your own listing.";
+			return false;
+		}
+
+		// A buyout is recorded as the winning offer so that the bid history,
+		// the bid count and the coin ledger all keep the shape they already
+		// have -- every coin movement here references the BID row, exactly as
+		// placeBid does, because coin_ledger's (ref_type, ref_id, kind) is
+		// unique and an auction has many movements.
+		if (!db.executeQuery(fmt::format(
+		        "INSERT INTO `character_auction_bids` (`auction_id`, `bidder_account_id`, `bid_amount`, `created_at`) "
+		        "VALUES ({:d}, {:d}, {:d}, {:d})",
+		        auctionId, accountId, auction.buyoutPrice, now))) {
+			reason = "The purchase could not be recorded.";
+			return false;
+		}
+		const uint32_t bidId = static_cast<uint32_t>(db.getLastInsertId());
+		if (bidId == 0) {
+			reason = "The purchase could not be recorded.";
+			return false;
+		}
+
+		// Refund whoever was winning BEFORE taking the buyer's coins, so a
+		// buyer who cannot afford it leaves the standing bid untouched.
+		if (auction.currentBidderAccountId != 0 && auction.currentBid != 0) {
+			if (!Coins::credit(auction.currentBidderAccountId, auction.currentBid,
+			                   bidMovement("charbazaar.release", bidId, operationId))) {
+				reason = "The previous bid could not be released.";
+				return false;
+			}
+		}
+		if (!Coins::debit(accountId, auction.buyoutPrice, bidMovement("charbazaar.escrow", bidId, operationId))) {
+			reason = "You do not have enough available Bp Coins to buy this character.";
+			return false;
+		}
+
+		// The transfer and the payout, in the same order finalizeAuction uses.
+		// This UPDATE is the sale: a listed character is locked out of the game
+		// so no Player object exists to overwrite `account_id` at a later save,
+		// and loadAccount re-reads the character list with no cache in front of
+		// it -- so the character is on the buyer's account the instant this
+		// transaction commits, with no server save involved.
+		const uint64_t commission = static_cast<uint64_t>(auction.buyoutPrice) *
+		                            std::min<uint32_t>(100, auction.commissionPercent) / 100;
+		const uint64_t sellerPayout = auction.buyoutPrice - commission;
+		if (!db.executeQuery(fmt::format(
+		        "UPDATE `players` SET `account_id` = {:d} WHERE `id` = {:d} AND `account_id` = {:d}", accountId,
+		        auction.playerId, auction.sellerAccountId)) ||
+		    db.getAffectedRows() != 1) {
+			reason = "The character could not be transferred.";
+			return false;
+		}
+		if (!creditTransferableCoins(auction.sellerAccountId, sellerPayout, "charbazaar.payout", auctionId)) {
+			reason = "The seller could not be paid.";
+			return false;
+		}
+
+		if (!db.executeQuery(fmt::format(
+		        "UPDATE `character_auctions` SET `status` = {:d}, `winner_account_id` = {:d}, `final_price` = {:d}, "
+		        "`current_bid` = {:d}, `current_bidder_account_id` = {:d}, `finished_at` = {:d} "
+		        "WHERE `id` = {:d} AND `status` = {:d}",
+		        AUCTION_STATUS_FINISHED, accountId, auction.buyoutPrice, auction.buyoutPrice, accountId, currentTime,
+		        auctionId, AUCTION_STATUS_ACTIVE))) {
+			reason = "That auction was already settled.";
+			return false;
+		}
+
+		if (!addHistoryInternal(auctionId, "buyout", accountId, auction.playerId, sellerPayout,
+		                        fmt::format("Bought with Buy Now for {:d} coins (commission: {:d}).",
+		                                    auction.buyoutPrice, commission))) {
+			reason = "The purchase could not be recorded.";
+			return false;
+		}
+
+		reason = fmt::format("{:s} is now on your account.", auction.playerName);
+		return true;
+	});
+}
+
+bool cancelAuction(uint32_t accountId, uint32_t auctionId, std::string& reason)
+{
+	if (accountId == 0) {
+		reason = "You must be logged in.";
+		return false;
+	}
+	return DBTransaction::executeWithinTransactionRollbackOnFailure([&]() {
+		Database& db = Database::getInstance();
+		AuctionRecord auction;
+		if (!lockAuction(auctionId, auction)) {
+			reason = "That auction does not exist.";
+			return false;
+		}
+		if (auction.sellerAccountId != accountId) {
+			reason = "Only the seller can withdraw a listing.";
+			return false;
+		}
+		if (auction.status != AUCTION_STATUS_ACTIVE) {
+			reason = "That auction is no longer active.";
+			return false;
+		}
+		if (auction.currentBid != 0 || auction.currentBidderAccountId != 0) {
+			reason = "A listing with a bid on it cannot be withdrawn.";
+			return false;
+		}
+		if (!affectedExactlyOne(db, fmt::format(
+		                                "UPDATE `character_auctions` SET `status` = {:d}, `finished_at` = {:d} "
+		                                "WHERE `id` = {:d} AND `status` = {:d} AND `current_bid` = 0",
+		                                AUCTION_STATUS_WITHDRAWN, time(nullptr), auctionId, AUCTION_STATUS_ACTIVE))) {
+			reason = "That auction changed while you were withdrawing it. Please try again.";
+			return false;
+		}
+		if (!addHistoryInternal(auctionId, "withdrawn", accountId, auction.playerId, 0,
+		                        "Listing withdrawn by the seller before any bid.")) {
+			reason = "The auction history could not be written.";
+			return false;
+		}
+		reason = fmt::format("{:s} is no longer for sale and can log in again. The listing fee is not refunded.",
+		                     auction.playerName);
+		return true;
+	});
 }
 
 void finalizeExpiredAuctions()
 {
-	if (!isEnabled()) {
-		return;
-	}
+	// Disabling new activity must not strand existing character/coin escrow.
 	const time_t currentTime = time(nullptr);
 	auto result = Database::getInstance().storeQuery(fmt::format(
 	    "SELECT `id` FROM `character_auctions` WHERE `status` = {:d} AND `end_at` <= {:d}", AUCTION_STATUS_ACTIVE,
@@ -406,9 +767,6 @@ void finalizeExpiredAuctions()
 
 void scheduleFinalization()
 {
-	if (!isEnabled()) {
-		return;
-	}
 	g_scheduler.addEvent(FINALIZATION_INTERVAL_MS, []() {
 		try {
 			finalizeExpiredAuctions();

@@ -6,6 +6,7 @@
 #include "actions.h"
 #include "astraclient.h"
 #include "fonticakclient.h"
+#include "backpackotclient.h"
 #include "ban.h"
 #include "character_bazaar.h"
 #include "configmanager.h"
@@ -19,6 +20,7 @@
 #include "outputmessage.h"
 #include "player.h"
 #include "protocolgame.h"
+#include "protocollogin.h"
 #include "imbuement.h"
 #include "familiar.h"
 #include "logger.h"
@@ -1159,7 +1161,9 @@ void ProtocolGame::login(uint32_t characterId, uint32_t accountId, OperatingSyst
 			    "You are already logged in.\nSomeone is trying to access your account?");
 			clientRef->disconnect();
 			clientRef->setOwner(nullptr);
-			g_scheduler.addEvent(
+			// Security audit 2026-10-05: remember the pending connect so a third
+			// login inside this second is refused instead of racing it.
+			eventConnect = g_scheduler.addEvent(
 			    createSchedulerTask(1000, ([=, thisPtr = getThis(), playerID = foundPlayer->getID()]() {
 				                        thisPtr->connect(playerID, operatingSystem);
 			                        })));
@@ -1183,6 +1187,18 @@ void ProtocolGame::finishLogin(uint32_t reservedGuid, uint32_t accountId, bool l
 		return;
 	}
 
+	// Security audit 2026-10-05: login() checked onePlayerOnlinePerAccount
+	// before the asynchronous load, so two characters of one account logging
+	// in at the same moment both passed. Re-check here, on the dispatcher,
+	// right before the character is placed: the first finishLogin has placed
+	// its player by the time the second one runs.
+	if (getBoolean(ConfigManager::ONE_PLAYER_ON_ACCOUNT) && player->getName() != "Account Manager" &&
+	    player->getAccountType() < ACCOUNT_TYPE_GAMEMASTER && g_game.getPlayerByAccount(player->getAccount())) {
+		g_game.releaseLogin(reservedGuid);
+		disconnectClient("You may only login with one character\nof your account at the same time.");
+		return;
+	}
+
 	IOLoginData::loadPlayerWorldData(player.get());
 
 	player->client->setOwner(getThis());
@@ -1192,6 +1208,8 @@ void ProtocolGame::finishLogin(uint32_t reservedGuid, uint32_t accountId, bool l
 	player->client->isOTC = isOTC;
 	player->client->isAstraClient = isAstraClient;
 	player->client->isFonticakClient = isFonticakClient;
+	player->client->isBackpackOT = isBackpackOT;
+	player->client->backpackClientRelease = backpackClientRelease;
 	if (!g_game.placeCreature(player.get(), player->getLoginPosition())) {
 		if (!g_game.placeCreature(player.get(), player->getTemplePosition(), false, true)) {
 			g_game.releaseLogin(reservedGuid);
@@ -1330,6 +1348,8 @@ void ProtocolGame::connect(uint32_t playerId, OperatingSystem_t operatingSystem)
 	player->client->isOTC = isOTC;
 	player->client->isAstraClient = isAstraClient;
 	player->client->isFonticakClient = isFonticakClient;
+	player->client->isBackpackOT = isBackpackOT;
+	player->client->backpackClientRelease = backpackClientRelease;
 	sendAddCreature(player.get(), player->getPosition(), 0);
 	resetDllCheckState();
 	sendLootContainers();
@@ -1383,6 +1403,48 @@ void ProtocolGame::logout(bool displayEffect, bool forced)
 	disconnect();
 
 	g_game.removeCreature(player.get());
+}
+
+// BackpackOT client gate, game server side (docs/client-launcher/GATE.md). A
+// game login that carries its own BPOT marker (phase 4b) is judged on that. One
+// that carries none is judged on the account login the login server accepted
+// for this account and IP in the last two minutes (LoginHandoff). Cast
+// spectators have no account and are not gated. Returns false when refused.
+bool ProtocolGame::passesClientGate(std::string_view accountName, uint32_t accountId)
+{
+	const uint32_t ip = getIP();
+	BackpackOTClient::Marker marker = backpackMarker;
+	if (!marker.present) {
+		if (const auto release = BackpackOTClient::LoginHandoff::getInstance().find(accountId, ip)) {
+			marker.present = true;
+			marker.valid = true;
+			marker.release = *release;
+		}
+	}
+
+	isBackpackOT = marker.valid;
+	backpackClientRelease = marker.valid ? marker.release : 0;
+
+	const auto mode = static_cast<BackpackOTClient::GateMode>(getInteger(ConfigManager::BACKPACK_CLIENT_GATE));
+	if (mode == BackpackOTClient::GateMode::OFF) {
+		return true;
+	}
+
+	const int64_t minRelease = getInteger(ConfigManager::BACKPACK_MIN_CLIENT_RELEASE);
+	const auto verdict = BackpackOTClient::judge(marker, minRelease);
+	if (verdict == BackpackOTClient::Verdict::PASS) {
+		return true;
+	}
+
+	const bool enforce = mode == BackpackOTClient::GateMode::ENFORCE;
+	LOG_WARN(BackpackOTClient::describeRefusal(enforce, accountName, convertIPToString(ip), verdict, marker.release,
+	                                           minRelease, " (game login)"));
+	if (!enforce) {
+		return true;
+	}
+
+	disconnectClient(BackpackOTClient::refusalMessage(verdict));
+	return false;
 }
 
 void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
@@ -1483,6 +1545,21 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 					    msg.get<uint32_t>() ==
 					    FonticakClient::generateSignature(static_cast<uint16_t>(operatingSystem), version, key,
 					                                   challengeTimestamp, challengeRandom);
+				} else if (marker == BackpackOTClient::LOGIN_MARKER) {
+					if (msg.getBufferPosition() + sizeof(uint32_t) + sizeof(uint16_t) > msg.getLength()) {
+						break;
+					}
+					// The BackpackOT client reads tier bytes and zone weather, so its marker
+					// also stands for "OTCv8TierByte" and "OTCv8ZoneWeather": those two
+					// strings take 33 of the RSA block's 128 bytes (GATE.md, "RSA budget").
+					useItemTierByte = true;
+					supportsZoneWeather = true;
+					const uint32_t signature = msg.get<uint32_t>();
+					backpackMarker.present = true;
+					backpackMarker.release = msg.get<uint16_t>();
+					backpackMarker.valid =
+					    signature == BackpackOTClient::generateSignature(static_cast<uint16_t>(operatingSystem), version,
+					                                                     key, challengeTimestamp, challengeRandom);
 				} else {
 					break;
 				}
@@ -1534,6 +1611,15 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 		return;
 	}
 
+	// Security audit 2026-10-05: the game port accepts account name + password
+	// directly, so it shares the login server's per-IP failed-attempt lockout.
+	// Without this a password guesser simply skips port 7171.
+	const uint32_t clientIP = getIP();
+	if (!accountName.empty() && !LoginAttemptLimiter::getInstance().allowLogin(clientIP)) {
+		disconnectClient("Too many failed login attempts. Please wait 5 minutes.");
+		return;
+	}
+
 	// Authenticate and resolve account/character IDs
 	bool cast = false;
 	auto authPair = IOLoginData::gameworldAuthentication(accountName, password, characterName, cast);
@@ -1544,8 +1630,10 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 	uint32_t accountId = authPair.first;
 	uint32_t characterId = authPair.second;
 
-	if (accountId == 0 || characterId == 0) {
-		// auth failed, will disconnect below
+	if (accountId == 0) {
+		LoginAttemptLimiter::getInstance().recordFailure(clientIP);
+	} else {
+		LoginAttemptLimiter::getInstance().recordSuccess(clientIP);
 	}
 
 	BanInfo banInfo;
@@ -1565,6 +1653,10 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 	}
 	if (characterId != 0 && CharacterBazaar::isPlayerOnActiveAuction(characterId)) {
 		disconnectClient("This character is currently listed on the Character Bazaar and cannot enter the game until the auction finishes or is cancelled.");
+		return;
+	}
+
+	if (!passesClientGate(accountName, accountId)) {
 		return;
 	}
 
@@ -1781,19 +1873,15 @@ void ProtocolGame::parsePacketOnDispatcher(NetworkMessage_ptr& packet)
 				parseNewPing(msg);
 			}
 			break; // GameClientExtendedPing
+		case 0x42:
+			parseChangeAwareRange(msg);
+			break; // GameChangeMapAwareRange (OTCv8)
 		case 0x60:
 			parseImbuementDurations(msg);
 			break;
 		case DllCheckProtocol::OPCODE:
 			if (clientOperatingSystem == CLIENTOS_CUSTOM_DLL) {
 				parseDllCheckResponse(msg);
-			} else {
-				skipUnreadBytes(msg);
-			}
-			break;
-		case CharacterBazaar::CLIENT_PACKET:
-			if (isAstraClient) {
-				parseCharacterBazaar(msg);
 			} else {
 				skipUnreadBytes(msg);
 			}
@@ -2109,43 +2197,6 @@ void ProtocolGame::parsePacketOnDispatcher(NetworkMessage_ptr& packet)
 	}
 }
 
-void ProtocolGame::parseCharacterBazaar(NetworkMessage& msg)
-{
-	if (!player || !isAstraClient || !ConfigManager::getBoolean(ConfigManager::CHARACTER_BAZAAR_ENABLED) ||
-	    !requireUnreadBytes(msg, 1)) {
-		skipUnreadBytes(msg);
-		return;
-	}
-
-	const uint8_t action = msg.getByte();
-	if (action == CharacterBazaar::ACTION_REQUEST_REQUIREMENTS) {
-		if (getUnreadBytes(msg) != 0) {
-			skipUnreadBytes(msg);
-			return;
-		}
-		CharacterBazaar::sendRequirements(player.get());
-		return;
-	}
-
-	if (action != CharacterBazaar::ACTION_CREATE_AUCTION ||
-	    !requireUnreadBytes(msg, sizeof(uint32_t) * 2 + sizeof(uint16_t))) {
-		skipUnreadBytes(msg);
-		return;
-	}
-
-	const uint32_t startPrice = msg.get<uint32_t>();
-	const uint32_t duration = msg.get<uint32_t>();
-	const std::string description = msg.getString();
-	if (msg.isOverrun() || getUnreadBytes(msg) != 0 || description.size() > 512) {
-		skipUnreadBytes(msg);
-		return;
-	}
-
-	std::string result;
-	const bool success = CharacterBazaar::createAuction(player.get(), startPrice, duration, description, result);
-	CharacterBazaar::sendCreateResult(player.get(), success, result);
-}
-
 void ProtocolGame::GetTileDescription(const Tile* tile, NetworkMessage& msg)
 {
 	const uint32_t playerInstanceId = player->getInstanceID();
@@ -2351,10 +2402,10 @@ bool ProtocolGame::canSee(int32_t x, int32_t y, int32_t z) const
 
 	// negative offset means that the action taken place is on a lower floor than ourself
 	int32_t offsetz = myPos.getZ() - z;
-	if ((x >= myPos.getX() - Map::maxClientViewportX + offsetz) &&
-	    (x <= myPos.getX() + (Map::maxClientViewportX + 1) + offsetz) &&
-	    (y >= myPos.getY() - Map::maxClientViewportY + offsetz) &&
-	    (y <= myPos.getY() + (Map::maxClientViewportY + 1) + offsetz)) {
+	if ((x >= myPos.getX() - awareRange.x + offsetz) &&
+	    (x <= myPos.getX() + (awareRange.x + 1) + offsetz) &&
+	    (y >= myPos.getY() - awareRange.y + offsetz) &&
+	    (y <= myPos.getY() + (awareRange.y + 1) + offsetz)) {
 		return true;
 	}
 	return false;
@@ -2976,16 +3027,22 @@ void ProtocolGame::parseRuleViolationReport(NetworkMessage& msg)
 	std::string comment;
 	std::string translation;
 
-	if (looksLikeLegacyRuleViolationReport(msg.getRemainingBuffer(), msg.getRemainingBufferLength())) {
+	// Security audit 2026-10-05: NetworkMessage::getRemainingBufferLength() is
+	// only right for the unencrypted first message (body at offset 6). For a
+	// decrypted game packet (body at offset 8) it is 8 too small and wraps
+	// when the cursor is past `length`, which let the legacy sniff below scan
+	// up to 34 bytes past the end of the message. getUnreadBytes() is the
+	// correct count for a decrypted packet.
+	if (looksLikeLegacyRuleViolationReport(msg.getRemainingBuffer(), getUnreadBytes(msg))) {
 		targetName = msg.getString();
 		reportReason = msg.getByte();
 		reportType = getRuleViolationTypeFromLegacyAction(msg.getByte());
 		comment = msg.getString();
 		translation = msg.getString();
-		if (msg.getRemainingBufferLength() >= sizeof(uint16_t)) {
+		if (getUnreadBytes(msg) >= sizeof(uint16_t)) {
 			msg.get<uint16_t>(); // legacy statement id
 		}
-		if (msg.getRemainingBufferLength() >= 1) {
+		if (getUnreadBytes(msg) >= 1) {
 			msg.getByte(); // legacy IP banishment flag
 		}
 	} else {
@@ -4205,8 +4262,69 @@ void ProtocolGame::sendMapDescription(const Position& pos)
 	NetworkMessage msg;
 	msg.addByte(0x64);
 	msg.addPosition(spyActive_ ? spyViewportPos_ : player->getPosition());
-	GetMapDescription(pos.x - Map::maxClientViewportX, pos.y - Map::maxClientViewportY, pos.z,
-	                  (Map::maxClientViewportX * 2) + 2, (Map::maxClientViewportY * 2) + 2, msg);
+	GetMapDescription(pos.x - awareRange.x, pos.y - awareRange.y, pos.z,
+	                  (awareRange.x * 2) + 2, (awareRange.y * 2) + 2, msg);
+	writeToOutputBuffer(msg);
+}
+
+void ProtocolGame::parseChangeAwareRange(NetworkMessage& msg)
+{
+	// The client sends the odd dimension it wants (e.g. 31x21) and will keep
+	// width/2 tiles left/above and width/2+1 right/below - the same box maths
+	// as Map::maxClientViewportX/Y, so width/2 maps straight onto awareRange.x.
+	const int32_t width = msg.getByte();
+	const int32_t height = msg.getByte();
+
+	if (!isOTCv8) {
+		return; // feature is only advertised to OTCv8-based clients
+	}
+
+	const int32_t x = std::clamp<int32_t>(width / 2, Map::maxClientViewportX, Map::maxClientViewportExtX);
+	const int32_t y = std::clamp<int32_t>(height / 2, Map::maxClientViewportY, Map::maxClientViewportExtY);
+	if (x == awareRange.x && y == awareRange.y) {
+		// Stay silent: game_interface re-requests on every ack (its
+		// onMapChangeAwareRange handler calls updateSize), so answering an
+		// unchanged range would ping-pong forever.
+		return;
+	}
+
+	// Security audit 2026-10-05: every accepted change answers with a full map
+	// description (tens of KB), so a client flipping between two ranges at the
+	// packet cap turns a 3-byte request into ~1 MB/s of output plus the CPU to
+	// build it. A real client sends one request per window resize (the ack
+	// loop above ends as soon as the range is unchanged), so ten changes in a
+	// two-second window is already far above honest use; past that the request
+	// is ignored and the next resize starts a fresh window.
+	constexpr int64_t AWARE_RANGE_WINDOW_MS = 2000;
+	constexpr uint8_t AWARE_RANGE_WINDOW_LIMIT = 10;
+	const int64_t now = OTSYS_TIME();
+	if (now - awareRangeWindowStart > AWARE_RANGE_WINDOW_MS) {
+		awareRangeWindowStart = now;
+		awareRangeWindowCount = 0;
+	}
+	if (++awareRangeWindowCount > AWARE_RANGE_WINDOW_LIMIT) {
+		if (awareRangeWindowCount == AWARE_RANGE_WINDOW_LIMIT + 1 && player) {
+			LOG_NETWORK(fmt::format("[ProtocolGame] {} ({}) is changing the aware range faster than allowed; ignoring until the window resets.",
+			                        player->getName(), convertIPToString(getIP())));
+		}
+		return;
+	}
+
+	awareRange.x = x;
+	awareRange.y = y;
+
+	// Ack first so the client resizes its aware box (and drops what is now
+	// outside it), then hand it a full description of the new box.
+	sendAwareRange();
+	sendMapDescription(spyActive_ ? spyViewportPos_ : player->getPosition());
+}
+
+void ProtocolGame::sendAwareRange()
+{
+	NetworkMessage msg;
+	msg.addByte(0x42);
+	msg.addByte(static_cast<uint8_t>((awareRange.x * 2) + 1));
+	msg.addByte(static_cast<uint8_t>((awareRange.y * 2) + 1));
 	writeToOutputBuffer(msg);
 }
 
@@ -4493,21 +4611,21 @@ void ProtocolGame::sendMoveCreature(const Creature* creature, const Position& ne
 
 		if (oldPos.y > newPos.y) {
 			msg.addByte(0x65);
-			GetMapDescription(oldPos.x - Map::maxClientViewportX, newPos.y - Map::maxClientViewportY, newPos.z,
-			                  (Map::maxClientViewportX * 2) + 2, 1, msg);
+			GetMapDescription(oldPos.x - awareRange.x, newPos.y - awareRange.y, newPos.z,
+			                  (awareRange.x * 2) + 2, 1, msg);
 		} else if (oldPos.y < newPos.y) {
 			msg.addByte(0x67);
-			GetMapDescription(oldPos.x - Map::maxClientViewportX, newPos.y + (Map::maxClientViewportY + 1),
-			                  newPos.z, (Map::maxClientViewportX * 2) + 2, 1, msg);
+			GetMapDescription(oldPos.x - awareRange.x, newPos.y + (awareRange.y + 1),
+			                  newPos.z, (awareRange.x * 2) + 2, 1, msg);
 		}
 		if (oldPos.x < newPos.x) {
 			msg.addByte(0x66);
-			GetMapDescription(newPos.x + (Map::maxClientViewportX + 1), newPos.y - Map::maxClientViewportY,
-			                  newPos.z, 1, (Map::maxClientViewportY * 2) + 2, msg);
+			GetMapDescription(newPos.x + (awareRange.x + 1), newPos.y - awareRange.y,
+			                  newPos.z, 1, (awareRange.y * 2) + 2, msg);
 		} else if (oldPos.x > newPos.x) {
 			msg.addByte(0x68);
-			GetMapDescription(newPos.x - Map::maxClientViewportX, newPos.y - Map::maxClientViewportY, newPos.z,
-			                  1, (Map::maxClientViewportY * 2) + 2, msg);
+			GetMapDescription(newPos.x - awareRange.x, newPos.y - awareRange.y, newPos.z,
+			                  1, (awareRange.y * 2) + 2, msg);
 		}
 		writeToOutputBuffer(msg);
 		return;
@@ -4544,26 +4662,26 @@ void ProtocolGame::sendMoveCreature(const Creature* creature, const Position& ne
 			if (!isOTC && newStackPos >= MAX_STACKPOS_THINGS) {
 				msg.addByte(0x64);
 				msg.addPosition(player->getPosition());
-				GetMapDescription(newPos.x - Map::maxClientViewportX, newPos.y - Map::maxClientViewportY, newPos.z,
-				                  (Map::maxClientViewportX * 2) + 2, (Map::maxClientViewportY * 2) + 2, msg);
+				GetMapDescription(newPos.x - awareRange.x, newPos.y - awareRange.y, newPos.z,
+				                  (awareRange.x * 2) + 2, (awareRange.y * 2) + 2, msg);
 			} else {
 				if (oldPos.y > newPos.y) {
 					msg.addByte(0x65);
-					GetMapDescription(oldPos.x - Map::maxClientViewportX, newPos.y - Map::maxClientViewportY, newPos.z,
-					                  (Map::maxClientViewportX * 2) + 2, 1, msg);
+					GetMapDescription(oldPos.x - awareRange.x, newPos.y - awareRange.y, newPos.z,
+					                  (awareRange.x * 2) + 2, 1, msg);
 				} else if (oldPos.y < newPos.y) {
 					msg.addByte(0x67);
-					GetMapDescription(oldPos.x - Map::maxClientViewportX, newPos.y + (Map::maxClientViewportY + 1),
-					                  newPos.z, (Map::maxClientViewportX * 2) + 2, 1, msg);
+					GetMapDescription(oldPos.x - awareRange.x, newPos.y + (awareRange.y + 1),
+					                  newPos.z, (awareRange.x * 2) + 2, 1, msg);
 				}
 				if (oldPos.x < newPos.x) {
 					msg.addByte(0x66);
-					GetMapDescription(newPos.x + (Map::maxClientViewportX + 1), newPos.y - Map::maxClientViewportY,
-					                  newPos.z, 1, (Map::maxClientViewportY * 2) + 2, msg);
+					GetMapDescription(newPos.x + (awareRange.x + 1), newPos.y - awareRange.y,
+					                  newPos.z, 1, (awareRange.y * 2) + 2, msg);
 				} else if (oldPos.x > newPos.x) {
 					msg.addByte(0x68);
-					GetMapDescription(newPos.x - Map::maxClientViewportX, newPos.y - Map::maxClientViewportY, newPos.z,
-					                  1, (Map::maxClientViewportY * 2) + 2, msg);
+					GetMapDescription(newPos.x - awareRange.x, newPos.y - awareRange.y, newPos.z,
+					                  1, (awareRange.y * 2) + 2, msg);
 				}
 			}
 			writeToOutputBuffer(msg);
@@ -5425,8 +5543,8 @@ void ProtocolGame::MoveUpCreature(NetworkMessage& msg, const Creature* creature,
 
 		// floor 7 and 6 already set
 		for (int i = 5; i >= 0; --i) {
-			GetFloorDescription(msg, oldPos.x - Map::maxClientViewportX, oldPos.y - Map::maxClientViewportY, i,
-			                    (Map::maxClientViewportX * 2) + 2, (Map::maxClientViewportY * 2) + 2, 8 - i, skip);
+			GetFloorDescription(msg, oldPos.x - awareRange.x, oldPos.y - awareRange.y, i,
+			                    (awareRange.x * 2) + 2, (awareRange.y * 2) + 2, 8 - i, skip);
 		}
 		if (skip >= 0) {
 			msg.addByte(static_cast<uint8_t>(skip));
@@ -5436,8 +5554,8 @@ void ProtocolGame::MoveUpCreature(NetworkMessage& msg, const Creature* creature,
 	// underground, going one floor up (still underground)
 	else if (newPos.z > 7) {
 		int32_t skip = -1;
-		GetFloorDescription(msg, oldPos.x - Map::maxClientViewportX, oldPos.y - Map::maxClientViewportY,
-		                    oldPos.getZ() - 3, (Map::maxClientViewportX * 2) + 2, (Map::maxClientViewportY * 2) + 2, 3,
+		GetFloorDescription(msg, oldPos.x - awareRange.x, oldPos.y - awareRange.y,
+		                    oldPos.getZ() - 3, (awareRange.x * 2) + 2, (awareRange.y * 2) + 2, 3,
 		                    skip);
 
 		if (skip >= 0) {
@@ -5449,13 +5567,13 @@ void ProtocolGame::MoveUpCreature(NetworkMessage& msg, const Creature* creature,
 	// moving up a floor up makes us out of sync
 	// west
 	msg.addByte(0x68);
-	GetMapDescription(oldPos.x - Map::maxClientViewportX, oldPos.y - (Map::maxClientViewportY - 1), newPos.z, 1,
-	                  (Map::maxClientViewportY * 2) + 2, msg);
+	GetMapDescription(oldPos.x - awareRange.x, oldPos.y - (awareRange.y - 1), newPos.z, 1,
+	                  (awareRange.y * 2) + 2, msg);
 
 	// north
 	msg.addByte(0x65);
-	GetMapDescription(oldPos.x - Map::maxClientViewportX, oldPos.y - Map::maxClientViewportY, newPos.z,
-	                  (Map::maxClientViewportX * 2) + 2, 1, msg);
+	GetMapDescription(oldPos.x - awareRange.x, oldPos.y - awareRange.y, newPos.z,
+	                  (awareRange.x * 2) + 2, 1, msg);
 }
 
 void ProtocolGame::MoveDownCreature(NetworkMessage& msg, const Creature* creature, const Position& newPos,
@@ -5477,8 +5595,8 @@ void ProtocolGame::MoveDownCreature(NetworkMessage& msg, const Creature* creatur
 		int32_t skip = -1;
 
 		for (int i = 0; i < 3; ++i) {
-			GetFloorDescription(msg, oldPos.x - Map::maxClientViewportX, oldPos.y - Map::maxClientViewportY,
-			                    newPos.z + i, (Map::maxClientViewportX * 2) + 2, (Map::maxClientViewportY * 2) + 2,
+			GetFloorDescription(msg, oldPos.x - awareRange.x, oldPos.y - awareRange.y,
+			                    newPos.z + i, (awareRange.x * 2) + 2, (awareRange.y * 2) + 2,
 			                    -i - 1, skip);
 		}
 		if (skip >= 0) {
@@ -5489,8 +5607,8 @@ void ProtocolGame::MoveDownCreature(NetworkMessage& msg, const Creature* creatur
 	// going further down
 	else if (newPos.z > oldPos.z && newPos.z > 8 && newPos.z < 14) {
 		int32_t skip = -1;
-		GetFloorDescription(msg, oldPos.x - Map::maxClientViewportX, oldPos.y - Map::maxClientViewportY, newPos.z + 2,
-		                    (Map::maxClientViewportX * 2) + 2, (Map::maxClientViewportY * 2) + 2, -3, skip);
+		GetFloorDescription(msg, oldPos.x - awareRange.x, oldPos.y - awareRange.y, newPos.z + 2,
+		                    (awareRange.x * 2) + 2, (awareRange.y * 2) + 2, -3, skip);
 
 		if (skip >= 0) {
 			msg.addByte(static_cast<uint8_t>(skip));
@@ -5501,13 +5619,13 @@ void ProtocolGame::MoveDownCreature(NetworkMessage& msg, const Creature* creatur
 	// moving down a floor makes us out of sync
 	// east
 	msg.addByte(0x66);
-	GetMapDescription(oldPos.x + (Map::maxClientViewportX + 1), oldPos.y - (Map::maxClientViewportY + 1), newPos.z, 1,
-	                  (Map::maxClientViewportY * 2) + 2, msg);
+	GetMapDescription(oldPos.x + (awareRange.x + 1), oldPos.y - (awareRange.y + 1), newPos.z, 1,
+	                  (awareRange.y * 2) + 2, msg);
 
 	// south
 	msg.addByte(0x67);
-	GetMapDescription(oldPos.x - Map::maxClientViewportX, oldPos.y + (Map::maxClientViewportY + 1), newPos.z,
-	                  (Map::maxClientViewportX * 2) + 2, 1, msg);
+	GetMapDescription(oldPos.x - awareRange.x, oldPos.y + (awareRange.y + 1), newPos.z,
+	                  (awareRange.x * 2) + 2, 1, msg);
 }
 
 void ProtocolGame::AddShopItem(NetworkMessage& msg, const ShopInfo& item)
@@ -5628,6 +5746,7 @@ void ProtocolGame::sendFeatures(bool advertiseAstraItemState)
 	features[GameFeature::CreatureIcons] = true;
 	features[GameFeature::ContainerPagination] = true;
 	features[GameFeature::BrowseField] = true;
+	features[GameFeature::ChangeMapAwareRange] = true; // extended view, see parseChangeAwareRange
 	if (isAstraClient) {
 		features[GameFeature::ExperienceBonus] = true;
 		features[GameFeature::PlayerFamiliars] = true;

@@ -49,6 +49,12 @@ public:
 	[[nodiscard]] static uint8_t getProgress(const BestiaryCreatureInfo& info, uint32_t kills);
 	BestiaryCharmActionResult handleCharmAction(Player& player, uint8_t charmId, uint8_t action, uint16_t raceId) const;
 
+	// Relocks every charm and refunds the points spent on major tiers.
+	// `chargeGold` is the only difference between the two ways in: the charm
+	// window's Reset button (action 3 above) pays the gold fee, and the store's
+	// Charm Reset offer passes false because Bp Coins were already taken.
+	BestiaryCharmActionResult resetCharms(Player& player, bool chargeGold) const;
+
 	[[nodiscard]] bool isMajorCharm(uint8_t charmId) const;
 	[[nodiscard]] bool isMinorCharm(uint8_t charmId) const;
 	[[nodiscard]] uint8_t getAssignedCharmTier(const Player& player, uint8_t charmId, uint16_t raceId) const;

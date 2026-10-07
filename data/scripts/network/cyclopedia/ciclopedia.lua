@@ -559,7 +559,7 @@ local function writeCharms(out, player, kills, charms)
 		out:addByte(charm.id)
 		out:addString(charm.name)
 		out:addString(description)
-		out:addByte(0)
+		out:addByte(charm.category == "minor" and 1 or 0)
 		out:addU16(clamp(getNextCharmPrice(charm, tier), 0, 0xFFFF))
 		out:addByte(tier)
 		if unlocked then
@@ -753,6 +753,19 @@ local function sendBestiaryMonster(player, raceId)
 		out:addByte(0)
 	end
 
+	-- Soulpit mastery, appended 2026-09-08. Two bytes at the very END of the
+	-- packet on purpose: a client built before this exists stops reading after
+	-- the charm block and discards the tail, so old and new clients both work
+	-- off the same server. The client half that draws it still has to ship.
+	--   byte 1: 1 if this character has cleared the pit for this creature
+	--   byte 2: the experience bonus that mastery is worth, in percent
+	local soulpitMastered = false
+	if SoulPit and SoulPit.hasMastery and entry.name then
+		soulpitMastered = SoulPit.hasMastery(player, entry.name)
+	end
+	out:addByte(soulpitMastered and 1 or 0)
+	out:addByte(SoulPit and math.min(SoulPit.masteryExpBonus or 0, 0xFF) or 0)
+
 	return out:sendToPlayer(player)
 end
 
@@ -919,6 +932,13 @@ function infoHandler.onReceive(player, msg)
 		return
 	end
 
+	-- Per-player throttles on every bestiary request (security audit
+	-- 2026-10-05): these read and write player_bestiary_* rows, and a crafted
+	-- client could otherwise fire them 25 times a second.
+	if not NetworkGuard.cooldown(player, "bestiary-info", 1000) then
+		return
+	end
+
 	sendBestiaryData(player)
 	sendTracker(player)
 end
@@ -926,6 +946,9 @@ infoHandler:register()
 
 local categoryHandler = PacketHandler(OPCODE_CYCLOPEDIA_CATEGORY)
 function categoryHandler.onReceive(player, msg)
+	if not NetworkGuard.cooldown(player, "bestiary-category", 300) then
+		return
+	end
 	if msg:len() - msg:tell() < 3 then
 		return
 	end
@@ -949,6 +972,9 @@ categoryHandler:register()
 
 local monsterHandler = PacketHandler(OPCODE_CYCLOPEDIA_MONSTER)
 function monsterHandler.onReceive(player, msg)
+	if not NetworkGuard.cooldown(player, "bestiary-monster", 250) then
+		return
+	end
 	if msg:len() - msg:tell() < 2 then
 		return
 	end
@@ -964,6 +990,9 @@ monsterHandler:register()
 
 local charmHandler = PacketHandler(OPCODE_CYCLOPEDIA_CHARM)
 function charmHandler.onReceive(player, msg)
+	if not NetworkGuard.cooldown(player, "bestiary-charm", 500) then
+		return
+	end
 	if msg:len() - msg:tell() < 4 then
 		return
 	end
@@ -981,6 +1010,9 @@ charmHandler:register()
 
 local trackerHandler = PacketHandler(OPCODE_CYCLOPEDIA_TRACKER)
 function trackerHandler.onReceive(player, msg)
+	if not NetworkGuard.cooldown(player, "bestiary-tracker", 500) then
+		return
+	end
 	if msg:len() - msg:tell() < 2 then
 		return
 	end

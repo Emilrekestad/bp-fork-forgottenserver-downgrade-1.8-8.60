@@ -478,7 +478,7 @@ local function runRefCountTest(player, amount, done)
 end
 
 -- ============================================================================
--- /net all - sequencial, assíncrono e sem pular POOL FREE
+-- /net all - sequential, asynchronous and without skipping POOL FREE
 -- ============================================================================
 local function runAllTests(player)
     local pid = player:getId()

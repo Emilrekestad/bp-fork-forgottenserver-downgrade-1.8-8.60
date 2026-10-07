@@ -787,6 +787,13 @@ function requestHandler.onReceive(player, msg)
 		return
 	end
 
+	-- Item actions were unthrottled (only LIST_INFO had a cooldown); each one
+	-- loads the profile and may queue a database save (security audit
+	-- 2026-10-05).
+	if not NetworkGuard.cooldown(player, "proficiency:" .. tostring(action), 250) then
+		return
+	end
+
 	local itemId = resolveServerId(msg:getU16())
 	if action == ACTION_ITEM_INFO then
 		sendInfo(player, itemId)

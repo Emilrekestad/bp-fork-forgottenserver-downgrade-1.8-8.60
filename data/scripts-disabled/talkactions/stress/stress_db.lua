@@ -1,112 +1,112 @@
 --[[
 ================================================================================
   stress_db_pr69.lua  -  RevScript  (TFS 1.8 / 8.60 downgrade fork)
-  Stress test para PR #69 - "Port threaded database login save"
-  Repositorio: Mateuzkl/forgottenserver-downgrade-1.8-8.60
+  Stress test for PR #69 - "Port threaded database login save"
+  Repository: Mateuzkl/forgottenserver-downgrade-1.8-8.60
 ================================================================================
 
-  USO (apenas GMs com getAccess() == true):
-    /stress_db start   - roda todas as 11 fases em sequencia
-    /stress_db 1-11    - roda uma fase individualmente
-    /stress_db diag    - apenas diagnosticos InnoDB (Phase 10, nao destrutivo)
-    /stress_db info    - descreve cada fase e o que testa
-    /stress_db clean   - dropa a tabela stress_pr69
+  USAGE (GMs only, with getAccess() == true):
+    /stress_db start   - runs all 11 phases in sequence
+    /stress_db 1-11    - runs a single phase
+    /stress_db diag    - InnoDB diagnostics only (Phase 10, non-destructive)
+    /stress_db info    - describes each phase and what it tests
+    /stress_db clean   - drops the table stress_pr69
 
-  FASES E SQL EXERCITADO:
+  PHASES AND SQL EXERCISED:
   ┌────┬────────────────────────────────┬────────────────────────────────────────┐
-  │ Ph │ Area testada                   │ SQL / API                              │
+  │ Ph │ Area tested                    │ SQL / API                              │
   ├────┼────────────────────────────────┼────────────────────────────────────────┤
   │  1 │ ConnectionContext lazy         │ INSERT flood + db.escapeString()       │
   │    │ LAST_INSERT_ID / auto-commit   │ SELECT LAST_INSERT_ID()                │
   │  2 │ buildPlayerSave dirty snapshot │ WHERE key IN (...) + result:next()     │
   │  3 │ flushInFlight / pendingFlushes │ player:save() rapid-fire              │
   │  4 │ Deadlock retry ×3             │ SELECT...FOR UPDATE + Innodb_deadlocks │
-  │  5 │ R/W misto / handle lifecycle   │ addEvent bursts (concurrent workers)   │
-  │  6 │ Integridade count/dup/gap      │ EXPLAIN + ANALYZE TABLE                │
-  │  7 │ Atomicidade de transacao       │ START TRANSACTION + COMMIT + ROLLBACK  │
-  │  8 │ DELETE + re-INSERT (save real) │ player_storage save pattern completo   │
-  │  9 │ Batch INSERT em transacao      │ multi-row VALUES() em um unico query   │
+  │  5 │ Mixed R/W / handle lifecycle   │ addEvent bursts (concurrent workers)   │
+  │  6 │ Integrity count/dup/gap        │ EXPLAIN + ANALYZE TABLE                │
+  │  7 │ Transaction atomicity           │ START TRANSACTION + COMMIT + ROLLBACK  │
+  │  8 │ DELETE + re-INSERT (real save) │ player_storage save pattern complete   │
+  │  9 │ Batch INSERT in transaction    │ multi-row VALUES() in a single query   │
   │ 10 │ InnoDB diagnostics             │ SHOW STATUS + SHOW ENGINE INNODB STATUS│
   │ 11 │ UPSERT (ON DUPLICATE KEY)      │ INSERT...ON DUPLICATE KEY UPDATE       │
   └────┴────────────────────────────────┴────────────────────────────────────────┘
 
-  O QUE FOI CORRIGIDO/ADICIONADO vs versao anterior:
-    + db.escapeString() em toda string parametrizada
-    + result:next() loop - Ph2 de 60 SELECTs → 1 query com IN(...)
-    + START TRANSACTION / COMMIT / ROLLBACK explicitos (Ph7)
+  WHAT WAS FIXED/ADDED vs previous version:
+    + db.escapeString() on every parameterized string
+    + result:next() loop - Ph2 from 60 SELECTs → 1 query with IN(...)
+    + START TRANSACTION / COMMIT / ROLLBACK explicit (Ph7)
     + ROLLBACK atomicity verification (Ph7b)
-    + SELECT ... FOR UPDATE (Ph4) - bloqueio de linha correto
-    + Innodb_deadlocks delta antes/apos Phase 4
-    + DELETE + re-INSERT transacional (Ph8) - espelho do player_storage save
-    + Batch multi-row INSERT numa query so (Ph9)
+    + SELECT ... FOR UPDATE (Ph4) - correct row locking
+    + Innodb_deadlocks delta before/after Phase 4
+    + transactional DELETE + re-INSERT (Ph8) - mirrors the player_storage save
+    + Batch multi-row INSERT in a single query (Ph9)
     + SHOW STATUS + SHOW ENGINE INNODB STATUS (Ph10)
-    + EXPLAIN para verificar uso de indice (Ph6/Ph10)
-    + SELECT LAST_INSERT_ID() - verifica getLastInsertId() do PR (Ph1)
-    + ON DUPLICATE KEY UPDATE - padrao real do IOLoginData (Ph11)
-    + addEvent(0) burst concorrente no Ph5 (anteriormente era loop sincrono)
+    + EXPLAIN to verify index usage (Ph6/Ph10)
+    + SELECT LAST_INSERT_ID() - verifies getLastInsertId() from the PR (Ph1)
+    + ON DUPLICATE KEY UPDATE - real IOLoginData pattern (Ph11)
+    + addEvent(0) concurrent burst in Ph5 (previously a synchronous loop)
 
-  SEGURANCA:
-    • Tabela isolada `stress_pr69` - nunca toca tabelas de producao.
-    • Storage keys acima de STORAGE_BASE (95000) - limpas ao final de Ph2/Ph3.
-    • run_id unico por rodada (os.time() % 65535) - rodadas nao se cruzam.
-    • Requer player:getGroup():getAccess() == true.
+  SAFETY:
+    • Isolated table `stress_pr69` - never touches production tables.
+    • Storage keys above STORAGE_BASE (95000) - cleaned up at the end of Ph2/Ph3.
+    • run_id unique per run (os.time() % 65535) - runs do not overlap.
+    • Requires player:getGroup():getAccess() == true.
 ================================================================================
 --]]
 
 -- ============================================================================
--- CONFIGURACAO
+-- CONFIGURATION
 -- ============================================================================
 local STRESS_TABLE = "stress_pr69"
-local STORAGE_BASE = 95000   -- mude se colidir com storage keys do seu server
-local REPORT_DELAY = 15000   -- AUMENTADO PARA 15 SEGUNDOS (Obrigatorio para dar tempo de esvaziar a fila gigante)
+local STORAGE_BASE = 95000   -- change if it collides with your server's storage keys
+local REPORT_DELAY = 15000   -- INCREASED TO 15 SECONDS (Required to give the huge queue time to drain)
 
 local CFG = {
-    -- Phase 1: Flood massivo de conexoes soltas vs Transacao unica
-    ph1_inserts        = 5000,  -- 5 mil INSERTs individuais abrindo/fechando transacoes (Auto-commit espancado)
-    ph1_tx_batch       = 2000,  -- 2 mil INSERTs dentro de um unico bloco de transacao explicita
+    -- Phase 1: Massive flood of loose connections vs a single transaction
+    ph1_inserts        = 5000,  -- 5 thousand individual INSERTs opening/closing transactions (auto-commit hammered)
+    ph1_tx_batch       = 2000,  -- 2 thousand INSERTs inside a single explicit transaction block
 
-    -- Phase 2: Query gigante com clausula IN (...)
-    ph2_storage_keys   = 1000,  -- 1.000 chaves buscadas de uma vez, testando o parser de query do MySQL
+    -- Phase 2: Giant query with an IN (...) clause
+    ph2_storage_keys   = 1000,  -- 1,000 keys fetched at once, testing the MySQL query parser
 
-    -- Phase 3: Metralhadora de I/O na Main Thread (Risco real de congelar a tela do jogo)
-    ph3_save_count     = 300,   -- 300 salvamentos forcados do player consecutivamente
-    ph3_stagger_ms     = 0,     -- 0ms ou 1ms: sem intervalo! Vai enfileirar tudo no mesmo frame de execucao
+    -- Phase 3: I/O machine gun on the Main Thread (real risk of freezing the game)
+    ph3_save_count     = 300,   -- 300 forced player saves in a row
+    ph3_stagger_ms     = 0,     -- 0ms or 1ms: no interval! Everything gets queued in the same execution frame
 
-    -- Phase 4: Caos de Travas (Guerra de Deadlocks no InnoDB)
-    ph4_sentinel_rows  = 30,    -- 30 registros sob disputa intensa
-    ph4_update_bursts  = 600,   -- 600 atualizacoes cruzadas simultaneas tentando travar uma a outra
+    -- Phase 4: Lock chaos (deadlock war in InnoDB)
+    ph4_sentinel_rows  = 30,    -- 30 rows under heavy contention
+    ph4_update_bursts  = 600,   -- 600 simultaneous crossed updates trying to lock each other
 
-    -- Phase 5: Saturacao Maxima do Pool de Workers Assincronos
-    ph5_event_bursts   = 1500,  -- 1.500 tarefas assincronas paralelas jogadas na fila de uma vez so
+    -- Phase 5: Maximum saturation of the async worker pool
+    ph5_event_bursts   = 1500,  -- 1,500 parallel async tasks thrown into the queue all at once
 
-    -- Phase 7: Teste de Estresse do Log de Redo/Undo (Rollback pesado)
-    ph7_commit_rows    = 1500,  -- 1.500 linhas confirmadas
-    ph7_rollback_rows  = 800,   -- 800 linhas escritas e depois desfeitas (testa severamente os buffers de Undo)
+    -- Phase 7: Redo/Undo log stress test (heavy rollback)
+    ph7_commit_rows    = 1500,  -- 1,500 committed rows
+    ph7_rollback_rows  = 800,   -- 800 rows written and then undone (severely tests the Undo buffers)
 
-    -- Phase 8: Fragmentacao de Tabelas
-    ph8_rows           = 1000,  -- Deleta e reinsere 1.000 registros simulando save real de storages
+    -- Phase 8: Table fragmentation
+    ph8_rows           = 1000,  -- Deletes and re-inserts 1,000 rows simulating a real storage save
 
-    -- Phase 9: Teste de Limite de Pacote de Rede do MySQL
-    ph9_batch_size     = 3500,  -- Uma unica query string MONSTRUOSA contendo 3.500 linhas de dados
+    -- Phase 9: MySQL network packet limit test
+    ph9_batch_size     = 3500,  -- A single MONSTROUS query string containing 3,500 rows of data
 
-    -- Phase 11: Upserts Simultaneos (Duas operacoes por linha)
-    ph11_upsert_rows   = 1000,  -- 1.000 insercoes com tratamento de colisao de chave primaria
+    -- Phase 11: Simultaneous upserts (two operations per row)
+    ph11_upsert_rows   = 1000,  -- 1,000 inserts with primary key collision handling
 }
 
--- Constantes de mensagem podem mudar entre forks.
+-- Message constants may differ between forks.
 local MSG_BLUE = MESSAGE_STATUS_CONSOLE_BLUE or MESSAGE_EVENT_ADVANCE or 19
 local MSG_RED = MESSAGE_STATUS_CONSOLE_RED or MESSAGE_STATUS_WARNING or MSG_BLUE
 
-local activeRuns = {}  -- Indexado pelo GUID do jogador para permitir multiplos GMs
-local asyncResults = {}  -- asyncResults[guid][phase] = true/false para fases com callback async
-local asyncPending = {}  -- asyncPending[guid] = contador de callbacks async ainda nao resolvidos
-local settleData = {}    -- settleData[guid] = {pid, guid, runId, wallStart, results} para o summary final
+local activeRuns = {}  -- Indexed by player GUID to allow multiple GMs
+local asyncResults = {}  -- asyncResults[guid][phase] = true/false for phases with an async callback
+local asyncPending = {}  -- asyncPending[guid] = count of async callbacks not yet resolved
+local settleData = {}    -- settleData[guid] = {pid, guid, runId, wallStart, results} for the final summary
 
 -- ============================================================================
--- UTILIDADES
+-- UTILITIES
 -- ============================================================================
 
--- Codigos ANSI para cores no console
+-- ANSI codes for console colors
 local COLOR_RESET = "\27[0m"
 local COLOR_BLUE = "\27[94m"
 local COLOR_GREEN = "\27[32m"
@@ -153,19 +153,19 @@ end
 local function safePlayer(pid, expectedGuid)
     local p = Player(pid)
     if not p then
-        print("[StressDB] Player id=" .. tostring(pid) .. " desconectou durante teste.")
+        print("[StressDB] Player id=" .. tostring(pid) .. " disconnected during the test.")
         return nil
     end
     if expectedGuid and p:getGuid() ~= expectedGuid then
-        print("[StressDB] Player id=" .. tostring(pid) .. " GUID mismatch (PID reciclado?). Ignorando.")
+        print("[StressDB] Player id=" .. tostring(pid) .. " GUID mismatch (recycled PID?). Ignoring.")
         return nil
     end
     return p
 end
 
--- Compatibilidade entre forks:
--- Em TFS normal db.escapeString("abc") ja retorna 'abc'.
--- Em alguns forks pode retornar apenas abc. Esta funcao sempre devolve string SQL com aspas.
+-- Compatibility between forks:
+-- In regular TFS db.escapeString("abc") already returns 'abc'.
+-- In some forks it may return just abc. This function always returns a quoted SQL string.
 local function sqlString(value)
     local escaped = db.escapeString(tostring(value or ""))
     if not escaped or escaped == "" then
@@ -180,8 +180,8 @@ local function sqlString(value)
     return "'" .. escaped .. "'"
 end
 
--- Wrapper para db.storeQuery que retorna um objeto Result compativel
--- Le um STATUS variable do MySQL como numero (0 se nao encontrado)
+-- Wrapper for db.storeQuery that returns a compatible Result object
+-- Reads a MySQL STATUS variable as a number (0 if not found)
 local function readStatusVar(varName)
     local res = db.storeQuery("SHOW STATUS LIKE " .. sqlString(varName))
     if not res or res == false or res == nil then return 0 end
@@ -190,10 +190,10 @@ local function readStatusVar(varName)
     return v
 end
 
--- Tabela de callbacks para evitar captura de upvalue (TFS closures perdem referencias forward)
+-- Callback table to avoid upvalue capture (TFS closures lose forward references)
 local PhaseCallbacks = {}
 
--- Marca uma fase assincrona como completa. Quando todas terminam, agenda finalizacao via PhaseCallbacks.
+-- Marks an async phase as complete. When all finish, schedules finalization via PhaseCallbacks.
 local function completeAsyncPhase(guid, phase, ok)
     if not asyncResults[guid] or not asyncPending[guid] then return end
     asyncResults[guid][phase] = ok
@@ -209,7 +209,7 @@ end
 -- SETUP / TEARDOWN
 -- ============================================================================
 local function setupTable()
-    -- Usa CREATE TABLE IF NOT EXISTS para nao destruir tabela de outro GM rodando em paralelo
+    -- Uses CREATE TABLE IF NOT EXISTS so it does not destroy the table of another GM running in parallel
     return db.query(string.format([[
         CREATE TABLE IF NOT EXISTS `%s` (
             `id`      INT UNSIGNED      NOT NULL AUTO_INCREMENT,
@@ -230,30 +230,30 @@ end
 -- PHASE 1 - INSERT flood + db.escapeString + LAST_INSERT_ID
 -- ============================================================================
 --[[
-  Testa a ConnectionContext thread_local do PR (dispatcher thread).
-  Garante que a conexao e criada lazily e permanece aberta entre queries.
-  NOVIDADES vs versao anterior:
-    • db.escapeString() em TODOS os valores de string - evita SQL injection
-      mesmo num script de teste e confirma que a API funciona corretamente.
-    • Sub-teste com transacao explicita: START TRANSACTION + ph1_tx_batch
-      INSERTs + COMMIT - compara throughput com/sem auto-commit.
-    • SELECT LAST_INSERT_ID() apos INSERT - testa Database::getLastInsertId()
-      que o PR mantem por ConnectionContext (affinity de conexao).
-  FALHA ESPERADA SE: db.escapeString() retorna nil, LAST_INSERT_ID e 0,
-  ou a throughput da transacao for menor que a do auto-commit (indica overhead).
+  Tests the PR's thread_local ConnectionContext (dispatcher thread).
+  Ensures the connection is created lazily and stays open between queries.
+  NEW vs previous version:
+    • db.escapeString() on ALL string values - prevents SQL injection
+      even in a test script and confirms the API works correctly.
+    • Sub-test with explicit transaction: START TRANSACTION + ph1_tx_batch
+      INSERTs + COMMIT - compares throughput with/without auto-commit.
+    • SELECT LAST_INSERT_ID() after INSERT - tests Database::getLastInsertId()
+      which the PR keeps per ConnectionContext (connection affinity).
+  EXPECTED FAILURE IF: db.escapeString() returns nil, LAST_INSERT_ID is 0,
+  or transaction throughput is lower than auto-commit (indicates overhead).
 --]]
 local function runPhase1(player, runId)
     local n  = CFG.ph1_inserts
     local nb = CFG.ph1_tx_batch
 
-    log(player, string.format("Phase 1: INSERT flood - %d auto-commit + %d em transacao...", n, nb))
+    log(player, string.format("Phase 1: INSERT flood - %d auto-commit + %d in transaction...", n, nb))
 
-    -- ── 1a: auto-commit individual ──────────────────────────────────────────
+    -- ── 1a: individual auto-commit ──────────────────────────────────────────
     local t0 = os.clock()
     local ok, fail = 0, 0
 
     for i = 1, n do
-        -- db.escapeString() em toda string parametrizada
+        -- db.escapeString() on every parameterized string
         local safeLabel = sqlString("ph1_ac_" .. i)
         local q = string.format(
             "INSERT INTO `%s` (`run_id`,`phase`,`seq`,`label`,`ts`) VALUES (%d,1,%d,%s,%d)",
@@ -265,8 +265,8 @@ local function runPhase1(player, runId)
     local elapsedAC = (os.clock() - t0)
     local qpsAC = ok / (elapsedAC + 1e-9)
 
-    -- ── 1b: dentro de transacao explicita ────────────────────────────────────
-    -- Espelha o que flushPlayerSave faz: abre TX, reaplica N queries, COMMIT
+    -- ── 1b: inside an explicit transaction ────────────────────────────────────
+    -- Mirrors what flushPlayerSave does: opens TX, replays N queries, COMMIT
     local t1 = os.clock()
     local txOk = true
 
@@ -284,7 +284,7 @@ local function runPhase1(player, runId)
     local elapsedTX = (os.clock() - t1)
     local qpsTX = nb / (elapsedTX + 1e-9)
 
-    -- ── 1c: LAST_INSERT_ID - verifica affinity de conexao (worker thread) ──
+    -- ── 1c: LAST_INSERT_ID - verifies connection affinity (worker thread) ──
     -- Runs on scheduler thread via addEvent to exercise per-thread ConnectionContext
     local playerId = player:getId()
     local playerGuid = player:getGuid()
@@ -323,13 +323,13 @@ local function runPhase1(player, runId)
             ))
         else
             if failVal > 0 then
-                logFail(p, string.format("Phase 1: %d INSERTs falharam - verifique ConnectionContext.", failVal))
+                logFail(p, string.format("Phase 1: %d INSERTs failed - check ConnectionContext.", failVal))
             end
             if not txOkVal then
-                logFail(p, "Phase 1: INSERT dentro de transacao falhou - START TRANSACTION/COMMIT com problema.")
+                logFail(p, "Phase 1: INSERT inside a transaction failed - problem with START TRANSACTION/COMMIT.")
             end
             if lastId == 0 then
-                logFail(p, "Phase 1: LAST_INSERT_ID=0 - getLastInsertId() pode estar retornando de conexao errada!")
+                logFail(p, "Phase 1: LAST_INSERT_ID=0 - getLastInsertId() may be returning from the wrong connection!")
             end
         end
 
@@ -338,7 +338,7 @@ local function runPhase1(player, runId)
 
     -- Phase 1c runs async; return early (pass/fail reported via callback above)
 
-    -- ── Resultado (Phases 1a + 1b) ────────────────────────────────────────────
+    -- ── Result (Phases 1a + 1b) ────────────────────────────────────────────
     if fail == 0 and txOk then
         logInfo(player, string.format(
             "Phase 1a-b: AC=%d/%d (%.0f q/s | %.1fms) | TX=%d (%.0f q/s | %.1fms) | Phase 1c async...",
@@ -347,10 +347,10 @@ local function runPhase1(player, runId)
         ))
     else
         if fail > 0 then
-            logFail(player, string.format("Phase 1: %d INSERTs falharam - verifique ConnectionContext.", fail))
+            logFail(player, string.format("Phase 1: %d INSERTs failed - check ConnectionContext.", fail))
         end
         if not txOk then
-            logFail(player, "Phase 1: INSERT dentro de transacao falhou - START TRANSACTION/COMMIT com problema.")
+            logFail(player, "Phase 1: INSERT inside a transaction failed - problem with START TRANSACTION/COMMIT.")
         end
     end
 
@@ -361,41 +361,41 @@ end
 -- PHASE 2 - Storage dirty snapshot  (buildPlayerSave + flushPlayerSave)
 -- ============================================================================
 --[[
-  Testa que buildPlayerSave() captura o snapshot correto de
-  modifiedStorageKeys e removedStorageKeys, e que flushPlayerSave()
-  replica o SQL em transacao no worker.
-  NOVIDADE vs versao anterior:
-    • Verificacao reescrita com UMA query usando WHERE key IN (...) +
-      loop result:next() - antes eram 60 SELECTs individuais (1 por key).
-      Isso tambem testa que result:next() funciona corretamente para
-      resultado multi-row e que result:free() nao vaza handles.
-  FALHA ESPERADA SE: snapshot omitiu keys (faltam no banco), keys removidas
-  ainda aparecem, result:next() para cedo demais, ou ha valor errado.
+  Tests that buildPlayerSave() captures the correct snapshot of
+  modifiedStorageKeys and removedStorageKeys, and that flushPlayerSave()
+  replays the SQL in a transaction on the worker.
+  NEW vs previous version:
+    • Check rewritten with ONE query using WHERE key IN (...) +
+      result:next() loop - it used to be 60 individual SELECTs (1 per key).
+      This also tests that result:next() works correctly for
+      multi-row results and that result:free() does not leak handles.
+  EXPECTED FAILURE IF: snapshot omitted keys (missing in the database), removed keys
+  still show up, result:next() stops too early, or a value is wrong.
 --]]
 local function runPhase2(player, runId)
     local n    = CFG.ph2_storage_keys
-    local base = STORAGE_BASE + 2000  -- Fase 2 usa +2000 (intervalo: 97001-98000) | A Fase 3 usa +4000 (99000) - sem colisao
+    local base = STORAGE_BASE + 2000  -- Phase 2 uses +2000 (range: 97001-98000) | Phase 3 uses +4000 (99000) - no collision
 
-    log(player, string.format("Phase 2: Storage dirty snapshot - %d keys (verificacao com IN + next())...", n))
+    log(player, string.format("Phase 2: Storage dirty snapshot - %d keys (check with IN + next())...", n))
 
-    -- Seta todas as keys; remove as pares
+    -- Sets all keys; removes the even ones
     local t0 = os.clock()
     for i = 1, n do
         player:setStorageValue(base + i, i * 7)
     end
     for i = 1, n do
         if i % 2 == 0 then
-            player:setStorageValue(base + i, -1)  -- -1 = remove no TFS
+            player:setStorageValue(base + i, -1)  -- -1 = removes in TFS
         end
     end
     log(player, string.format(
-        "Phase 2: %d setadas | %d para remocao | %.1fms | disparando save...",
+        "Phase 2: %d set | %d for removal | %.1fms | triggering save...",
         n, math.floor(n / 2), (os.clock() - t0) * 1000
     ))
 
     local saved = player:save()
     if not saved then
-        logFail(player, "Phase 2: player:save() retornou false!")
+        logFail(player, "Phase 2: player:save() returned false!")
         return false
     end
 
@@ -409,7 +409,7 @@ local function runPhase2(player, runId)
             return
         end
 
-        -- Monta a lista IN(key1, key2, ...) de todas as keys impares esperadas
+        -- Builds the IN(key1, key2, ...) list of all expected odd keys
         local presentKeys = {}
         for i = 1, nKeys do
             if i % 2 ~= 0 then
@@ -418,7 +418,7 @@ local function runPhase2(player, runId)
         end
         local inList = table.concat(presentKeys, ",")
 
-        -- Uma query so busca todas as keys esperadas como presentes
+        -- A single query fetches all keys expected to be present
         local found = {}  -- found[key] = value
         local res = db.storeQuery(string.format(
             "SELECT `key`, `value` FROM `player_storage` WHERE `player_id`=%d AND `key` IN (%s)",
@@ -429,11 +429,11 @@ local function runPhase2(player, runId)
                 local k = result.getNumber(res, "key")
                 local v = result.getNumber(res, "value")
                 found[k] = v
-            until not result.next(res)  -- ← result:next() itera multi-row
+            until not result.next(res)  -- ← result:next() iterates multi-row
             result.free(res)
         end
 
-        -- Verifica keys impares (devem estar presentes com valor i*7)
+        -- Checks odd keys (must be present with value i*7)
         local missingPresent, wrongValue = 0, 0
         for i = 1, nKeys do
             if i % 2 ~= 0 then
@@ -447,7 +447,7 @@ local function runPhase2(player, runId)
             end
         end
 
-        -- Verifica keys pares (NAO devem estar no banco)
+        -- Checks even keys (must NOT be in the database)
         local wronglyPresent = 0
         local evenKeys = {}
         for i = 1, nKeys do
@@ -470,15 +470,15 @@ local function runPhase2(player, runId)
 
         if total == 0 then
             logPass(p, string.format(
-                "Phase 2: %d presentes OK | %d ausentes OK | result:next() iterou %d linhas corretamente",
+                "Phase 2: %d present OK | %d absent OK | result:next() iterated %d rows correctly",
                 expPresent, expAbsent, #presentKeys
             ))
         else
             logFail(p, string.format(
-                "Phase 2: %d faltando | %d valor errado | %d nao-removidas no banco",
+                "Phase 2: %d missing | %d wrong value | %d not removed from the database",
                 missingPresent, wrongValue, wronglyPresent
             ))
-            logFail(p, "  -> Verifique buildPlayerSave snapshot + result:next() do storeQuery.")
+            logFail(p, "  -> Check buildPlayerSave snapshot + result:next() of storeQuery.")
         end
 
         completeAsyncPhase(playerGuid, 2, total == 0)
@@ -498,14 +498,14 @@ end
 -- PHASE 3 - Save flood  (flushInFlight + pendingFlushes ordering)
 -- ============================================================================
 --[[
-  (sem alteracoes estruturais - logica ja estava correta)
-  Agenda N saves com intervalo stagger_ms. Cada save escreve um valor
-  diferente na mesma storage key. O ULTIMO valor deve persistir.
+  (no structural changes - logic was already correct)
+  Schedules N saves with a stagger_ms interval. Each save writes a
+  different value to the same storage key. The LAST value must persist.
 --]]
 local function runPhase3(player, runId)
     local n       = CFG.ph3_save_count
     local stagger = CFG.ph3_stagger_ms
-    local key     = STORAGE_BASE + 4000  -- Alterado +3000 para +4000 para evitar colisao com a Fase 2 (97001-98000)
+    local key     = STORAGE_BASE + 4000  -- Changed +3000 to +4000 to avoid collision with Phase 2 (97001-98000)
     local pid     = player:getId()
     local guid    = player:getGuid()
 
@@ -544,19 +544,19 @@ local function runPhase3(player, runId)
             ph3ok = (dbVal == expectedVal)
             if ph3ok then
                 logPass(p, string.format(
-                    "Phase 3: DB=%d (esperado %d) - flush ordering OK (%d saves)",
+                    "Phase 3: DB=%d (expected %d) - flush ordering OK (%d saves)",
                     dbVal, expectedVal, totalSaves
                 ))
             else
                 logFail(p, string.format(
-                    "Phase 3: DB=%d esperado=%d - ORDERING BUG em pendingFlushes!",
+                    "Phase 3: DB=%d expected=%d - ORDERING BUG in pendingFlushes!",
                     dbVal, expectedVal
                 ))
-                logFail(p, "  -> Verifique SaveManager::onPlayerFlushed + pendingFlushes drain.")
+                logFail(p, "  -> Check SaveManager::onPlayerFlushed + pendingFlushes drain.")
             end
         else
             logFail(p, string.format(
-                "Phase 3: key %d nao encontrada no banco - save DESCARTADO!", storageKey
+                "Phase 3: key %d not found in the database - save DISCARDED!", storageKey
             ))
         end
 
@@ -567,7 +567,7 @@ local function runPhase3(player, runId)
 
     end, verifyDelay, pid, guid, key, n * 99, n)
 
-    log(player, string.format("Phase 3: %d saves agendados | resultado em ~%dms", n, verifyDelay))
+    log(player, string.format("Phase 3: %d saves scheduled | result in ~%dms", n, verifyDelay))
     return true
 end
 
@@ -575,20 +575,20 @@ end
 -- PHASE 4 - Lock contention + SELECT...FOR UPDATE + Innodb_deadlocks delta
 -- ============================================================================
 --[[
-  Testa DBTransaction::executeWithinTransactionRollbackOnFailure (retry ×3).
+  Tests DBTransaction::executeWithinTransactionRollbackOnFailure (retry ×3).
 
-  NOVIDADES vs versao anterior:
-    • SELECT ... FOR UPDATE antes do UPDATE - bloqueio de linha explicito,
-      padrao correto para gerar deadlock/lock-wait no InnoDB.
-      Sem isso, UPDATEs em auto-commit raramente geram deadlock real.
-    • Le SHOW STATUS LIKE 'Innodb_deadlocks' ANTES e DEPOIS dos bursts.
-      Imprime o delta real de deadlocks que o InnoDB registrou.
-      Isso confirma se o retry path foi realmente ativado.
-    • Le 'Innodb_row_lock_waits' e 'Innodb_row_lock_time_avg' para
-      mostrar latencia de contencao.
+  NEW vs previous version:
+    • SELECT ... FOR UPDATE before the UPDATE - explicit row lock,
+      the correct pattern to generate a deadlock/lock-wait in InnoDB.
+      Without it, auto-commit UPDATEs rarely produce a real deadlock.
+    • Reads SHOW STATUS LIKE 'Innodb_deadlocks' BEFORE and AFTER the bursts.
+      Prints the real deadlock delta that InnoDB recorded.
+      This confirms whether the retry path was actually triggered.
+    • Reads 'Innodb_row_lock_waits' and 'Innodb_row_lock_time_avg' to
+      show contention latency.
 
-  FALHA ESPERADA SE: counter < expected (update perdido sem retry),
-  ou delta_deadlocks == 0 (nenhum deadlock real gerado - teste trivial).
+  EXPECTED FAILURE IF: counter < expected (update lost without retry),
+  or delta_deadlocks == 0 (no real deadlock generated - trivial test).
 --]]
 local function runPhase4(player, runId)
     local rows  = CFG.ph4_sentinel_rows
@@ -597,15 +597,15 @@ local function runPhase4(player, runId)
     local guid  = player:getGuid()
 
     log(player, string.format(
-        "Phase 4: Lock contention + FOR UPDATE - %d linhas x %d bursts...",
+        "Phase 4: Lock contention + FOR UPDATE - %d rows x %d bursts...",
         rows, burst
     ))
 
-    -- Le contadores InnoDB ANTES dos bursts
+    -- Reads InnoDB counters BEFORE the bursts
     local deadlocksBefore  = readStatusVar("Innodb_deadlocks")
     local lockWaitsBefore  = readStatusVar("Innodb_row_lock_waits")
 
-    -- Insere sentinelas com counter=0
+    -- Inserts sentinel rows with counter=0
     local inserted = 0
     for r = 1, rows do
         local safeLabel = sqlString("sentinel_" .. r)
@@ -618,23 +618,23 @@ local function runPhase4(player, runId)
     end
 
     if inserted == 0 then
-        logFail(player, "Phase 4: Falha ao inserir sentinelas. Abortando.")
+        logFail(player, "Phase 4: Failed to insert sentinels. Aborting.")
         return false
     end
 
     if inserted ~= rows then
         logFail(player, string.format(
-            "Phase 4: Inconsistencia - inserted=%d != rows=%d. Abortando.", inserted, rows
+            "Phase 4: Inconsistency - inserted=%d != rows=%d. Aborting.", inserted, rows
         ))
         return false
     end
 
-    -- Calcula total esperado e dispara bursts de UPDATE com FOR UPDATE
-    -- NOTA: cada UPDATE afeta 2 rows (seq IN (first, second)), exceto quando seqA == seqB (rows=1: toca apenas 1 row)
+    -- Computes the expected total and fires UPDATE bursts with FOR UPDATE
+    -- NOTE: each UPDATE affects 2 rows (seq IN (first, second)), except when seqA == seqB (rows=1: touches only 1 row)
     local totalExpected = 0
     for b = 1, burst do
         local inc = (b % 2 == 0) and 2 or 1
-        -- Cada burst × inserted rows, mas cada UPDATE toca 2 rows (ou 1 se rows=1)
+        -- Each burst × inserted rows, but each UPDATE touches 2 rows (or 1 if rows=1)
         local rowsPerUpdate = (rows == 1) and 1 or 2
         totalExpected = totalExpected + (inc * inserted * rowsPerUpdate)
 
@@ -642,8 +642,8 @@ local function runPhase4(player, runId)
             local seqA = r
             local seqB = (r % rows) + 1
             addEvent(function(tbl, rId, a, b, increment)
-                -- SELECT ... FOR UPDATE em duas linhas com ordem de lock oposta
-                -- para gerar deadlock real entre workers concorrentes.
+                -- SELECT ... FOR UPDATE on two rows with opposite lock order
+                -- to generate a real deadlock between concurrent workers.
                 local first = increment % 2 == 1 and a or b
                 local second = increment % 2 == 1 and b or a
                 db.query("START TRANSACTION")
@@ -697,7 +697,7 @@ local function runPhase4(player, runId)
             end
         end
 
-        -- Le contadores InnoDB DEPOIS
+        -- Reads InnoDB counters AFTER
         local deadlocksAfter = readStatusVar("Innodb_deadlocks")
         local lockWaitsAfter = readStatusVar("Innodb_row_lock_waits")
         local dlDelta  = deadlocksAfter  - dlBefore
@@ -710,23 +710,23 @@ local function runPhase4(player, runId)
         ))
 
         if dlDelta == 0 and lwDelta == 0 then
-            logInfo(p, "  -> Nenhum deadlock/wait detectado - teste pode nao ter gerado contencao real.")
-            logInfo(p, "     Aumente ph4_update_bursts ou ph4_sentinel_rows para maior pressao.")
+            logInfo(p, "  -> No deadlock/wait detected - the test may not have generated real contention.")
+            logInfo(p, "     Increase ph4_update_bursts or ph4_sentinel_rows for more pressure.")
         end
 
         if rowsFound == nRows and actualTotal == expected then
             logPass(p, string.format(
-                "Phase 4: %d linhas | counter=%d/%d - todos UPDATEs comitaram (retry OK)",
+                "Phase 4: %d rows | counter=%d/%d - all UPDATEs committed (retry OK)",
                 rowsFound, actualTotal, expected
             ))
         elseif rowsFound == nRows then
             logFail(p, string.format(
-                "Phase 4: counter=%d esperado=%d - %d UPDATEs perdidos!",
+                "Phase 4: counter=%d expected=%d - %d UPDATEs lost!",
                 actualTotal, expected, expected - actualTotal
             ))
-            logFail(p, "  -> Verifique executeWithinTransactionRollbackOnFailure + lastQueryWasDeadlock().")
+            logFail(p, "  -> Check executeWithinTransactionRollbackOnFailure + lastQueryWasDeadlock().")
         else
-            logFail(p, string.format("Phase 4: Apenas %d/%d linhas encontradas.", rowsFound, nRows))
+            logFail(p, string.format("Phase 4: Only %d/%d rows found.", rowsFound, nRows))
         end
 
         completeAsyncPhase(playerGuid, 4, rowsFound == nRows and actualTotal == expected)
@@ -734,7 +734,7 @@ local function runPhase4(player, runId)
     end, verifyDelay, pid, guid, runId, rows, totalExpected, deadlocksBefore, lockWaitsBefore)
 
     log(player, string.format(
-        "Phase 4: %d UPDATEs (com FOR UPDATE) | expected counter=%d | resultado em ~%dms",
+        "Phase 4: %d UPDATEs (with FOR UPDATE) | expected counter=%d | result in ~%dms",
         burst * rows, totalExpected, verifyDelay
     ))
     return true
@@ -744,23 +744,23 @@ end
 -- PHASE 5 - Concurrent addEvent(0) burst (worker pool saturation)
 -- ============================================================================
 --[[
-  NOVIDADE vs versao anterior: antes era um loop sincrono no dispatcher -
-  todos os db.query() rodavam sequencialmente na thread do dispatcher.
-  Agora dispara N addEvent(0) que caem no scheduler e sao processados
-  pelos workers DatabaseTasks com suas proprias ConnectionContexts (PR#69).
-  Isso realmente exercita multiplas ConnectionContexts simultaneas.
+  NEW vs previous version: it used to be a synchronous loop on the dispatcher -
+  all db.query() calls ran sequentially on the dispatcher thread.
+  Now it fires N addEvent(0) calls that land in the scheduler and are processed
+  by DatabaseTasks workers with their own ConnectionContexts (PR#69).
+  This really exercises multiple simultaneous ConnectionContexts.
 
-  Intercala SELECTs e INSERTs para:
-    • Verificar que diferentes workers nao interferem nas conexoes uns dos outros.
-    • Confirmar que result handles criados em workers sao liberados corretamente.
-    • Medir throughput real com concorrencia (vs. sequencial do dispatcher).
+  Interleaves SELECTs and INSERTs to:
+    • Verify that different workers do not interfere with each other's connections.
+    • Confirm that result handles created in workers are released correctly.
+    • Measure real throughput under concurrency (vs. the dispatcher's sequential run).
 --]]
 local function runPhase5(player, runId)
     local n    = CFG.ph5_event_bursts
     local pid  = player:getId()
     local guid = player:getGuid()
 
-    log(player, string.format("Phase 5: %d addEvent(0) bursts concorrentes...", n))
+    log(player, string.format("Phase 5: %d addEvent(0) concurrent bursts...", n))
 
     local t0 = os.clock()
 
@@ -774,7 +774,7 @@ local function runPhase5(player, runId)
                     tbl, rId, seq, safeLabel, os.time()
                 ))
             else
-                -- SELECT + result:next() num worker - testa handle lifecycle fora do dispatcher
+                -- SELECT + result:next() in a worker - tests handle lifecycle outside the dispatcher
                 local res = db.storeQuery(string.format(
                     "SELECT `seq`,`label` FROM `%s` WHERE `run_id`=%d AND `phase`=1 LIMIT 3",
                     tbl, rId
@@ -789,7 +789,7 @@ local function runPhase5(player, runId)
         end, 0, STRESS_TABLE, runId, i, isWrite)
     end
 
-    -- Verifica apos assentamento
+    -- Checks after settling
     local verifyDelay = REPORT_DELAY + 500
 
     addEvent(function(playerId, playerGuid, rId, expectedWrites, wallStart)
@@ -813,12 +813,12 @@ local function runPhase5(player, runId)
 
         if cnt == expectedWrites then
             logPass(p, string.format(
-                "Phase 5: %d/%d writes chegaram | %.0fms wall | workers concorrentes OK",
+                "Phase 5: %d/%d writes arrived | %.0fms wall | workers concorrentes OK",
                 cnt, expectedWrites, elapsed
             ))
         else
             logFail(p, string.format(
-                "Phase 5: Apenas %d/%d writes - %d perdidos em workers concorrentes!",
+                "Phase 5: Only %d/%d writes - %d lost in concurrent workers!",
                 cnt, expectedWrites, expectedWrites - cnt
             ))
         end
@@ -828,26 +828,26 @@ local function runPhase5(player, runId)
     end, verifyDelay, pid, guid, runId, math.floor(n / 2), t0)
 
     log(player, string.format(
-        "Phase 5: %d events disparados | resultado em ~%dms", n, verifyDelay
+        "Phase 5: %d events fired | result in ~%dms", n, verifyDelay
     ))
     return true
 end
 
 -- ============================================================================
--- PHASE 6 - Integridade: count + dup + gap + EXPLAIN + ANALYZE TABLE
+-- PHASE 6 - Integrity: count + dup + gap + EXPLAIN + ANALYZE TABLE
 -- ============================================================================
 --[[
-  NOVIDADES vs versao anterior:
-    • EXPLAIN SELECT no indice da tabela - verifica que `idx_run_phase`
-      esta sendo usado. Se key=NULL, a query esta fazendo full scan.
-    • ANALYZE TABLE - forca atualizacao das estatisticas de indice.
-    • Agora cobre TODAS as fases (1-5, 7, 8, 9, 11) pelo run_id.
+  NEW vs previous version:
+    • EXPLAIN SELECT on the table index - verifies that `idx_run_phase`
+      is being used. If key=NULL, the query is doing a full scan.
+    • ANALYZE TABLE - forces an update of the index statistics.
+    • Now covers ALL phases (1-5, 7, 8, 9, 11) by run_id.
 --]]
 local function runPhase6(player, runId)
-    log(player, "Phase 6: Integridade + EXPLAIN + ANALYZE TABLE...")
+    log(player, "Phase 6: Integrity + EXPLAIN + ANALYZE TABLE...")
     local t0 = os.clock()
 
-    -- ANALYZE TABLE antes de qualquer SELECT para estatisticas atualizadas
+    -- ANALYZE TABLE before any SELECT so statistics are up to date
     db.query("ANALYZE TABLE `" .. STRESS_TABLE .. "`")
 
     local function countPhase(phase)
@@ -885,10 +885,10 @@ local function runPhase6(player, runId)
         local mx  = result.getNumber(res, "mx")
         local tot = result.getNumber(res, "tot")
         result.free(res)
-        return mx - tot  -- 0 = sem gaps
+        return mx - tot  -- 0 = no gaps
     end
 
-    -- EXPLAIN para verificar uso do indice idx_run_phase
+    -- EXPLAIN to verify use of the index idx_run_phase
     local function checkIndexUsed()
         local res = db.storeQuery(string.format(
             "EXPLAIN SELECT * FROM `%s` WHERE `run_id`=%d AND `phase`=1 LIMIT 1",
@@ -899,19 +899,19 @@ local function runPhase6(player, runId)
         local rows    = result.getNumber(res, "rows")
         result.free(res)
         if keyUsed and keyUsed ~= "" then
-            return string.format("%s (%d rows estimadas)", keyUsed, rows)
+            return string.format("%s (%d rows estimated)", keyUsed, rows)
         else
             return "NONE (full scan!)"
         end
     end
 
-    -- Contagens esperadas
+    -- Expected counts
     local expPh1 = CFG.ph1_inserts + CFG.ph1_tx_batch + 1  -- auto-commit + tx + probe
     local expPh5 = math.floor(CFG.ph5_event_bursts / 2)
-    local expPh7 = CFG.ph7_commit_rows + 1 -- COMMIT rows + 1 row antes do SAVEPOINT; rollback rows NAO devem aparecer
-    local expPh8 = CFG.ph8_rows          -- apenas v2 rows (v1 deletadas)
+    local expPh7 = CFG.ph7_commit_rows + 1 -- COMMIT rows + 1 row before the SAVEPOINT; rollback rows must NOT appear
+    local expPh8 = CFG.ph8_rows          -- only v2 rows (v1 deleted)
     local expPh9 = CFG.ph9_batch_size
-    local expPh11 = CFG.ph11_upsert_rows -- ON DUPLICATE = sem duplicatas
+    local expPh11 = CFG.ph11_upsert_rows -- ON DUPLICATE = no duplicates
 
     local cPh1  = countPhase(1)
     local cPh5  = countPhase(5)
@@ -951,25 +951,25 @@ local function runPhase6(player, runId)
             dPh1, dPh9, dPh11, gaps, elapsed
         ))
         if idxInfo:find("NONE") then
-            logFail(player, "  -> EXPLAIN: indice nao usado - full table scan! Revise a UNIQUE KEY.")
+            logFail(player, "  -> EXPLAIN: index not used - full table scan! Review the UNIQUE KEY.")
         end
         if cPh7 ~= expPh7 then
             logFail(player, string.format(
-                "  -> Ph7: %d/%d rows - ROLLBACK nao atomico ou COMMIT falhou!", cPh7, expPh7
+                "  -> Ph7: %d/%d rows - ROLLBACK not atomic or COMMIT failed!", cPh7, expPh7
             ))
         end
         if cPh8 ~= expPh8 then
             logFail(player, string.format(
-                "  -> Ph8: %d/%d rows apos DELETE+re-INSERT - padrao player_storage corrompido!", cPh8, expPh8
+                "  -> Ph8: %d/%d rows after DELETE+re-INSERT - player_storage pattern corrupted!", cPh8, expPh8
             ))
         end
         if dPh11 > 0 then
             logFail(player, string.format(
-                "  -> Ph11: %d duplicatas! ON DUPLICATE KEY UPDATE nao funcionou corretamente.", dPh11
+                "  -> Ph11: %d duplicates! ON DUPLICATE KEY UPDATE did not work correctly.", dPh11
             ))
         end
         if gaps > 0 then
-            logFail(player, string.format("  -> %d gaps no seq da Ph1 - writes perdidos!", gaps))
+            logFail(player, string.format("  -> %d gaps in the Ph1 seq - lost writes!", gaps))
         end
     end
 
@@ -977,30 +977,30 @@ local function runPhase6(player, runId)
 end
 
 -- ============================================================================
--- PHASE 7 - Atomicidade: START TRANSACTION / COMMIT / ROLLBACK
+-- PHASE 7 - Atomicity: START TRANSACTION / COMMIT / ROLLBACK
 -- ============================================================================
 --[[
-  Testa explicitamente o modelo de transacao do PR.
-  flushPlayerSave() abre uma transacao, replays todos os SQLs capturados e
-  comita (ou faz rollback+retry em deadlock). Este e o core do PR.
+  Explicitly tests the PR's transaction model.
+  flushPlayerSave() opens a transaction, replays all captured SQLs and
+  commits (or does rollback+retry on deadlock). This is the core of the PR.
 
-  Sub-testes:
+  Sub-tests:
     7a (COMMIT): START TRANSACTION + ph7_commit_rows INSERTs + COMMIT
-        → verifica que EXATAMENTE commit_rows estao no banco.
+        → verifies that EXACTLY commit_rows are in the database.
     7b (ROLLBACK): START TRANSACTION + ph7_rollback_rows INSERTs + ROLLBACK
-        → verifica que ZERO rows dos rollback foram persistidas.
-        → se aparecer qualquer row, atomicidade esta quebrada.
+        → verifies that ZERO rollback rows were persisted.
+        → if any row appears, atomicity is broken.
     7c (Savepoint): START TRANSACTION + SAVEPOINT + INSERT + ROLLBACK TO SAVEPOINT
-        → avancado: confirma granularidade de rollback parcial.
-  FALHA ESPERADA SE: rows do ROLLBACK aparecem no banco (falha catastrofica
-  de atomicidade), ou rows do COMMIT nao aparecem (commit silencioso falhou).
+        → advanced: confirms partial rollback granularity.
+  EXPECTED FAILURE IF: ROLLBACK rows appear in the database (catastrophic
+  atomicity failure), or COMMIT rows do not appear (silent commit failure).
 --]]
 local function runPhase7(player, runId)
     local nc = CFG.ph7_commit_rows
     local nr = CFG.ph7_rollback_rows
 
     log(player, string.format(
-        "Phase 7: Atomicidade - COMMIT(%d rows) + ROLLBACK(%d rows) + SAVEPOINT...",
+        "Phase 7: Atomicity - COMMIT(%d rows) + ROLLBACK(%d rows) + SAVEPOINT...",
         nc, nr
     ))
 
@@ -1026,7 +1026,7 @@ local function runPhase7(player, runId)
     local elapsedCommit = (os.clock() - t0) * 1000
 
     -- ── 7b: ROLLBACK path ─────────────────────────────────────────────────────
-    -- Usa seq offset nc+1000 para distinguir de 7a mesmo sem phase separado
+    -- Uses seq offset nc+1000 to tell it apart from 7a even without a separate phase
     local rollbackSeqBase = nc + 1000
     db.query("START TRANSACTION")
     for i = 1, nr do
@@ -1036,7 +1036,7 @@ local function runPhase7(player, runId)
             STRESS_TABLE, runId, rollbackSeqBase + i, safeLabel, os.time()
         ))
     end
-    db.query("ROLLBACK")  -- Nada disso deve persistir
+    db.query("ROLLBACK")  -- None of this should persist
 
     -- ── 7c: SAVEPOINT ─────────────────────────────────────────────────────────
     local savepointSeq = rollbackSeqBase + nr + 500
@@ -1052,12 +1052,12 @@ local function runPhase7(player, runId)
         "INSERT INTO `%s` (`run_id`,`phase`,`seq`,`label`,`ts`) VALUES (%d,7,%d,%s,%d)",
         STRESS_TABLE, runId, savepointSeq + 1, safeLabel4, os.time()
     ))
-    db.query("ROLLBACK TO SAVEPOINT sp_ph7")  -- so o segundo INSERT e desfeito
+    db.query("ROLLBACK TO SAVEPOINT sp_ph7")  -- only the second INSERT is undone
     db.query("COMMIT")
 
-    -- ── Verificacoes ──────────────────────────────────────────────────────────
+    -- ── Checks ──────────────────────────────────────────────────────────
 
-    -- 7a: commit_rows devem estar presentes
+    -- 7a: commit_rows must be present
     local res7a = db.storeQuery(string.format(
         "SELECT COUNT(*) AS cnt FROM `%s` WHERE `run_id`=%d AND `phase`=7 AND `seq` <= %d",
         STRESS_TABLE, runId, nc
@@ -1068,7 +1068,7 @@ local function runPhase7(player, runId)
         result.free(res7a)
     end
 
-    -- 7b: rollback_rows NAO devem estar presentes
+    -- 7b: rollback_rows must NOT be present
     local res7b = db.storeQuery(string.format(
         "SELECT COUNT(*) AS cnt FROM `%s` WHERE `run_id`=%d AND `phase`=7 AND `seq` > %d AND `seq` <= %d",
         STRESS_TABLE, runId, rollbackSeqBase, rollbackSeqBase + nr
@@ -1079,7 +1079,7 @@ local function runPhase7(player, runId)
         result.free(res7b)
     end
 
-    -- 7c: apenas "before_savepoint" (seq=savepointSeq) deve existir; "after" nao
+    -- 7c: only "before_savepoint" (seq=savepointSeq) should exist; "after" should not
     local res7c = db.storeQuery(string.format(
         "SELECT COUNT(*) AS cnt FROM `%s` WHERE `run_id`=%d AND `phase`=7 AND `seq` >= %d",
         STRESS_TABLE, runId, savepointSeq
@@ -1091,8 +1091,8 @@ local function runPhase7(player, runId)
     end
 
     local ok7a = commitOk and (cnt7a == nc)
-    local ok7b = (cnt7b == 0)   -- ROLLBACK: zero rows devem ter persistido
-    local ok7c = (cnt7c == 1)   -- apenas a row antes do SAVEPOINT
+    local ok7b = (cnt7b == 0)   -- ROLLBACK: zero rows should have persisted
+    local ok7c = (cnt7c == 1)   -- only the row before the SAVEPOINT
 
     if ok7a then
         logPass(player, string.format(
@@ -1100,26 +1100,26 @@ local function runPhase7(player, runId)
         ))
     else
         logFail(player, string.format(
-            "Phase 7a COMMIT: %d/%d rows - COMMIT nao persistiu todos os dados!", cnt7a, nc
+            "Phase 7a COMMIT: %d/%d rows - COMMIT did not persist all the data!", cnt7a, nc
         ))
     end
 
     if ok7b then
         logPass(player, string.format(
-            "Phase 7b ROLLBACK: 0 rows persistidas (esperado) - atomicidade OK"
+            "Phase 7b ROLLBACK: 0 rows persisted (expected) - atomicity OK"
         ))
     else
         logFail(player, string.format(
-            "Phase 7b ROLLBACK: %d rows persistidas! - ROLLBACK nao foi atomico!", cnt7b
+            "Phase 7b ROLLBACK: %d rows persisted! - ROLLBACK was not atomic!", cnt7b
         ))
-        logFail(player, "  -> Falha catastrofica: flushPlayerSave pode estar comitando parcialmente.")
+        logFail(player, "  -> Catastrophic failure: flushPlayerSave may be committing partially.")
     end
 
     if ok7c then
-        logPass(player, "Phase 7c SAVEPOINT: 1 row pos-rollback-parcial - granularidade OK")
+        logPass(player, "Phase 7c SAVEPOINT: 1 row after partial rollback - granularity OK")
     else
         logFail(player, string.format(
-            "Phase 7c SAVEPOINT: %d rows (esperado 1) - ROLLBACK TO SAVEPOINT com problema.", cnt7c
+            "Phase 7c SAVEPOINT: %d rows (expected 1) - problem with ROLLBACK TO SAVEPOINT.", cnt7c
         ))
     end
 
@@ -1127,30 +1127,30 @@ local function runPhase7(player, runId)
 end
 
 -- ============================================================================
--- PHASE 8 - DELETE + re-INSERT transacional (espelho do player_storage save)
+-- PHASE 8 - transactional DELETE + re-INSERT (mirror of the player_storage save)
 -- ============================================================================
 --[[
-  Replica exatamente o padrao que IOLoginData::savePlayerQueries() usa:
+  Exactly replicates the pattern IOLoginData::savePlayerQueries() uses:
     DELETE FROM player_storage WHERE player_id = ?
     INSERT INTO player_storage (player_id, key, value) VALUES (...) [× N]
 
-  Este padrao inteiro corre dentro de uma unica transacao em flushPlayerSave.
-  Se o COMMIT falhar no meio, a transacao e retried. O estado do banco
-  deve sempre ser ou "v1 completo" ou "v2 completo" - nunca hibrido.
-  Teste:
-    1. Insere ph8_rows linhas com label='v1_X' (simula save anterior)
-    2. START TRANSACTION + DELETE + re-INSERT com label='v2_X' + COMMIT
-    3. Verifica: COUNT = ph8_rows, TODAS labels comecam com 'v2_', ZERO 'v1_'
+  This whole pattern runs inside a single transaction in flushPlayerSave.
+  If the COMMIT fails midway, the transaction is retried. The database state
+  must always be either "full v1" or "full v2" - never a hybrid.
+  Test:
+    1. Inserts ph8_rows rows with label='v1_X' (simulates a previous save)
+    2. START TRANSACTION + DELETE + re-INSERT with label='v2_X' + COMMIT
+    3. Checks: COUNT = ph8_rows, ALL labels start with 'v2_', ZERO 'v1_'
 
-  FALHA ESPERADA SE: sobram 'v1_' rows (DELETE nao rodou),
-  total != ph8_rows (INSERT parcial ou duplicata),
-  ou mix de 'v1_' e 'v2_' (commit parcial - falha de atomicidade).
+  EXPECTED FAILURE IF: 'v1_' rows are left over (DELETE did not run),
+  total != ph8_rows (partial INSERT or duplicate),
+  or a mix of 'v1_' and 'v2_' (partial commit - atomicity failure).
 --]]
 local function runPhase8(player, runId)
     local n = CFG.ph8_rows
     log(player, string.format("Phase 8: DELETE + re-INSERT (player_storage pattern) - %d rows...", n))
 
-    -- ── Insere v1 (estado inicial, simula save anterior) ─────────────────────
+    -- ── Inserts v1 (initial state, simulates a previous save) ─────────────────────
     db.query("START TRANSACTION")
     for i = 1, n do
         local safeLabel = sqlString("v1_" .. i)
@@ -1161,7 +1161,7 @@ local function runPhase8(player, runId)
     end
     db.query("COMMIT")
 
-    -- ── Re-save: DELETE + INSERT v2 (dentro de transacao) ───────────────────
+    -- ── Re-save: DELETE + INSERT v2 (inside a transaction) ───────────────────
     local t0 = os.clock()
     db.query("START TRANSACTION")
     db.query(string.format(
@@ -1178,7 +1178,7 @@ local function runPhase8(player, runId)
     db.query("COMMIT")
     local elapsed = (os.clock() - t0) * 1000
 
-    -- ── Verifica ──────────────────────────────────────────────────────────────
+    -- ── Verify ──────────────────────────────────────────────────────────────
     local resCount = db.storeQuery(string.format(
         "SELECT COUNT(*) AS total FROM `%s` WHERE `run_id`=%d AND `phase`=8",
         STRESS_TABLE, runId
@@ -1189,7 +1189,7 @@ local function runPhase8(player, runId)
         result.free(resCount)
     end
 
-    -- Conta quantas sao v1 (nao devem existir) e v2 (devem ser todas)
+    -- Counts how many are v1 (must not exist) and v2 (must be all of them)
     local resV1 = db.storeQuery(string.format(
         "SELECT COUNT(*) AS cnt FROM `%s` WHERE `run_id`=%d AND `phase`=8 AND `label` LIKE 'v1%%'",
         STRESS_TABLE, runId
@@ -1212,20 +1212,20 @@ local function runPhase8(player, runId)
 
     if total == n and v1count == 0 and v2count == n then
         logPass(player, string.format(
-            "Phase 8: %d/%d rows | 0 v1 (deletadas) | %d v2 (atuais) | %.1fms - player_storage OK",
+            "Phase 8: %d/%d rows | 0 v1 (deleted) | %d v2 (current) | %.1fms - player_storage OK",
             total, n, v2count, elapsed
         ))
     else
         logFail(player, string.format(
-            "Phase 8: total=%d/%d | v1=%d (deveria ser 0!) | v2=%d | %.1fms",
+            "Phase 8: total=%d/%d | v1=%d (should be 0!) | v2=%d | %.1fms",
             total, n, v1count, v2count, elapsed
         ))
         if v1count > 0 then
-            logFail(player, "  -> DELETE nao removeu rows v1 - transacao nao foi atomica!")
+            logFail(player, "  -> DELETE did not remove v1 rows - transaction was not atomic!")
         end
         if total ~= n then
             logFail(player, string.format(
-                "  -> Contagem errada: esperado %d, encontrado %d - INSERT parcial?", n, total
+                "  -> Wrong count: expected %d, found %d - partial INSERT?", n, total
             ))
         end
     end
@@ -1234,26 +1234,26 @@ local function runPhase8(player, runId)
 end
 
 -- ============================================================================
--- PHASE 9 - Batch multi-row INSERT em transacao unica
+-- PHASE 9 - Batch multi-row INSERT in a single transaction
 -- ============================================================================
 --[[
-  flushPlayerSave() captura N queries no buildPlayerSave e as replays todas
-  em sequencia dentro de uma transacao. Esta fase testa o caso extremo:
-  um unico INSERT com ph9_batch_size rows no VALUES() - a forma mais eficiente
-  de INSERT em batch que o MySQL suporta. Compara:
-    • ph9_batch_size INSERTs individuais em auto-commit (baseline)
-    • 1 multi-row INSERT com ph9_batch_size rows em transacao
+  flushPlayerSave() captures N queries in buildPlayerSave and replays them all
+  in sequence inside a transaction. This phase tests the extreme case:
+  a single INSERT with ph9_batch_size rows in VALUES() - the most efficient way
+  of batch INSERT that MySQL supports. Compares:
+    • ph9_batch_size individual INSERTs in auto-commit (baseline)
+    • 1 multi-row INSERT with ph9_batch_size rows in a transaction
 
-  FALHA ESPERADA SE: multi-row INSERT insere duplicatas, falha no meio
-  (atomicidade), ou a query excede max_allowed_packet (aumentar se necessario).
-  O speedup do multi-row vs individual deve ser significativo (geralmente 5-20×).
+  EXPECTED FAILURE IF: multi-row INSERT inserts duplicates, fails midway
+  (atomicity), or the query exceeds max_allowed_packet (increase it if needed).
+  The multi-row vs individual speedup should be significant (usually 5-20×).
 --]]
 local function runPhase9(player, runId)
     local n = CFG.ph9_batch_size
-    log(player, string.format("Phase 9: Batch multi-row INSERT - %d rows numa query...", n))
+    log(player, string.format("Phase 9: Batch multi-row INSERT - %d rows in one query...", n))
 
-    -- ── Baseline: N INSERTs individuais em auto-commit ────────────────────────
-    -- Usa seq 90001+ para nao colidir com o batch
+    -- ── Baseline: N individual INSERTs in auto-commit ────────────────────────
+    -- Uses seq 90001+ so it does not collide with the batch
     local t0 = os.clock()
     local baselineOk = 0
     for i = 1, n do
@@ -1267,13 +1267,13 @@ local function runPhase9(player, runId)
     end
     local elapsedIndividual = (os.clock() - t0) * 1000
 
-    -- Remove as rows individuais antes do batch (mesmo run_id+phase)
+    -- Removes the individual rows before the batch (same run_id+phase)
     db.query(string.format(
         "DELETE FROM `%s` WHERE `run_id`=%d AND `phase`=9 AND `seq` >= 90001",
         STRESS_TABLE, runId
     ))
 
-    -- ── Batch: 1 multi-row INSERT dentro de transacao ─────────────────────────
+    -- ── Batch: 1 multi-row INSERT inside a transaction ─────────────────────────
     local parts = {}
     for i = 1, n do
         local safeLabel = sqlString("ph9_batch_" .. i)
@@ -1293,7 +1293,7 @@ local function runPhase9(player, runId)
     if batchOk then db.query("COMMIT") else db.query("ROLLBACK") end
     local elapsedBatch = (os.clock() - t1) * 1000
 
-    -- ── Verifica contagem pos-batch ───────────────────────────────────────────
+    -- ── Checks count after the batch ───────────────────────────────────────────
     local res = db.storeQuery(string.format(
         "SELECT COUNT(*) AS cnt FROM `%s` WHERE `run_id`=%d AND `phase`=9 AND `seq` <= %d",
         STRESS_TABLE, runId, n
@@ -1317,10 +1317,10 @@ local function runPhase9(player, runId)
             cnt, n, tostring(batchOk), elapsedIndividual, elapsedBatch
         ))
         if not batchOk then
-            logFail(player, "  -> Multi-row INSERT falhou - verifique max_allowed_packet ou syntax.")
+            logFail(player, "  -> Multi-row INSERT failed - check max_allowed_packet or syntax.")
         end
         if cnt ~= n then
-            logFail(player, string.format("  -> Contagem errada: esperado %d, encontrado %d.", n, cnt))
+            logFail(player, string.format("  -> Wrong count: expected %d, found %d.", n, cnt))
         end
     end
 
@@ -1331,26 +1331,26 @@ end
 -- PHASE 10 - InnoDB & INFORMATION_SCHEMA diagnostics
 -- ============================================================================
 --[[
-  Fase de leitura pura - nao escreve dados. Coleta metricas do MySQL que
-  revelam o estado real da camada de banco apos o stress:
+  Pure read phase - does not write data. Collects MySQL metrics that
+  reveal the real state of the database layer after the stress:
 
-    • SHOW STATUS: variaveis InnoDB (deadlocks, lock_waits, buffer hits) e
-      globais (connections, threads, queries). Usa result:next() para
-      iterar todas as linhas retornadas - verifica que o loop funciona.
-    • SHOW ENGINE INNODB STATUS: texto completo do InnoDB status. O PR usa fluxo de worker/dispatcher - se houver transacao aberta
-      inesperadamente, aparece aqui em "TRANSACTIONS".
-    • SHOW VARIABLES: verifica configuracao relevante ao PR
+    • SHOW STATUS: InnoDB variables (deadlocks, lock_waits, buffer hits) and
+      global ones (connections, threads, queries). Uses result:next() to
+      iterate all returned rows - verifies the loop works.
+    • SHOW ENGINE INNODB STATUS: full InnoDB status text. The PR uses a worker/dispatcher flow - if a transaction is open
+      unexpectedly, it shows up here in "TRANSACTIONS".
+    • SHOW VARIABLES: checks configuration relevant to the PR
       (innodb_lock_wait_timeout, max_connections, thread_stack).
-    • SHOW FULL PROCESSLIST: lista threads ativas - verifica que workers
-      do PR fecharam suas conexoes corretamente apos os flushes.
-  FALHA ESPERADA SE: threads abertas sobraram dos workers (leak de conexao),
-  innodb_lock_wait_timeout e muito baixo (explicaria falhas na Phase 4),
-  ou buffer pool hit ratio < 90% (pressao de I/O excessiva).
+    • SHOW FULL PROCESSLIST: lists active threads - verifies that workers
+      of the PR closed their connections correctly after the flushes.
+  EXPECTED FAILURE IF: open threads are left over from the workers (connection leak),
+  innodb_lock_wait_timeout is too low (would explain failures in Phase 4),
+  or buffer pool hit ratio < 90% (excessive I/O pressure).
 --]]
 local function runPhase10(player, runId)
     log(player, "Phase 10: InnoDB + INFORMATION_SCHEMA diagnostics...")
 
-    -- ── SHOW STATUS: variaveis selecionadas ───────────────────────────────────
+    -- ── SHOW STATUS: selected variables ───────────────────────────────────
     local statusVars = {
         "Innodb_deadlocks",
         "Innodb_row_lock_waits",
@@ -1367,7 +1367,7 @@ local function runPhase10(player, runId)
         "Com_rollback",
     }
 
-    -- Monta IN(list) com db.escapeString
+    -- Builds IN(list) with db.escapeString
     local inList = {}
     for _, v in ipairs(statusVars) do
         inList[#inList + 1] = sqlString(v)
@@ -1383,7 +1383,7 @@ local function runPhase10(player, runId)
             local name  = result.getString(statusRes, "Variable_name")
             local value = result.getString(statusRes, "Value")
             statusMap[name] = value
-        until not result.next(statusRes)  -- ← result.next() itera as 13 variaveis
+        until not result.next(statusRes)  -- ← result.next() iterates the 13 variables
         result.free(statusRes)
     end
 
@@ -1414,7 +1414,7 @@ local function runPhase10(player, runId)
         statusMap["Com_rollback"] or "0"
     ))
 
-    -- ── SHOW VARIABLES relevantes ao PR ───────────────────────────────────────
+    -- ── SHOW VARIABLES relevant to the PR ───────────────────────────────────────
     local varRes = db.storeQuery([[
         SHOW VARIABLES WHERE `Variable_name` IN (
             'innodb_lock_wait_timeout',
@@ -1444,19 +1444,19 @@ local function runPhase10(player, runId)
         local lockTimeout = tonumber(varMap["innodb_lock_wait_timeout"]) or 50
         if lockTimeout < 5 then
             logFail(player, string.format(
-                "Ph10: innodb_lock_wait_timeout=%ds e muito baixo - Phase 4 pode ter falsos negativos!", lockTimeout
+                "Ph10: innodb_lock_wait_timeout=%ds is too low - Phase 4 may have false negatives!", lockTimeout
             ))
         end
     end
 
-    -- ── SHOW FULL PROCESSLIST: verifica conexoes abertas de workers ────────────
+    -- ── SHOW FULL PROCESSLIST: checks open worker connections ────────────
     local procRes = db.storeQuery("SHOW FULL PROCESSLIST")
     local workerConns = 0
     if procRes and procRes ~= false and procRes ~= nil then
         repeat
             local cmd   = result.getString(procRes, "Command")
             local state = result.getString(procRes, "State")
-            -- Conexoes de worker TFS aparecem como "Sleep" ou "Query"
+            -- TFS worker connections appear as "Sleep" or "Query"
             if cmd == "Sleep" or cmd == "Query" then
                 workerConns = workerConns + 1
             end
@@ -1464,14 +1464,14 @@ local function runPhase10(player, runId)
         result.free(procRes)
     end
     logInfo(player, string.format(
-        "Ph10 PROCESSLIST: %d conexoes ativas (workers + dispatcher)", workerConns
+        "Ph10 PROCESSLIST: %d active connections (workers + dispatcher)", workerConns
     ))
 
-    -- ── Buffer pool hit ratio: aviso se baixo ────────────────────────────────
+    -- ── Buffer pool hit ratio: warning if low ────────────────────────────────
     local diag_ok = true
     if hitRatio < 90 then
         logFail(player, string.format(
-            "Ph10: Buffer pool hit=%.1f%% - pressao de I/O alta! Verifique innodb_buffer_pool_size.", hitRatio
+            "Ph10: Buffer pool hit=%.1f%% - high I/O pressure! Check innodb_buffer_pool_size.", hitRatio
         ))
         diag_ok = false
     else
@@ -1482,28 +1482,28 @@ local function runPhase10(player, runId)
 end
 
 -- ============================================================================
--- PHASE 11 - ON DUPLICATE KEY UPDATE (upsert, padrao real do IOLoginData)
+-- PHASE 11 - ON DUPLICATE KEY UPDATE (upsert, real IOLoginData pattern)
 -- ============================================================================
 --[[
-  IOLoginData::savePlayerQueries() usa extensivamente:
+  IOLoginData::savePlayerQueries() uses extensively:
     INSERT INTO player_storage (player_id, key, value)
     VALUES (X, Y, Z)
     ON DUPLICATE KEY UPDATE value = VALUES(value)
 
-  Esta fase replica esse padrao na tabela de stress:
-    1. INSERT ph11_upsert_rows rows com counter=0
-    2. Re-INSERT das MESMAS rows com counter=99 + ON DUPLICATE KEY UPDATE
-    3. Verifica: COUNT deve ser EXATAMENTE ph11_upsert_rows (sem duplicatas),
-       todos os counters devem ser 99 (UPDATE executou, nao INSERT duplicado).
+  This phase replicates that pattern on the stress table:
+    1. INSERT ph11_upsert_rows rows with counter=0
+    2. Re-INSERT of the SAME rows with counter=99 + ON DUPLICATE KEY UPDATE
+    3. Checks: COUNT must be EXACTLY ph11_upsert_rows (no duplicates),
+       all counters must be 99 (UPDATE ran, not a duplicate INSERT).
 
-  FALHA ESPERADA SE: count == ph11_upsert_rows * 2 (UNIQUE KEY ignorado),
-  ou counter != 99 (UPDATE nao executou - INSERT criou nova linha).
+  EXPECTED FAILURE IF: count == ph11_upsert_rows * 2 (UNIQUE KEY ignored),
+  or counter != 99 (UPDATE did not run - INSERT created a new row).
 --]]
 local function runPhase11(player, runId)
     local n = CFG.ph11_upsert_rows
     log(player, string.format("Phase 11: ON DUPLICATE KEY UPDATE - %d upserts...", n))
 
-    -- ── INSERT inicial com counter=0 ──────────────────────────────────────────
+    -- ── Initial INSERT with counter=0 ──────────────────────────────────────────
     local t0 = os.clock()
     db.query("START TRANSACTION")
     for i = 1, n do
@@ -1515,7 +1515,7 @@ local function runPhase11(player, runId)
     end
     db.query("COMMIT")
 
-    -- ── Re-INSERT com ON DUPLICATE KEY UPDATE counter=99 ─────────────────────
+    -- ── Re-INSERT with ON DUPLICATE KEY UPDATE counter=99 ─────────────────────
     local t1 = os.clock()
     db.query("START TRANSACTION")
     for i = 1, n do
@@ -1530,7 +1530,7 @@ local function runPhase11(player, runId)
     db.query("COMMIT")
     local elapsed = (os.clock() - t1) * 1000
 
-    -- ── Verificacao ───────────────────────────────────────────────────────────
+    -- ── Verification ───────────────────────────────────────────────────────────
     local resCount = db.storeQuery(string.format(
         "SELECT COUNT(*) AS cnt, SUM(`counter`) AS total_counter FROM `%s` WHERE `run_id`=%d AND `phase`=11",
         STRESS_TABLE, runId
@@ -1547,19 +1547,19 @@ local function runPhase11(player, runId)
 
     if cnt == n and totalCounter == expectedCounter then
         logPass(player, string.format(
-            "Phase 11: %d/%d rows (sem duplicatas) | counter_sum=%d/%d | %.1fms - upsert OK",
+            "Phase 11: %d/%d rows (no duplicates) | counter_sum=%d/%d | %.1fms - upsert OK",
             cnt, n, totalCounter, expectedCounter, elapsed
         ))
     else
         if cnt ~= n then
             logFail(player, string.format(
-                "Phase 11: %d/%d rows - ON DUPLICATE KEY gerou duplicatas (esperado %d)!",
+                "Phase 11: %d/%d rows - ON DUPLICATE KEY produced duplicates (expected %d)!",
                 cnt, n, n
             ))
         end
         if totalCounter ~= expectedCounter then
             logFail(player, string.format(
-                "Phase 11: counter_sum=%d esperado=%d - UPDATE nao executou em %d rows!",
+                "Phase 11: counter_sum=%d expected=%d - UPDATE did not run on %d rows!",
                 totalCounter, expectedCounter, math.max(0, n - math.floor((totalCounter or 0) / 99))
             ))
         end
@@ -1569,7 +1569,7 @@ local function runPhase11(player, runId)
 end
 
 -- ============================================================================
--- ASYNC SETTLE FINALIZER  (atribuido a PhaseCallbacks.finalize apos runPhase6)
+-- ASYNC SETTLE FINALIZER  (assigned to PhaseCallbacks.finalize after runPhase6)
 -- ============================================================================
 PhaseCallbacks.finalize = function(guid)
     local sd = settleData[guid]
@@ -1598,10 +1598,10 @@ PhaseCallbacks.finalize = function(guid)
     local wall = (os.clock() - sd.wallStart) * 1000
     if passed == total then
         print(COLOR_BLUE .. "[StressDB]" .. COLOR_GREEN .. "[INFO]" .. COLOR_RESET .. " " ..
-              COLOR_BLUE .. string.format("=== STRESS COMPLETO: ALL PASS | wall ~%.0fms ===", wall) .. COLOR_RESET)
-        p:sendTextMessage(MSG_BLUE, string.format("[StressDB][PASS] === STRESS COMPLETO: ALL PASS | wall ~%.0fms ===", wall))
+              COLOR_BLUE .. string.format("=== STRESS COMPLETE: ALL PASS | wall ~%.0fms ===", wall) .. COLOR_RESET)
+        p:sendTextMessage(MSG_BLUE, string.format("[StressDB][PASS] === STRESS COMPLETE: ALL PASS | wall ~%.0fms ===", wall))
     else
-        logFail(p, string.format("=== STRESS COMPLETO: %d/%d PASS | wall ~%.0fms - revise os FAILs! ===", passed, total, wall))
+        logFail(p, string.format("=== STRESS COMPLETE: %d/%d PASS | wall ~%.0fms - review the FAILs! ===", passed, total, wall))
     end
     activeRuns[sd.guid] = false
     asyncResults[sd.guid] = nil
@@ -1625,19 +1625,19 @@ function stressTalkAction.onSay(player, words, param)
     -- ── INFO ─────────────────────────────────────────────────────────────────
     if cmd == "info" then
         local lines = {
-            "=== Stress DB PR#69 | 11 fases ===",
+            "=== Stress DB PR#69 | 11 phases ===",
             "Ph1  INSERT flood + escapeString + LAST_INSERT_ID + TX",
             "Ph2  Dirty snapshot: IN(...) + result:next() loop",
             "Ph3  Save flood: flushInFlight + pendingFlushes ordering",
             "Ph4  FOR UPDATE + deadlock retry + Innodb_deadlocks delta",
             "Ph5  addEvent(0) concurrent bursts (worker pool)",
             "Ph6  Integridade: ANALYZE + EXPLAIN + count/dup/gap",
-            "Ph7  COMMIT + ROLLBACK + SAVEPOINT atomicidade",
+            "Ph7  COMMIT + ROLLBACK + SAVEPOINT atomicity",
             "Ph8  DELETE + re-INSERT transacional (player_storage pattern)",
             "Ph9  Batch multi-row INSERT - throughput comparison",
-            "Ph10 SHOW STATUS + PROCESSLIST + SHOW VARIABLES (diagnostico)",
+            "Ph10 SHOW STATUS + PROCESSLIST + SHOW VARIABLES (diagnostics)",
             "Ph11 ON DUPLICATE KEY UPDATE (upsert IOLoginData pattern)",
-            "Uso: /stress_db [start|diag|1-11|clean|info]",
+            "Usage: /stress_db [start|diag|1-11|clean|info]",
         }
         for _, l in ipairs(lines) do
             player:sendTextMessage(MSG_BLUE, l)
@@ -1648,18 +1648,18 @@ function stressTalkAction.onSay(player, words, param)
 	-- ── CLEAN ────────────────────────────────────────────────────────────────
 	if cmd == "clean" then
 		if activeRuns[player:getGuid()] then
-			log(player, "Stress em andamento - aguarde a conclusao antes de limpar.")
+			log(player, "Stress run in progress - wait for it to finish before cleaning.")
 			return false
 		end
 		if db.query(string.format("DELETE FROM `%s` WHERE 1=1", STRESS_TABLE)) then
-            log(player, "Tabela stress_pr69 esvaziada.")
+            log(player, "Table stress_pr69 emptied.")
         else
-            logFail(player, "Falha ao limpar tabela (talvez ja nao exista).")
+            logFail(player, "Failed to clean the table (maybe it no longer exists).")
         end
         return false
     end
 
-    -- ── DIAG (apenas Phase 10, nao destrutivo) ────────────────────────────────
+    -- ── DIAG (Phase 10 only, non-destructive) ────────────────────────────────
     if cmd == "diag" then
         runPhase10(player, 0)
         return false
@@ -1667,7 +1667,7 @@ function stressTalkAction.onSay(player, words, param)
 
 	local runId = os.time() % 65535
 
-	-- ── FASE INDIVIDUAL ───────────────────────────────────────────────────────
+	-- ── SINGLE PHASE ───────────────────────────────────────────────────────
 	local args = {}
 	for w in (param or ""):gmatch("%S+") do args[#args + 1] = w end
 	local phaseNum = tonumber(args[1])
@@ -1675,12 +1675,12 @@ function stressTalkAction.onSay(player, words, param)
 	if explicitRunId then runId = explicitRunId end
 	if phaseNum then
 		if activeRuns[player:getGuid()] then
-			log(player, "Stress em andamento - aguarde a conclusao antes de iniciar nova fase.")
+			log(player, "Stress run in progress - wait for it to finish before starting a new phase.")
 			return false
 		end
 		if phaseNum ~= 6 and phaseNum ~= 10 then
             if not setupTable() then
-                logFail(player, "Falha ao criar tabela de stress. Abortando.")
+                logFail(player, "Failed to create the stress table. Aborting.")
                 activeRuns[player:getGuid()] = false
                 return false
             end
@@ -1698,39 +1698,39 @@ function stressTalkAction.onSay(player, words, param)
         elseif phaseNum == 11 then runPhase11(player, runId)
         else
             player:sendTextMessage(MSG_BLUE,
-                "Fase invalida. Use 1-11, start, diag, clean ou info.")
+                "Invalid phase. Use 1-11, start, diag, clean or info.")
         end
         return false
     end
 
-    -- ── START - todas as fases ────────────────────────────────────────────────
+    -- ── START - all phases ────────────────────────────────────────────────
 	if cmd == "" or cmd == "start" or cmd == "all" then
 		if activeRuns[player:getGuid()] then
-			log(player, "Stress ja em andamento - aguarde a conclusao.")
+			log(player, "Stress run already in progress - wait for it to finish.")
 			return false
 		end
 		activeRuns[player:getGuid()] = true
 
 		print(COLOR_BLUE .. "[StressDB]" .. COLOR_GREEN .. "[INFO]" .. COLOR_RESET .. " " .. 
-			  COLOR_BLUE .. string.format("=== Stress DB PR#69 | run_id=%d | 11 fases | iniciando ===", runId) .. COLOR_RESET)
+			  COLOR_BLUE .. string.format("=== Stress DB PR#69 | run_id=%d | 11 phases | starting ===", runId) .. COLOR_RESET)
 		player:sendTextMessage(MSG_BLUE, string.format(
-            "[StressDB] === Stress DB PR#69 | run_id=%d | 11 fases | iniciando ===", runId
+            "[StressDB] === Stress DB PR#69 | run_id=%d | 11 phases | starting ===", runId
         ))
 
         if not setupTable() then
             activeRuns[player:getGuid()] = false
-            logFail(player, "Falha ao criar tabela de stress. Abortando.")
+            logFail(player, "Failed to create the stress table. Aborting.")
             return false
         end
 
 		print(COLOR_BLUE .. "[StressDB]" .. COLOR_GREEN .. "[INFO]" .. COLOR_RESET .. " " .. 
-			  COLOR_BLUE .. "Tabela stress_pr69 criada." .. COLOR_RESET)
-		player:sendTextMessage(MSG_BLUE, "[StressDB] Tabela stress_pr69 criada.")
+			  COLOR_BLUE .. "Table stress_pr69 created." .. COLOR_RESET)
+		player:sendTextMessage(MSG_BLUE, "[StressDB] Table stress_pr69 created.")
 
         local wallStart = os.clock()
         local results   = {}
 
-        -- Fases sincronas (dispatcher)
+        -- Synchronous phases (dispatcher)
         results[1]  = runPhase1(player, runId)
         results[2]  = runPhase2(player, runId)
         results[3]  = runPhase3(player, runId)
@@ -1743,8 +1743,8 @@ function stressTalkAction.onSay(player, words, param)
         results[11] = runPhase11(player, runId)
 
         -- Async tracking: phases 1c, 2, 3, 4, 5 report results via callbacks.
-        -- Inicializa tracking com default=pass; callbacks marcam false se falharem.
-        -- O summary final dispara quando todas 5 fases async completarem (ou por timeout).
+        -- Initializes tracking with default=pass; callbacks mark false if they fail.
+        -- The final summary fires when all 5 async phases complete (or on timeout).
         local stressGuid = player:getGuid()
         asyncResults[stressGuid] = {[1] = true, [2] = true, [3] = true, [4] = true, [5] = true}
         asyncPending[stressGuid] = 5
@@ -1757,7 +1757,7 @@ function stressTalkAction.onSay(player, words, param)
             results = results,
         }
 
-        -- Safety timeout: se algum callback nunca disparar, forca summary apos settleTime + buffer
+        -- Safety timeout: if a callback never fires, forces the summary after settleTime + buffer
         local settleTime = math.max(
             (CFG.ph3_save_count * CFG.ph3_stagger_ms) + REPORT_DELAY + 1200,
             REPORT_DELAY + 2200
@@ -1776,7 +1776,7 @@ function stressTalkAction.onSay(player, words, param)
                 if sd then
                     local p = safePlayer(sd.pid, sd.guid)
                     if p then
-                        logFail(p, "Timeout: algumas fases assincronas nao completaram. Summary forcado.")
+                        logFail(p, "Timeout: some async phases did not complete. Summary forced.")
                     end
                 end
                 PhaseCallbacks.finalize(g)
@@ -1786,17 +1786,17 @@ function stressTalkAction.onSay(player, words, param)
         end, settleTime + 5000, stressGuid)
 
         local execMsg = string.format(
-            "Fases 1-11 em execucao | resultados async alimentam summary final (timeout=~%.0fms)", settleTime + 5000
+            "Phases 1-11 running | async results feed the final summary (timeout=~%.0fms)", settleTime + 5000
         )
         print(COLOR_BLUE .. "[StressDB]" .. COLOR_RESET .. " " ..
-              COLOR_ORANGE .. "Fases 1-11 em execucao" .. COLOR_RESET ..
-              string.format(" | resultados async alimentam summary final (timeout=~%.0fms)", settleTime + 5000))
+              COLOR_ORANGE .. "Phases 1-11 running" .. COLOR_RESET ..
+              string.format(" | async results feed the final summary (timeout=~%.0fms)", settleTime + 5000))
         player:sendTextMessage(MSG_BLUE, "[StressDB] " .. execMsg)
         return false
     end
 
     player:sendTextMessage(MSG_BLUE,
-        "Uso: /stress_db [start|diag|1-11|clean|info]")
+        "Usage: /stress_db [start|diag|1-11|clean|info]")
     return false
 end
 

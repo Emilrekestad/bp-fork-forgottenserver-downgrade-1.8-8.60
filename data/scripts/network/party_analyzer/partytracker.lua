@@ -184,6 +184,10 @@ function partyHealEvent.onHealthChange(creature, attacker, primaryDamage, primar
 	local session = getOrCreateSession(leader)
 	if not session then return primaryDamage, primaryType, secondaryDamage, secondaryType end
 
+	-- Heals by TYPE, not sign: a health-change handler sees positive damage
+	-- when it runs first on a creature, so a positive value is not a heal.
+	if primaryType ~= COMBAT_HEALING then return primaryDamage, primaryType, secondaryDamage, secondaryType end
+
 	local healing = math.max(primaryDamage or 0, 0) + math.max(secondaryDamage or 0, 0)
 	if healing > 0 then
 		local data = getOrCreateMemberData(session, creature:getId(), creature:getName())
@@ -256,7 +260,9 @@ partyLoginEvent:register()
 local handler = PacketHandler(0x2E)
 function handler.onReceive(player, msg)
 	if not isOTC(player) then return true end
-	local action = msg:getByte()
+	if not NetworkGuard.cooldown(player, "party-analyzer", 300) then return true end
+	local action = NetworkGuard.readByte(msg)
+	if action == nil then return true end
 	if action == 0 then
 		if isPartyLeader(player) then
 			partySessions[player:getId()] = nil

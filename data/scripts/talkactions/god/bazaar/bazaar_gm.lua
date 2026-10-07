@@ -31,14 +31,14 @@ local ADMIN_COMMANDS = {
 }
 
 -- Rarity tiers, mirroring data/lib/rarity/rarity_stats.lua (1..4 revealed,
--- 5 = Dormant). Shown by name rather than a raw number so GM output reads the
+-- 5 = Unrevealed). Shown by name rather than a raw number so GM output reads the
 -- same as the loot channel and the client UI.
 local TIER_NAMES = {
-	[1] = "Scarce",
-	[2] = "Adept",
-	[3] = "Superior",
+	[1] = "Rare",
+	[2] = "Superior",
+	[3] = "Exalted",
 	[4] = "Prime",
-	[5] = "Dormant",
+	[5] = "Unrevealed",
 }
 
 local function tierName(tier)
@@ -204,6 +204,15 @@ function talkaction.onSay(player, words, param)
 	if ADMIN_COMMANDS[command] and player:getAccountType() < ADMIN_ACCOUNT_TYPE then
 		reply(player, "[Bazaar] That subcommand is staff-only.")
 		return false
+	end
+
+	-- Security audit 2026-10-05: /bazaar is registered without a gate because
+	-- players use its trade subcommands, so the C++ dispatcher does not log it.
+	-- Record the staff-only subcommands (settle, backfill creates items, ...)
+	-- the same way gated commands are recorded.
+	if ADMIN_COMMANDS[command] and GameEvents and GameEvents.emitForPlayer then
+		GameEvents.emitForPlayer("gm.command", player,
+			{ command = "/bazaar", param = param, by = player:getName() }, "talkaction", "/bazaar " .. command)
 	end
 
 	if command == "config" then

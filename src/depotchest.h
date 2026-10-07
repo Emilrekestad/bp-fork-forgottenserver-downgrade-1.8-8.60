@@ -6,6 +6,10 @@
 
 #include "container.h"
 
+// Each box shows capacity() slots per page and grows up to this many pages.
+inline constexpr uint16_t DEPOT_BOX_COUNT = ITEM_DEPOT_BOX_LAST - ITEM_DEPOT_BOX_1 + 1;
+inline constexpr uint32_t DEPOT_BOX_MAX_PAGES = 64;
+
 class DepotChest final : public Container
 {
 public:
@@ -13,6 +17,9 @@ public:
 
 	// serialization
 	void setMaxDepotItems(uint32_t maxitems) { maxDepotItems = maxitems; }
+
+	uint32_t getStoredItemCount() const;
+	ReturnValue queryStoredLimit(const Item& item, uint32_t count) const;
 
 	// cylinder implementations
 	ReturnValue queryAdd(int32_t index, const Thing& thing, uint32_t count, uint32_t flags,
@@ -46,6 +53,9 @@ class DepotBox final : public Container
 {
 public:
 	explicit DepotBox(uint16_t type);
+
+	ReturnValue queryAdd(int32_t index, const Thing& thing, uint32_t count, uint32_t flags,
+	                     Creature* actor = nullptr) const override;
 };
 
 #endif

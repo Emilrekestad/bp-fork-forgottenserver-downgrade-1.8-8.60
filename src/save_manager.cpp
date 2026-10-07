@@ -20,6 +20,53 @@ extern Game g_game;
 
 SaveManager g_saveManager;
 
+bool SaveManager::saveWorldState()
+{
+	// Security audit 2026-10-05 (PERS-1/PERS-2). Mirrors the non-player half of
+	// saveAll(); runs on the dispatcher, never kicks or snapshots players.
+	if (isSaving()) {
+		return false;
+	}
+
+	auto startTime = std::chrono::high_resolution_clock::now();
+	bool ok = true;
+
+	if (!g_game.saveGameStorageValues()) {
+		LOG_ERROR("[SaveManager] saveWorldState: failed to save game storage values.");
+		ok = false;
+	}
+
+	if (!g_game.saveAccountStorageValues()) {
+		LOG_ERROR("[SaveManager] saveWorldState: failed to save account storage values.");
+		ok = false;
+	}
+
+	if (!KVStore::getInstance().saveAll()) {
+		LOG_ERROR("[SaveManager] saveWorldState: failed to save KV store.");
+		ok = false;
+	}
+
+	beginTrackedFlush();
+	bool mapSaved = false;
+	for (uint32_t tries = 0; tries < 3; tries++) {
+		if (IOMapSerialize::saveHouseInfo() && IOMapSerialize::saveHouseItems()) {
+			mapSaved = true;
+			break;
+		}
+	}
+	completeTrackedFlush();
+	if (!mapSaved) {
+		LOG_ERROR("[SaveManager] saveWorldState: failed to save house data after 3 retries.");
+		ok = false;
+	}
+
+	auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+		std::chrono::high_resolution_clock::now() - startTime).count();
+	LOG_INFO(fmt::format(">> {}: world state saved in {} ms{}",
+		fmt::format(fg(fmt::color::magenta), "SaveManager"), durationMs, ok ? "" : " (with errors)"));
+	return ok;
+}
+
 void SaveManager::saveAll()
 {
 	if (isSaving() || saving.exchange(true)) {

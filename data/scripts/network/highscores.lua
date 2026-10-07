@@ -208,6 +208,12 @@ function highscoresHandler.onReceive(player, msg)
 		return
 	end
 
+	-- Three uncached full scans of `players` per request (count, @rank walk,
+	-- page). Without this a client could ask 25 times a second.
+	if not NetworkGuard.cooldown(player, "highscores-native", 1000) then
+		return
+	end
+
 	local requestType = NetworkGuard.readByte(msg)
 	local categoryId = NetworkGuard.readByte(msg)
 	local vocationId = NetworkGuard.readU32(msg)

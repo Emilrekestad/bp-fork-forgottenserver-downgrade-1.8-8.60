@@ -1060,6 +1060,8 @@ class ProtocolSpectator {
 	    bool isOTC = false;
         bool isAstraClient = false;
         bool isFonticakClient = false;
+        bool isBackpackOT = false; // BackpackOT client gate, see ProtocolGame::passesClientGate
+        uint16_t backpackClientRelease = 0;
         std::string cast_password = "";
         std::string cast_description = "";
 

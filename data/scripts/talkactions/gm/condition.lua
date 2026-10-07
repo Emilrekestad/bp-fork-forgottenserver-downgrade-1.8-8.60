@@ -55,6 +55,9 @@ function talk.onSay(player, words, param)
 		return false
 	end
 
+	-- Security audit 2026-10-05: bound the duration. An unbounded value would
+	-- overflow the tick counter or root a player for hours.
+	seconds = math.max(1, math.min(math.floor(seconds), 3600))
 	local ticks = seconds * 1000
 	local condition = Condition(conditionType, CONDITIONID_DEFAULT)
 	if not condition then
@@ -69,4 +72,10 @@ function talk.onSay(player, words, param)
 end
 
 talk:separator(" ")
+-- Security audit 2026-10-05: this command had no access gate at all, so any
+-- player could root, fear or bleed any online player by name. Gamemaster
+-- account type AND a staff group are now required; the C++ dispatcher logs
+-- every use as a gm.command event because of these two lines.
+talk:accountType(ACCOUNT_TYPE_GAMEMASTER)
+talk:access(true)
 talk:register()

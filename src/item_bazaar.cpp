@@ -5,6 +5,8 @@
 
 #include "item_bazaar.h"
 
+#include "character_bazaar.h"
+
 #include "coins.h"
 #include "configmanager.h"
 #include "container.h"
@@ -214,17 +216,6 @@ bool lockAuction(uint32_t auctionId, AuctionRecord& out)
 // replays safe: a retried transaction (DBTransaction retries up to 3x on
 // deadlock) or a resubmitted web command hits the constraint and the whole
 // transaction fails rather than paying twice.
-// Describes a coin movement for `coin_ledger`. The operation id is carried in
-// the metadata so a row here can be joined to its `bazaar_ledger` twin: the
-// two ledgers answer different questions -- this one "where did the coins in
-// the economy go", that one "what happened to this auction".
-Coins::Movement bazaarMovement(std::string kind, uint32_t auctionId, const std::string& operationId)
-{
-	return Coins::Movement{std::move(kind), "bazaar_auction",
-	                       auctionId ? std::to_string(auctionId) : std::string{},
-	                       fmt::format(R"({{"operation_id":"{:s}"}})", operationId), 0};
-}
-
 bool addLedger(uint32_t accountId, uint32_t auctionId, uint32_t bidId, uint8_t type, int64_t amount,
                const std::string& operationId)
 {
@@ -234,6 +225,35 @@ bool addLedger(uint32_t accountId, uint32_t auctionId, uint32_t bidId, uint8_t t
 	    "`created_at`) VALUES ({:s}, {:s}, {:s}, {:d}, {:d}, {:s}, {:d})",
 	    accountId ? std::to_string(accountId) : "NULL", auctionId ? std::to_string(auctionId) : "NULL",
 	    bidId ? std::to_string(bidId) : "NULL", type, amount, db.escapeString(operationId), time(nullptr)));
+}
+
+// Writes the `bazaar_ledger` row FIRST and then moves the coins with a
+// `coin_ledger` reference to that row (ref_type "bazaar_ledger", ref_id = row
+// id). The two ledgers answer different questions -- coin_ledger "where did
+// the coins in the economy go", bazaar_ledger "what happened to this auction"
+// -- and the row id is what joins them.
+//
+// The reference MUST be unique per movement: coin_ledger carries
+// UNIQUE (ref_type, ref_id, kind). Referencing the auction id instead (as an
+// earlier revision did) made the second escrow or release on one auction a
+// duplicate key, so every bid after the first and every buyout after a bid
+// failed with "not enough Bp Coins". Runs inside the caller's transaction, so
+// a failed coin movement also rolls the bazaar_ledger row back.
+bool moveCoinsLedgered(uint32_t accountId, uint32_t auctionId, uint32_t bidId, uint8_t type, int64_t amount,
+                       std::string kind, const std::string& operationId)
+{
+	if (!addLedger(accountId, auctionId, bidId, type, amount, operationId)) {
+		return false;
+	}
+	const uint64_t ledgerId = Database::getInstance().getLastInsertId();
+	if (ledgerId == 0) {
+		return false;
+	}
+	return Coins::move(accountId, amount,
+	                   Coins::Movement{std::move(kind), "bazaar_ledger", std::to_string(ledgerId),
+	                                   fmt::format(R"({{"auction_id":{:d},"operation_id":"{:s}"}})", auctionId,
+	                                               operationId),
+	                                   0});
 }
 
 // Moves the escrowed item to a new owner and back into their Bazaar
@@ -254,15 +274,10 @@ bool releaseCurrentBid(const AuctionRecord& auction, const std::string& operatio
 	if (auction.currentBidderAccountId == 0 || auction.currentBid == 0) {
 		return true;
 	}
-	if (!Coins::credit(auction.currentBidderAccountId, auction.currentBid,
-	                   bazaarMovement("bazaar.release", auction.id,
-	                                  fmt::format("{:s}:release:{:d}", operationPrefix, auction.id)))) {
-		return false;
-	}
-	return addLedger(auction.currentBidderAccountId, auction.id, 0, LEDGER_BID_RELEASE,
-	                 static_cast<int64_t>(auction.currentBid),
-	                 fmt::format("{:s}:release:{:d}:{:d}:{:d}", operationPrefix, auction.id,
-	                             auction.currentBidderAccountId, auction.currentBid));
+	return moveCoinsLedgered(auction.currentBidderAccountId, auction.id, 0, LEDGER_BID_RELEASE,
+	                         static_cast<int64_t>(auction.currentBid), "bazaar.release",
+	                         fmt::format("{:s}:release:{:d}:{:d}:{:d}", operationPrefix, auction.id,
+	                                     auction.currentBidderAccountId, auction.currentBid));
 }
 
 // Shared tail of createAuction and relistItem: the item is already escrowed,
@@ -309,15 +324,10 @@ bool insertAuctionRow(uint32_t bazaarItemId, uint64_t itemUid, uint32_t sellerAc
 	if (promote) {
 		const uint32_t fee = getPromotionFee();
 		if (fee > 0) {
-			if (!Coins::debit(sellerAccountId, fee,
-			                  bazaarMovement("bazaar.promotion", outAuctionId,
-			                                 fmt::format("promo:{:d}", outAuctionId)))) {
+			if (!moveCoinsLedgered(sellerAccountId, outAuctionId, 0, LEDGER_PROMOTION_FEE,
+			                       -static_cast<int64_t>(fee), "bazaar.promotion",
+			                       fmt::format("promo:{:d}", outAuctionId))) {
 				reason = "You do not have enough Bp Coins for the promotion fee.";
-				return false;
-			}
-			if (!addLedger(sellerAccountId, outAuctionId, 0, LEDGER_PROMOTION_FEE, -static_cast<int64_t>(fee),
-			               fmt::format("promo:{:d}", outAuctionId))) {
-				reason = "The promotion could not be recorded.";
 				return false;
 			}
 		}
@@ -821,11 +831,9 @@ bool placeBid(uint32_t accountId, uint32_t auctionId, uint32_t amount, const std
 			reason = "The previous bid could not be released.";
 			return false;
 		}
-		if (!Coins::debit(accountId, amount, bazaarMovement("bazaar.escrow", auctionId, operationId))) {
-			reason = "You do not have enough available Bp Coins for this bid.";
-			return false;
-		}
 
+		// The bid row first: the ledger row references it, and the coin
+		// movement references the ledger row.
 		if (!db.executeQuery(fmt::format(
 		        "INSERT INTO `bazaar_bids` (`auction_id`, `bidder_account_id`, `amount`, `created_at`) "
 		        "VALUES ({:d}, {:d}, {:d}, {:d})",
@@ -835,8 +843,9 @@ bool placeBid(uint32_t accountId, uint32_t auctionId, uint32_t amount, const std
 		}
 		const uint32_t bidId = static_cast<uint32_t>(db.getLastInsertId());
 
-		if (!addLedger(accountId, auctionId, bidId, LEDGER_BID_ESCROW, -static_cast<int64_t>(amount), operationId)) {
-			reason = "Your bid could not be recorded.";
+		if (!moveCoinsLedgered(accountId, auctionId, bidId, LEDGER_BID_ESCROW, -static_cast<int64_t>(amount),
+		                       "bazaar.escrow", operationId)) {
+			reason = "You do not have enough available Bp Coins for this bid.";
 			return false;
 		}
 
@@ -915,25 +924,18 @@ bool buyout(uint32_t accountId, uint32_t auctionId, const std::string& operation
 			reason = "The previous bid could not be released.";
 			return false;
 		}
-		if (!Coins::debit(accountId, auction.buyoutPrice,
-		                  bazaarMovement("bazaar.escrow", auctionId, operationId))) {
+		if (!moveCoinsLedgered(accountId, auctionId, 0, LEDGER_BUYOUT_ESCROW,
+		                       -static_cast<int64_t>(auction.buyoutPrice), "bazaar.escrow", operationId)) {
 			reason = "You do not have enough available Bp Coins for this buyout.";
-			return false;
-		}
-		if (!addLedger(accountId, auctionId, 0, LEDGER_BUYOUT_ESCROW, -static_cast<int64_t>(auction.buyoutPrice),
-		               operationId)) {
-			reason = "The buyout could not be recorded.";
 			return false;
 		}
 
 		const uint64_t fee = calculateSaleFee(auction.buyoutPrice);
 		const uint64_t payout = auction.buyoutPrice - fee;
 
-		if (!Coins::credit(auction.sellerAccountId, payout,
-		                   bazaarMovement("bazaar.payout", auctionId,
-		                                  fmt::format("payout:{:d}", auctionId))) ||
-		    !addLedger(auction.sellerAccountId, auctionId, 0, LEDGER_SELLER_PAYOUT, static_cast<int64_t>(payout),
-		               fmt::format("payout:{:d}", auctionId)) ||
+		if (!moveCoinsLedgered(auction.sellerAccountId, auctionId, 0, LEDGER_SELLER_PAYOUT,
+		                       static_cast<int64_t>(payout), "bazaar.payout",
+		                       fmt::format("payout:{:d}", auctionId)) ||
 		    !addLedger(0, auctionId, 0, LEDGER_SALE_FEE, static_cast<int64_t>(fee),
 		               fmt::format("fee:{:d}", auctionId))) {
 			reason = "The seller could not be paid.";
@@ -1186,11 +1188,9 @@ bool settleAuction(uint32_t auctionId)
 		const uint64_t fee = calculateSaleFee(auction.currentBid);
 		const uint64_t payout = auction.currentBid - fee;
 
-		if (!Coins::credit(auction.sellerAccountId, payout,
-		                   bazaarMovement("bazaar.payout", auctionId,
-		                                  fmt::format("payout:{:d}", auctionId))) ||
-		    !addLedger(auction.sellerAccountId, auctionId, 0, LEDGER_SELLER_PAYOUT, static_cast<int64_t>(payout),
-		               fmt::format("payout:{:d}", auctionId)) ||
+		if (!moveCoinsLedgered(auction.sellerAccountId, auctionId, 0, LEDGER_SELLER_PAYOUT,
+		                       static_cast<int64_t>(payout), "bazaar.payout",
+		                       fmt::format("payout:{:d}", auctionId)) ||
 		    !addLedger(0, auctionId, 0, LEDGER_SALE_FEE, static_cast<int64_t>(fee),
 		               fmt::format("fee:{:d}", auctionId))) {
 			return false;
@@ -1280,7 +1280,10 @@ void reconcilePendingEscrow()
 
 void processCommands()
 {
-	if (!isEnabled()) {
+	// The queue is shared with the Character Bazaar (char_* actions), so it
+	// drains while EITHER system is on; a disabled system answers its own
+	// commands with its disabled reason rather than leaving them pending.
+	if (!isEnabled() && !CharacterBazaar::isEnabled()) {
 		return;
 	}
 	Database& db = Database::getInstance();
@@ -1328,7 +1331,17 @@ void processCommands()
 		};
 
 		const std::string operationId = fmt::format("web:{:d}", commandId);
-		if (action == "bid") {
+		if (action == "char_bid") {
+			success = CharacterBazaar::placeBid(accountId, static_cast<uint32_t>(param("auction")),
+			                                    static_cast<uint32_t>(param("amount")), operationId, reason);
+		} else if (action == "char_buynow") {
+			success = CharacterBazaar::buyNow(accountId, static_cast<uint32_t>(param("auction")), operationId,
+			                                  reason);
+		} else if (action == "char_cancel") {
+			success = CharacterBazaar::cancelAuction(accountId, static_cast<uint32_t>(param("auction")), reason);
+		} else if (!isEnabled()) {
+			reason = "The Item Bazaar is currently disabled.";
+		} else if (action == "bid") {
 			success = placeBid(accountId, static_cast<uint32_t>(param("auction")),
 			                   static_cast<uint32_t>(param("amount")), operationId, reason);
 		} else if (action == "buyout") {
@@ -1352,7 +1365,8 @@ void processCommands()
 		    "UPDATE `bazaar_commands` SET `status` = {:d}, `result_code` = {:d}, `result_message` = {:s}, "
 		    "`completed_at` = {:d} WHERE `id` = {:d}",
 		    success ? COMMAND_DONE : COMMAND_FAILED, success ? 0 : 1,
-		    db.escapeString(bazaarSanitizeMessage(success ? std::string{} : reason)), time(nullptr), commandId));
+		    db.escapeString(bazaarSanitizeMessage(success && action.rfind("char_", 0) != 0 ? std::string{} : reason)),
+		    time(nullptr), commandId));
 	}
 }
 
@@ -1395,12 +1409,13 @@ void scheduleReconciliation()
 
 void scheduleTasks()
 {
-	if (!isEnabled()) {
-		return;
+	if (isEnabled()) {
+		scheduleSettlement();
+		scheduleReconciliation();
 	}
-	scheduleSettlement();
-	scheduleCommandPolling();
-	scheduleReconciliation();
+	if (isEnabled() || CharacterBazaar::isEnabled()) {
+		scheduleCommandPolling();
+	}
 }
 
 } // namespace ItemBazaar

@@ -23,4 +23,6 @@ function proficiency.onSay(player, words, param)
 end
 
 proficiency:separator(" ")
+-- Security audit 2026-10-05: registered gate so the dispatcher logs the use.
+proficiency:access(true)
 proficiency:register()

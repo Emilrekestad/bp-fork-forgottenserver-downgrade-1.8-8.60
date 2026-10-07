@@ -1,7 +1,21 @@
 -- Task Board Network Module — Main Entry Point
 -- Wires together protocol, bounty, weekly, shop, and resource balance modules.
 -- Opcodes: 0x5F (client->server), 0x53/0xEE (Task Board server->client).
--- Task Hunting is loaded separately and owns 0xBA/0xBB.
+--
+-- (!) The separate Task Hunting system (3 slots, 0xBA/0xBB, paid out Bp Coins)
+-- was REMOVED on 2026-09-07 in favour of Bao's hunts. Its script, its client
+-- module and its tab in the Prey window are all gone.
+--
+-- What deliberately stayed: Task Hunting POINTS (HTP). Despite the name they
+-- were not that system's currency -- it paid Tibia Coins. HTP is minted by
+-- Weekly Tasks and spent in the Hunting Shop and at Walter Jaeger, all of
+-- which are live, so the player column and its Lua methods must not be
+-- removed with it.
+--
+-- Likewise TASK_HUNTING_SYSTEM_ENABLED is NOT that system's switch: C++
+-- (configmanager.cpp) forces bounty, weekly and soulseals off whenever it is
+-- false, so it is the master gate for this whole directory. It keeps its
+-- misleading name until someone is willing to rebuild the server to rename it.
 --
 -- Uses native bytes only. No JSON, no extended opcodes.
 -- Only sends modern bytes to AstraClient (IsAstraClient guard in protocol layer).
@@ -17,7 +31,11 @@ end
 
 local bountyEnabled = configManager.getBoolean(configKeys.BOUNTY_TASKS_ENABLED)
 local weeklyEnabled = configManager.getBoolean(configKeys.WEEKLY_TASKS_ENABLED)
-local soulsealsEnabled = configManager.getBoolean(configKeys.SOULSEALS_SYSTEM_ENABLED)
+-- Soulseals were retired 2026-09-08 when the Soulpit was rebuilt around a soul
+-- core used on the obelisk. Their handler is in docs/superseded-scripts and the
+-- three SoulPit functions it called no longer exist, so this stays off
+-- regardless of the config flag rather than raising if someone flips it.
+local soulsealsEnabled = false
 
 -- ============================================
 -- LOAD MODULES
@@ -51,18 +69,8 @@ if shop and shop.setProtocol then
 end
 
 local soulseal = nil
-if soulsealsEnabled then
-	soulseal = dofile("data/scripts/network/task_board/soulseal_handler.lua")
-	if soulseal and soulseal.setProtocol then
-		soulseal.setProtocol(protocol)
-	end
-end
 
 local resourceBalance = TaskBoard
-
--- Global-like Task Hunting uses its own native protocol and state. It must be
--- loaded after TaskBoard so its resource type is available to the sync path.
-local taskHunting = dofile("data/scripts/network/task_hunting/task_hunting.lua")
 
 -- ============================================
 -- LOAD CONFIG DATA
@@ -99,6 +107,13 @@ function taskBoardActionHandler.onReceive(player, msg)
 	end
 
 	local option = payload.option
+
+	-- Per-option throttle (security audit 2026-10-05): every option below
+	-- loads the player's bounty/weekly rows and most of them write them back,
+	-- so an unthrottled client could turn the board into a database flood.
+	if not NetworkGuard.cooldown(player, "taskboard:" .. tostring(option), 300) then
+		return
+	end
 
 	if option == 0 then -- Open Bounty
 		if not bountyEnabled then return end
@@ -189,9 +204,9 @@ TaskBoardProtocol = protocol
 TaskBoardBountyTasks = bounty
 TaskBoardWeeklyTasks = weekly
 TaskBoardHuntingShop = shop
-TaskBoardSoulSealHandler = soulseal
+-- Soulseals were retired 2026-09-08; the handler moved to docs/superseded-scripts.
+-- TaskBoardSoulSealHandler = soulseal
 TaskBoardResourceBalance = resourceBalance
-_TASK_HUNTING_MODULE = taskHunting
 
 -- Also expose for other scripts
 if bounty then

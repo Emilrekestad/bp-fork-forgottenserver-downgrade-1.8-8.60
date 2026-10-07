@@ -23,6 +23,14 @@ public:
 	SaveManager() = default;
 
 	void saveAll();
+	// Security audit 2026-10-05 (PERS-1/PERS-2): persist the world state that
+	// saveAll() covers but no autosave did (game storage, account storage, the KV
+	// store, house info + items) WITHOUT touching players or closing the game.
+	// Called from the Lua autosave every 10 minutes so a crash no longer rolls
+	// gems/wheel/boss cooldowns/house furniture back to the 09:55 save while
+	// players' gold and items are 10 minutes fresh (a dupe window per crash).
+	// Dispatcher thread only. Returns false if any part failed (each is logged).
+	bool saveWorldState();
 	bool savePlayer(Player* player);
 	void saveMapAsync();
 	bool savePlayerSync(Player* player);
@@ -56,6 +64,16 @@ public:
 	[[nodiscard]] bool hasFailedRecovery(uint32_t guid) const noexcept
 	{
 		return failedRecoveryGuids.contains(guid);
+	}
+
+	// True while a save for this GUID is being flushed or is queued behind one.
+	// Offline writers (mail, bank, market, bazaar) must refuse in that window:
+	// loading the character from the database would read a stale copy that
+	// the queued flush then overwrites -- or, through savePlayerSync, REPLACES
+	// the queued flush with the stale copy. Dispatcher thread only.
+	[[nodiscard]] bool isPlayerFlushPending(uint32_t guid) const
+	{
+		return flushInFlight.contains(guid) || pendingFlushes.contains(guid);
 	}
 
 private:

@@ -185,7 +185,8 @@ void ProtocolAdmin::parsePacket(NetworkMessage& msg)
 					loginTries++;
 					output->addByte(AP_MSG_LOGIN_FAILED);
 					output->addString("wrong password");
-					addLogLine("login failed.(" + pass + ")");
+					// Security audit 2026-10-05: never write the attempted password to the log.
+					addLogLine("login failed");
 				}
 			} else {
 				output->addByte(AP_MSG_LOGIN_FAILED);

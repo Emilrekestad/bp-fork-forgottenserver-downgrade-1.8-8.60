@@ -1044,9 +1044,12 @@ local function deliverItemToPlayer(playerId, playerName, itemId, amount, attribu
 	local target = playerName and Player(playerName) or nil
 	if target then
 		local inbox = target:getInbox()
-		if addItemToInbox(inbox, itemId, amount, attributes) then
-			return true
-		end
+		-- An online target is memory-authoritative: never fall through to the
+		-- database insert, because their next save rewrites player_inboxitems
+		-- from memory and the row (and the paid-for item) would be destroyed.
+		-- A refused add (inbox at its 100-item save limit) is a failed
+		-- delivery, which every caller rolls back.
+		return addItemToInbox(inbox, itemId, amount, attributes) == true
 	end
 	return Game.insertMarketInboxItem(playerId, itemId, amount, attributes)
 end
@@ -1568,7 +1571,7 @@ local function expireOffers()
 				else
 					-- Delivery failed: restore the offer so it can be retried
 					rollbackOfferClaim(offer, offer.amount)
-					logError("[CustomMarket] Failed to return expired offer " .. offer.id .. " — restored to DB")
+					logError("[CustomMarket] Failed to return expired offer " .. offer.id .. " - restored to DB")
 				end
 			end
 			releaseLock(offerKey)
@@ -1760,6 +1763,16 @@ function createHandler.onReceive(player, msg)
 
 	offerCountCache[player:getGuid()] = nil
 	releaseLock(playerKey)
+	-- Offer row is in the database; the depot items or bank gold it was paid
+	-- with only left memory. Persist the player before a crash returns them.
+	player:saveOnTransfer("market.create")
+	GameEvents.emitForPlayer("market.trade", player, {
+		action = "create",
+		sale = actionType,
+		item = itemId,
+		amount = amount,
+		price = price,
+	})
 	sendMarketMessage(player, "Market offer created.")
 	refreshMarket(player, itemId, depotMap)
 end
@@ -1832,6 +1845,15 @@ function cancelHandler.onReceive(player, msg)
 	offerCountCache[player:getGuid()] = nil
 	addHistory(player:getGuid(), offer.sale, offer.itemId, offer.amount, offer.price, MARKET_STATE_CANCELLED, offer.created, offer.tier)
 	releaseMultipleLocks({ offerKey, playerKey })
+	player:saveOnTransfer("market.cancel")
+	GameEvents.emitForPlayer("market.trade", player, {
+		action = "cancel",
+		offer_id = offer.id,
+		sale = offer.sale,
+		item = offer.itemId,
+		amount = offer.amount,
+		price = offer.price,
+	}, "offer", tostring(offer.id))
 	sendMarketMessage(player, "Market offer cancelled.")
 	refreshMarket(player, MARKET_REQUEST_MY_OFFERS)
 end
@@ -2002,10 +2024,31 @@ function acceptHandler.onReceive(player, msg)
 
 	releaseMultipleLocks({ offerKey, buyerKey, ownerKey })
 
+	local owner = Player(offer.playerName)
+
+	-- Both legs of the trade are now applied: one of them may already be in
+	-- the database (offline owner via creditBank / insertInboxItems) while the
+	-- acceptor's side is memory only. Save whoever is online.
+	player:saveOnTransfer("market.accept")
+	if owner then
+		owner:saveOnTransfer("market.accept")
+	end
+	GameEvents.emitForPlayer("market.trade", player, {
+		action = "accept",
+		offer_id = offer.id,
+		sale = offer.sale,
+		item = offer.itemId,
+		amount = amount,
+		price = offer.price,
+		total = totalPrice,
+		owner_guid = offer.playerId,
+		owner_name = offer.playerName,
+		owner_online = owner ~= nil,
+	}, "offer", tostring(offer.id))
+
 	sendMarketMessage(player, "Market offer accepted.")
 	refreshMarket(player, offer.itemId, depotMap)
 
-	local owner = Player(offer.playerName)
 	if owner then
 		if offer.sale == MARKET_ACTION_BUY then
 			sendMarketMessage(owner, "Your market buy offer has been fulfilled. The purchased item was delivered to your Market Inbox.")

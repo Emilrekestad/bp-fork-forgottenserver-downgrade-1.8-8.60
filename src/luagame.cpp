@@ -18,8 +18,10 @@
 #include "talkaction.h"
 #include "tools.h"
 #include "logger.h"
+#include "character_bazaar.h"
 #include "item_bazaar.h"
 #include "market.h"
+#include "save_manager.h"
 #include "stash.h"
 #include "zones.h"
 #include <fmt/format.h>
@@ -1594,6 +1596,86 @@ int luaGameBazaarCalculateFee(lua_State* L)
 	return 1;
 }
 
+// --- Character Bazaar ----------------------------------------------------
+// Thin wrappers over src/character_bazaar.cpp, the single authority for the
+// character auction rules. data/scripts/network/character_bazaar/ owns the
+// wire format and calls these; it never decides eligibility or moves coins.
+
+int luaGameCharacterBazaarGetRules(lua_State* L)
+{
+	// Game.characterBazaarGetRules(player) -- everything the Sell form shows
+	Player* player = getUserdata<Player>(L, 1);
+	const CharacterBazaar::Rules rules = CharacterBazaar::getRules(player);
+	lua_createtable(L, 0, 11);
+	setField(L, "enabled", rules.enabled ? 1 : 0);
+	setField(L, "eligible", rules.eligible ? 1 : 0);
+	setField(L, "reason", rules.reason);
+	setField(L, "minLevel", rules.minLevel);
+	setField(L, "minPrice", rules.minPrice);
+	setField(L, "minDurationSeconds", rules.minDurationSeconds);
+	setField(L, "maxDurationSeconds", rules.maxDurationSeconds);
+	setField(L, "fee", rules.fee);
+	setField(L, "commissionPercent", rules.commissionPercent);
+	setField(L, "antiSnipeSeconds", rules.antiSnipeSeconds);
+	setField(L, "balance", std::min<uint64_t>(rules.balance, UINT32_MAX));
+	return 1;
+}
+
+int luaGameCharacterBazaarCreateAuction(lua_State* L)
+{
+	// Game.characterBazaarCreateAuction(player, startPrice, durationSeconds, description)
+	Player* player = getUserdata<Player>(L, 1);
+	if (!player) {
+		pushBoolean(L, false);
+		pushString(L, "No player.");
+		return 2;
+	}
+	std::string reason;
+	uint32_t auctionId = 0;
+	const bool success = CharacterBazaar::createAuction(player, getInteger<uint32_t>(L, 2), getInteger<uint32_t>(L, 3),
+	                                                    getInteger<uint32_t>(L, 4), getString(L, 5), reason, auctionId);
+	pushBoolean(L, success);
+	pushString(L, reason);
+	// Third return: the new auction id. The wire layer needs it to attach the
+	// Bao Ledger snapshot, taken in Lua because Bao's code owns the Ledger's kv
+	// key layout (data/lib/bao/bao_ledger.lua).
+	lua_pushinteger(L, auctionId);
+	return 3;
+}
+
+int luaGameCharacterBazaarBuyNow(lua_State* L)
+{
+	// Game.characterBazaarBuyNow(accountId, auctionId, operationId)
+	std::string reason;
+	const bool success =
+	    CharacterBazaar::buyNow(getInteger<uint32_t>(L, 1), getInteger<uint32_t>(L, 2), getString(L, 3), reason);
+	pushBoolean(L, success);
+	pushString(L, reason);
+	return 2;
+}
+
+int luaGameCharacterBazaarPlaceBid(lua_State* L)
+{
+	// Game.characterBazaarPlaceBid(accountId, auctionId, amount, operationId)
+	std::string reason;
+	const bool success = CharacterBazaar::placeBid(getInteger<uint32_t>(L, 1), getInteger<uint32_t>(L, 2),
+	                                               getInteger<uint32_t>(L, 3), getString(L, 4), reason);
+	pushBoolean(L, success);
+	pushString(L, reason);
+	return 2;
+}
+
+int luaGameCharacterBazaarCancelAuction(lua_State* L)
+{
+	// Game.characterBazaarCancelAuction(accountId, auctionId)
+	std::string reason;
+	const bool success =
+	    CharacterBazaar::cancelAuction(getInteger<uint32_t>(L, 1), getInteger<uint32_t>(L, 2), reason);
+	pushBoolean(L, success);
+	pushString(L, reason);
+	return 2;
+}
+
 int luaGameGetSupplyStashRows(lua_State* L)
 {
 	// Game.getSupplyStashRows(playerId)
@@ -1684,6 +1766,27 @@ int luaGameHandleBestiaryCharmAction(lua_State* L)
 	const uint16_t raceId = getInteger<uint16_t>(L, 4, 0);
 	const BestiaryCharmActionResult result = g_bestiaryCharmSystem.handleCharmAction(*player, charmId, action, raceId);
 
+	pushBoolean(L, result.success);
+	pushString(L, result.message);
+	return 2;
+}
+
+int luaGameResetBestiaryCharms(lua_State* L)
+{
+	// Game.resetBestiaryCharms(player) -> success, message
+	//
+	// The paid-for reset. Action 3 of handleBestiaryCharmAction is the charm
+	// window's own Reset button and charges gold; this one waives that fee
+	// because the store's Charm Reset offer has already taken Bp Coins. Read
+	// Game.getBestiaryCharmPoints before and after to report the refund.
+	Player* player = getPlayer(L, 1);
+	if (!player) {
+		pushBoolean(L, false);
+		pushString(L, "Player not found.");
+		return 2;
+	}
+
+	const BestiaryCharmActionResult result = g_bestiaryCharmSystem.resetCharms(*player, false);
 	pushBoolean(L, result.success);
 	pushString(L, result.message);
 	return 2;
@@ -1834,12 +1937,27 @@ int luaGameAddBosstiaryPoints(lua_State* L)
 	return 2;
 }
 
+int luaGameIsPlayerSavePending(lua_State* L)
+{
+	// Game.isPlayerSavePending(guid)
+	// Security audit 2026-10-05 (ECON-6 / PERS-6): true while the character is
+	// logging in (reserved, not yet placed) or has a save flush in flight or
+	// queued. Offline writers in Lua (bank transfer to an offline player, market
+	// credit) must refuse in that window, exactly as Mailbox::sendItem now does:
+	// a database write made then is overwritten by the pending flush (loss), or
+	// a stale copy loaded from the database replaces the queued flush (dupe).
+	uint32_t guid = Lua::getNumber<uint32_t>(L, 1);
+	Lua::pushBoolean(L, guid != 0 && (g_game.isLoginPending(guid) || g_saveManager.isPlayerFlushPending(guid)));
+	return 1;
+}
+
 } // namespace
 
 void LuaScriptInterface::registerGame()
 {
 	// Game
 	registerTable("Game");
+	registerMethod("Game", "isPlayerSavePending", luaGameIsPlayerSavePending);
 	registerMethod("Game", "getLightState", luaGameGetLightState);
 	registerMethod("Game", "setWorldTime", luaGameSetWorldTime);
 	registerMethod("Game", "getMarketOfferCount", luaGameGetMarketOfferCount);
@@ -1869,12 +1987,19 @@ void LuaScriptInterface::registerGame()
 	registerMethod("Game", "bazaarGetConfig", luaGameBazaarGetConfig);
 	registerMethod("Game", "bazaarGetItemCategory", luaGameBazaarGetItemCategory);
 	registerMethod("Game", "bazaarCalculateFee", luaGameBazaarCalculateFee);
+
+	registerMethod("Game", "characterBazaarGetRules", luaGameCharacterBazaarGetRules);
+	registerMethod("Game", "characterBazaarCreateAuction", luaGameCharacterBazaarCreateAuction);
+	registerMethod("Game", "characterBazaarPlaceBid", luaGameCharacterBazaarPlaceBid);
+	registerMethod("Game", "characterBazaarBuyNow", luaGameCharacterBazaarBuyNow);
+	registerMethod("Game", "characterBazaarCancelAuction", luaGameCharacterBazaarCancelAuction);
 	registerMethod("Game", "getSupplyStashRows", luaGameGetSupplyStashRows);
 	registerMethod("Game", "addSupplyStashAmount", luaGameAddSupplyStashAmount);
 	registerMethod("Game", "removeSupplyStashAmount", luaGameRemoveSupplyStashAmount);
 	registerMethod("Game", "cleanupSupplyStash", luaGameCleanupSupplyStash);
 	registerMethod("Game", "registerBestiaryMonsterData", luaGameRegisterBestiaryMonsterData);
 	registerMethod("Game", "handleBestiaryCharmAction", luaGameHandleBestiaryCharmAction);
+	registerMethod("Game", "resetBestiaryCharms", luaGameResetBestiaryCharms);
 	registerMethod("Game", "getBestiaryKills", luaGameGetBestiaryKills);
 	registerMethod("Game", "getBestiaryKillCount", luaGameGetBestiaryKillCount);
 	registerMethod("Game", "addBestiaryKill", luaGameAddBestiaryKill);

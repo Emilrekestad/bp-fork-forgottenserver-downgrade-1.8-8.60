@@ -374,6 +374,57 @@ bool BestiaryCharmSystem::restoreCharmStatesAndResources(uint32_t playerGuid, co
 	return restored && setCharmPoints(playerGuid, charmPoints);
 }
 
+// The reset, for both the charm window's own Reset button and the store's Charm
+// Reset offer. The two differ by the gold fee and nothing else -- same refund,
+// same echo restore, same rollback -- so they cannot drift apart.
+BestiaryCharmActionResult BestiaryCharmSystem::resetCharms(Player& player, bool chargeGold) const
+{
+	const uint32_t playerGuid = player.getGUID();
+	const CharmStateMap states = loadCharmStates(playerGuid);
+
+	const uint64_t resetCost =
+	    chargeGold ? 100000 + (player.getLevel() > 100 ? static_cast<uint64_t>(player.getLevel()) * 11000 : 0) : 0;
+	if (resetCost > 0 && !hasGold(player, resetCost)) {
+		return { false, "You do not have enough gold." };
+	}
+
+	const uint32_t charmPoints = getCharmPoints(playerGuid);
+	const uint32_t refund = getSpentMajorCharmPoints(states);
+	const auto [minorEchoes, maxMinorEchoes] = getMinorCharmEchoes(playerGuid);
+
+	// (!) Echoes are RESTORED to their lifetime total, not zeroed.
+	//
+	// They are minted only by upgrading major charms, so wiping them while
+	// refunding the points that earned them made a reset strictly destructive:
+	// the player paid to lose every minor charm and had to re-buy the same
+	// major upgrades to earn the same echoes back. maxMinorEchoes is exactly
+	// that lifetime total, and since every minor charm is being locked again,
+	// the whole of it is unspent by definition.
+	const bool reset = DBTransaction::executeWithinTransactionRollbackOnFailure([&]() {
+		return Database::getInstance().executeQuery(fmt::format(
+		           "UPDATE `player_bestiary_charms` SET `unlocked` = 0, `raceid` = 0 WHERE `player_id` = {:d}",
+		           playerGuid)) &&
+		       setMinorCharmEchoes(playerGuid, maxMinorEchoes, maxMinorEchoes);
+	});
+	if (!reset) {
+		return { false, "Could not reset charms." };
+	}
+	player.setBestiaryCharmPoints(charmPoints + refund);
+
+	// Only reachable on the gold path; the store path has no fee to fail on.
+	if (resetCost > 0 && !removeGold(player, resetCost)) {
+		const bool restored =
+		    restoreCharmStatesAndResources(playerGuid, states, charmPoints, minorEchoes, maxMinorEchoes);
+		invalidatePlayer(playerGuid);
+		if (!restored) {
+			return { false, "Could not charge gold or restore charm state." };
+		}
+		return { false, "Could not charge gold for resetting charms." };
+	}
+	invalidatePlayer(playerGuid);
+	return { true, "All charms were reset." };
+}
+
 BestiaryCharmActionResult BestiaryCharmSystem::handleCharmAction(Player& player, uint8_t charmId, uint8_t action, uint16_t raceId) const
 {
 	const uint32_t playerGuid = player.getGUID();
@@ -441,34 +492,7 @@ BestiaryCharmActionResult BestiaryCharmSystem::handleCharmAction(Player& player,
 	}
 
 	if (action == 3) {
-		const uint64_t resetCost = 100000 + (player.getLevel() > 100 ? static_cast<uint64_t>(player.getLevel()) * 11000 : 0);
-		if (!hasGold(player, resetCost)) {
-			return { false, "You do not have enough gold." };
-		}
-
-		const uint32_t charmPoints = getCharmPoints(playerGuid);
-		const uint32_t refund = getSpentMajorCharmPoints(states);
-		const auto [minorEchoes, maxMinorEchoes] = getMinorCharmEchoes(playerGuid);
-		const bool reset = DBTransaction::executeWithinTransactionRollbackOnFailure([&]() {
-			return Database::getInstance().executeQuery(fmt::format(
-			           "UPDATE `player_bestiary_charms` SET `unlocked` = 0, `raceid` = 0 WHERE `player_id` = {:d}",
-			           playerGuid)) &&
-			       setMinorCharmEchoes(playerGuid, 0, 0);
-		});
-		if (!reset) {
-			return { false, "Could not reset charms." };
-		}
-		player.setBestiaryCharmPoints(charmPoints + refund);
-		if (!removeGold(player, resetCost)) {
-			const bool restored = restoreCharmStatesAndResources(playerGuid, states, charmPoints, minorEchoes, maxMinorEchoes);
-			invalidatePlayer(playerGuid);
-			if (!restored) {
-				return { false, "Could not charge gold or restore charm state." };
-			}
-			return { false, "Could not charge gold for resetting charms." };
-		}
-		invalidatePlayer(playerGuid);
-		return { true, "All charms were reset." };
+		return resetCharms(player, true);
 	}
 
 	if (currentState.tier == 0) {
@@ -491,7 +515,11 @@ BestiaryCharmActionResult BestiaryCharmSystem::handleCharmAction(Player& player,
 
 		if (currentState.raceId == 0) {
 			const uint8_t usedSlots = getAssignedCharmCount(states);
-			const uint8_t maxSlots = player.isPremium() ? 6 : 2;
+			const uint8_t baseSlots = player.isPremium() ? 6 : 2;
+			const uint8_t maxSlots =
+			    static_cast<uint8_t>(std::min<uint32_t>(static_cast<uint32_t>(baseSlots) +
+			                                                player.getCharmExpansion(),
+			                                            std::numeric_limits<uint8_t>::max()));
 			if (usedSlots >= maxSlots) {
 				return { false, "You do not have any charm slots available." };
 			}
